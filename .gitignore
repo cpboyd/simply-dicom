@@ -1,0 +1,6 @@
+/.settings
+/bin
+/gen
+/src/us/cboyd/android/dicom/DcmViewer.java
+/.classpath
+/.project
