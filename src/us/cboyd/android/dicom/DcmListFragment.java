@@ -37,8 +37,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 /**
  * DICOM ListFragment
@@ -58,7 +60,8 @@ public class DcmListFragment extends ListFragment {
     }
 	
 	/** Current directory. */
-	private File mCurrDir;
+	private File 	mCurrDir;
+	private int 	mIsRoot = 1;
 	private List<String> mDirList = new ArrayList<String>();
 	private List<String> mFileList = new ArrayList<String>();
 	
@@ -120,11 +123,10 @@ public class DcmListFragment extends ListFragment {
 		super.onListItemClick(l, v, position, id);
 		
 		String itemName = mAdapter.getItem(position);
-		int	   offset 	= 1;		// offset is 1 if in root directory
 		
 		// Account for the potential '..'
 		if (!mCurrDir.equals(Environment.getExternalStorageDirectory())) {
-			offset = 0;
+			mIsRoot = 0;
 			// Go up to the parent directory, if '..'
 			if (position == 0) {
 				setDir(mCurrDir.getParentFile());
@@ -134,7 +136,7 @@ public class DcmListFragment extends ListFragment {
 		}
 		
 		// If it's a directory:
-		if (position > mFileList.size() - offset) {
+		if (position > mFileList.size() - mIsRoot) {
 			 setDir(new File(mCurrDir, itemName));
 			 mCallback.onDirectorySelected(mCurrDir);
 		// Otherwise, display info about the DICOM file selected.
@@ -237,14 +239,35 @@ public class DcmListFragment extends ListFragment {
 		mDirList.addAll(0, mFileList);
 		
 		// If not at the root directory, add the ability to go up to the parent directory.
-		if (!mCurrDir.equals(Environment.getExternalStorageDirectory()))
+		if (!mCurrDir.equals(Environment.getExternalStorageDirectory())) {
 			mDirList.add(0, "..");
+			mIsRoot = 0;
+		} else {
+			mIsRoot = 1;
+		}
 		
-		// We need to use a different list item layout for devices older than Honeycomb
-        int layout = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ?
-                android.R.layout.simple_list_item_activated_1 : android.R.layout.simple_list_item_1;
+		
         // Create an array adapter for the list view, using the files array
-		mAdapter = new ArrayAdapter<String>(getActivity(), layout, mDirList);
+        mAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_activated_2, android.R.id.text1, mDirList) {
+        	  @Override
+        	  public View getView(int position, View convertView, ViewGroup parent) {
+        	    View view = super.getView(position, convertView, parent);
+        	    TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+        	    TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+
+        	    text1.setText(mDirList.get(position));
+        	    if ((mIsRoot == 0) && (position == 0)) {
+        	    	text2.setText("Up to parent directory");
+        	    } else if (position > mFileList.size() - mIsRoot) {
+        	    	text2.setText("Directory");
+    			// Otherwise, display info about the file.
+    			} else {
+        	    	text2.setText("File");
+        	    }
+        	    return view;
+        	  }
+        	};
+		//mAdapter = new ArrayAdapter<String>(getActivity(), layout, mDirList);
 		setListAdapter(mAdapter);
 	}
 
