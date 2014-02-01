@@ -33,12 +33,12 @@ import us.cboyd.shared.NotHidFilter;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ListFragment;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -248,21 +248,27 @@ public class DcmListFragment extends ListFragment {
 		
 		
         // Create an array adapter for the list view, using the files array
-        mAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_activated_2, android.R.id.text1, mDirList) {
+        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.file_list_item_2, android.R.id.text1, mDirList) {
         	  @Override
         	  public View getView(int position, View convertView, ViewGroup parent) {
         	    View view = super.getView(position, convertView, parent);
+        	    ImageView icon = (ImageView) view.findViewById(R.id.icon);
         	    TextView text1 = (TextView) view.findViewById(android.R.id.text1);
         	    TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 
         	    text1.setText(mDirList.get(position));
         	    if ((mIsRoot == 0) && (position == 0)) {
+        	    	icon.setImageResource(R.drawable.ic_action_back);
         	    	text2.setText("Up to parent directory");
         	    } else if (position > mFileList.size() - mIsRoot) {
+        	    	//ic_action_collection icon
+        	    	icon.setImageResource(R.drawable.ic_action_collection);
         	    	text2.setText("Directory");
     			// Otherwise, display info about the file.
     			} else {
-        	    	text2.setText("File");
+        	    	//ic_action_picture icon
+        	    	icon.setImageResource(R.drawable.ic_action_picture);
+        	    	text2.setText("File, " + new File(mCurrDir, mDirList.get(position)).length()/1024 + " KB");
         	    }
         	    return view;
         	  }
