@@ -58,6 +58,32 @@
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
     
+    <!-- DICOM Info Tags -->
+    <!-- SOP Common -->
+    <string name="dcm_00080016">(0008, 0016) SOP Class UID VR:UI VM:1</string>
+    <string name="dcm_00080018">(0008, 0018) SOP Instance UID VR:UI VM:1</string>
+    <!-- Patient -->
+    <string name="dcm_00100010">(0010, 0010) Patient\'s Name VR:PN VM:1</string>
+    <string name="dcm_00100020">(0010, 0020) Patient ID VR:LO VM:1</string>
+    <string name="dcm_00100030">(0010, 0030) Patient\'s Birth Date VR:DA VM:1</string>
+    <string name="dcm_00100040">(0010, 0040) Patient\'s Sex VR:CS VM:1</string>
+    <!-- Study -->
+    <string name="dcm_0020000D">(0020, 000D) Study Instance UID VR:UI VM:1</string>
+    <string name="dcm_00080020">(0008, 0020) Study Date VR:DA VM:1</string>
+    <string name="dcm_00080030">(0008, 0030) Study Time VR:TM VM:1</string>
+    <string name="dcm_00200010">(0020, 0010) Study ID VR:SH VM:1</string>
+    <string name="dcm_00080090">(0008, 0090) Referring Physician\'s Name VR:PN VM:1</string>
+    <string name="dcm_00080050">(0008, 0050) Accession Number VR:SH VM:1</string>
+    <!-- Series -->
+    <string name="dcm_0020000E">(0020, 000E) Series Instance UID VR:UI VM:1</string>
+    <string name="dcm_00080021">(0008, 0021) Series Date VR:DA VM:1</string>
+    <string name="dcm_00080031">(0008, 0031) Series Time VR:TM VM:1</string>
+    <string name="dcm_00200011">(0020, 0011) Series Number VR:IS VM:1</string>
+    <!-- Equipment -->
+    <string name="dcm_00080070">(0008, 0070) Manufacturer VR:LO VM:1</string>
+    <string name="dcm_00080080">(0008, 0080) Institution Name VR:LO VM:1</string>
+    
+    
     <!-- Error Messages (Displayed to User) -->
     <string name="err_title_disk">"ERROR: No external storage found."</string>
     <string name="err_mesg_disk">"Please connect or insert external storage."</string>

@@ -55,15 +55,15 @@ public class DcmListFragment extends ListFragment {
     // The container Activity must implement this interface so the frag can deliver messages
     public interface OnFileSelectedListener {
         /** Called by DcmListFragment when a list item is selected */
-        public void onFileSelected(int position, List<String> dirList, File currDir);
+        public void onFileSelected(int position, ArrayList<String> dirList, File currDir);
         public void onDirectorySelected(File currDir);
     }
 	
 	/** Current directory. */
 	private File 	mCurrDir;
 	private int 	mIsRoot = 1;
-	private List<String> mDirList = new ArrayList<String>();
-	private List<String> mFileList = new ArrayList<String>();
+	private ArrayList<String> mDirList = new ArrayList<String>();
+	private ArrayList<String> mFileList = new ArrayList<String>();
 	
 	/**  Array adapter for the directory listing. */
 	private ArrayAdapter<String> mAdapter;
@@ -120,8 +120,14 @@ public class DcmListFragment extends ListFragment {
 	/** onListItemClick is called when an item in the list is selected. */
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-		
+		setSelection(position);
+        
+        // Set the item as checked to be highlighted when in two-pane layout
+        //getListView().setItemChecked(position, true);
+	}
+	
+	// Allows onListItemClick as well as the DcmBrowser's nav-drawer to set the current selection.
+	public void setSelection(int position) {
 		String itemName = mAdapter.getItem(position);
 		
 		// Account for the potential '..'
@@ -142,11 +148,9 @@ public class DcmListFragment extends ListFragment {
 		// Otherwise, display info about the DICOM file selected.
 		} else {
 	        // Notify the parent activity of selected item
-	        mCallback.onFileSelected(position, mFileList, mCurrDir);
-	        
-	        // Set the item as checked to be highlighted when in two-pane layout
-	        getListView().setItemChecked(position, true);
+	        mCallback.onFileSelected(position, (ArrayList<String>) mFileList.clone(), mCurrDir);
 		}
+		
 	}
 	
 	/** Save the directory for reuse later. */
@@ -173,32 +177,21 @@ public class DcmListFragment extends ListFragment {
 		// If there isn't external storage, do nothing.
 		if (!ExternalIO.checkStorage())
 			return;
-		// If the directory is the external storage directory or there is no parent,
-		// stop showing the Home/Up button.
-		if (mCurrDir.getParent() == null
-				|| mCurrDir.equals(Environment.getExternalStorageDirectory())) {
-			ActionBar actionBar = getActivity().getActionBar();
-	        actionBar.setHomeButtonEnabled(false);
-	        actionBar.setDisplayHomeAsUpEnabled(false);
-		} else {
-			ActionBar actionBar = getActivity().getActionBar();
-	        actionBar.setHomeButtonEnabled(true);
-	        actionBar.setDisplayHomeAsUpEnabled(true);
+		// If this fragment is visible:
+		if (this.isVisible()) {
+			// If the directory is the external storage directory or there is no parent,
+			// stop showing the Home/Up button.
+			if (mCurrDir.getParent() == null
+					|| mCurrDir.equals(Environment.getExternalStorageDirectory())) {
+				ActionBar actionBar = getActivity().getActionBar();
+		        actionBar.setHomeButtonEnabled(false);
+		        actionBar.setDisplayHomeAsUpEnabled(false);
+			} else {
+				ActionBar actionBar = getActivity().getActionBar();
+		        actionBar.setHomeButtonEnabled(true);
+		        actionBar.setDisplayHomeAsUpEnabled(true);
+			}
 		}
-		
-		// TODO: See if there's a more efficient way to do this.
-		/*String[] temp = mCurrDir.list(new SubDirFilter());
-		if (temp == null) {
-			mDirList = new ArrayList<String>();
-		} else {
-			mDirList = new ArrayList<String>(Arrays.asList(temp));
-		}
-		temp = mCurrDir.list(new DcmFileFilter());
-		if (temp == null) {
-			mFileList = new ArrayList<String>();
-		} else {
-			mFileList = Arrays.asList(temp);
-		}*/
 		
 		// Clear the directory and file lists
 		mDirList.clear();

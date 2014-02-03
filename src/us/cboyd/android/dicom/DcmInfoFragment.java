@@ -34,7 +34,7 @@ public class DcmInfoFragment extends Fragment {
     private static String 		mCurrDir 	 = null;
     private static DicomObject 	mDicomObject = null;
     private static int 			mPosition 	 = 0;
-    private static List<String> mFileList 	 = null;
+    private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
     private static TextView mArticle;
 
@@ -57,7 +57,7 @@ public class DcmInfoFragment extends Fragment {
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
             mPosition	= savedInstanceState.getInt(DcmVar.POSITION);
-        	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.DIRLIST);
+        	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.FILELIST);
             mCurrDir 	= savedInstanceState.getString(DcmVar.CURRDIR);
         }
 
@@ -83,8 +83,7 @@ public class DcmInfoFragment extends Fragment {
         if (args != null) {
             // Set article based on argument passed in
             updateDicomInfo(args.getInt(DcmVar.POSITION),
-            		(List<String>) args.getStringArrayList(DcmVar.DIRLIST),
-            		args.getString(DcmVar.CURRDIR));
+            		args.getStringArrayList(DcmVar.FILELIST), args.getString(DcmVar.CURRDIR));
         } else if ((mCurrDir != null) && (mFileList != null) && (mPosition != 0)) {
             // Set article based on saved instance state defined during onCreateView
             updateDicomInfo(mPosition, mFileList, mCurrDir);
@@ -92,6 +91,8 @@ public class DcmInfoFragment extends Fragment {
     }
     
     public String getDicomFile() {
+    	Log.i("cpb", "File DIR: " + mCurrDir);
+    	Log.i("cpb", "File ID: " + mPosition + " FileList count: " + mFileList.size());
     	return mCurrDir + '/' + mFileList.get(mPosition);
     }
     
@@ -99,7 +100,7 @@ public class DcmInfoFragment extends Fragment {
     	return mFileList;
     }
 
-    public void updateDicomInfo(int position, List<String> dirList, String currDir) {
+    public void updateDicomInfo(int position, ArrayList<String> dirList, String currDir) {
     	mPosition 	= position;
     	mFileList 	= dirList;
     	mCurrDir 	= currDir;
@@ -165,7 +166,7 @@ public class DcmInfoFragment extends Fragment {
 
         // Save the current article selection in case we need to recreate the fragment
         outState.putInt(DcmVar.POSITION, mPosition);
-        outState.putStringArrayList(DcmVar.DIRLIST, (ArrayList<String>) mFileList);
-        outState.putString(DcmVar.DIRLIST, mCurrDir);
+        outState.putStringArrayList(DcmVar.FILELIST, mFileList);
+        outState.putString(DcmVar.FILELIST, mCurrDir);
     }
 }

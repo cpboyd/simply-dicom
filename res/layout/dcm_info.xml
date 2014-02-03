@@ -34,8 +34,6 @@
 			android:orientation="horizontal"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_alignParentLeft="true"
-			android:layout_alignParentBottom="true"
 			android:gravity="center_vertical"
 			android:background="#99333333"
 			android:longClickable="true">
@@ -43,7 +41,7 @@
 			<Button android:id="@+id/loadButton"
 				android:layout_width="36dp"
 				android:layout_height="36dp"
-				android:background="@drawable/ic_action_next_item"
+				android:background="@drawable/ic_action_accept"
 				android:onClick="load" />
 			
 		</LinearLayout>

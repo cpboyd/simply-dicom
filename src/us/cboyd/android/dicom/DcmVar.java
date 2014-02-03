@@ -39,6 +39,7 @@ public class DcmVar {
     /** Bundle Key / Intent Extra */
     public final static String 	DIRLIST = "dirlist",
     							CURRDIR = "currdir",
+    							FILELIST = "filelist",
     							POSITION = "position",
     							DCMFILE = "DCMFile";
 	

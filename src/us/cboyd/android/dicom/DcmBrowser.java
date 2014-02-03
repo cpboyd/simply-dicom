@@ -198,16 +198,22 @@ public class DcmBrowser extends FragmentActivity
 	public void onBackPressed() {
 		File temp = mListFragment.getDir();
 		if (!mListFragment.isVisible()) {
+			// Assume we're jumping back to the ListFragment
+			if (ExternalIO.isRoot(temp)) {
+				ActionBar actionBar = getActionBar();
+		        actionBar.setHomeButtonEnabled(false);
+		        actionBar.setDisplayHomeAsUpEnabled(false);
+			}
 			FragmentManager fm = getFragmentManager();
 			if (fm.getBackStackEntryCount() > 0) {
 			    fm.popBackStack();
 			} else {
 				super.onBackPressed();
 			}
+			
 		// If the directory is the external storage directory or there is no parent,
 		// super.onBackPressed(). Else go to parent directory.
-		} else if (temp.getParent() == null
-				|| temp.equals(Environment.getExternalStorageDirectory())) {
+		} else if (ExternalIO.isRoot(temp)) {
 			super.onBackPressed();
 		} else {
 			temp = temp.getParentFile();
@@ -235,18 +241,16 @@ public class DcmBrowser extends FragmentActivity
 	/** navigateUp replicates "Back" functionality for the Home/Up key. */
 	public boolean navigateUp() {
 		File temp = mListFragment.getDir();
-		if (!mListFragment.isVisible()) {
-			// If the directory is the external storage directory or there is no parent,
-			// stop showing the Home/Up button.
-			if (temp.getParent() == null
-					|| temp.equals(Environment.getExternalStorageDirectory())) {
+		if (mListFragment.isVisible()) {
+			if (ExternalIO.isRoot(temp)) {
 				ActionBar actionBar = getActionBar();
 		        actionBar.setHomeButtonEnabled(false);
 		        actionBar.setDisplayHomeAsUpEnabled(false);
+		        return false;
+			} else {
+				temp = temp.getParentFile();
+				mListFragment.setDir(temp);
 			}
-		} else {
-			temp = temp.getParentFile();
-			mListFragment.setDir(temp);
 		}
 		onDirectorySelected(temp);
 		return true;
@@ -292,10 +296,15 @@ public class DcmBrowser extends FragmentActivity
 	
 	public void onDirectorySelected(File currDir) {
 		mDrawerTitle = getFolderTitle(currDir);
-        setTitle(mDrawerTitle);
+		getActionBar().setTitle(mDrawerTitle);
+		
+		if (!mListFragment.isVisible()) {
+			// set up the drawer's list view with items and click listener
+			mDrawerList.setAdapter(mListFragment.getListAdapter());
+		}
     }
 	
-    public void onFileSelected(int position, List<String> fileList, File currDir) {
+    public void onFileSelected(int position, ArrayList<String> fileList, File currDir) {
         // The user selected a DICOM file from the DcmListFragment
     	position -= 1;
     	if ((position < 0) || (position > fileList.size())) {
@@ -325,7 +334,7 @@ public class DcmBrowser extends FragmentActivity
             mInfoFragment = new DcmInfoFragment();
             Bundle args = new Bundle();
             args.putInt(DcmVar.POSITION, position);
-            args.putStringArrayList(DcmVar.DIRLIST, (ArrayList<String>) fileList);
+            args.putStringArrayList(DcmVar.FILELIST, fileList);
             args.putString(DcmVar.CURRDIR, currDir.getPath());
             mInfoFragment.setArguments(args);
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -334,7 +343,8 @@ public class DcmBrowser extends FragmentActivity
             // and add the transaction to the back stack so the user can navigate back
             transaction.replace(R.id.fragment_container, mInfoFragment);
             transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            transaction.addToBackStack(null);
+            if (mListFragment.isVisible())
+            	transaction.addToBackStack(null);
 
             // Commit the transaction
             transaction.commit();
@@ -350,7 +360,7 @@ public class DcmBrowser extends FragmentActivity
 		// Open the DICOM Viewer
 		Intent intent = new Intent(this, DcmViewer.class);
 		intent.putExtra(DcmVar.DCMFILE, mInfoFragment.getDicomFile());
-		intent.putExtra(DcmVar.DIRLIST, (ArrayList<String>) mInfoFragment.getFileList());
+		intent.putExtra(DcmVar.FILELIST, (ArrayList<String>) mInfoFragment.getFileList());
 		startActivity(intent);
 	}
 	
@@ -364,28 +374,12 @@ public class DcmBrowser extends FragmentActivity
         return super.onPrepareOptionsMenu(menu);
     }
     
-	/* The click listner for ListView in the navigation drawer */
+	/* The click listener for ListView in the navigation drawer */
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            selectItem(position);
+            mListFragment.setSelection(position);
         }
-    }
-
-    private void selectItem(int position) {
-        /*// update the main content by replacing fragments
-        Fragment fragment = new PlanetFragment();
-        Bundle args = new Bundle();
-        args.putInt(PlanetFragment.ARG_PLANET_NUMBER, position);
-        fragment.setArguments(args);
-
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
-
-        // update selected item and title, then close the drawer
-        mDrawerList.setItemChecked(position, true);
-        setTitle(mPlanetTitles[position]);
-        mDrawerLayout.closeDrawer(mDrawerList);*/
     }
 
     @Override

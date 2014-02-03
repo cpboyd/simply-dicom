@@ -23,6 +23,8 @@
 
 package us.cboyd.android.shared;
 
+import java.io.File;
+
 import android.os.Environment;
 
 public class ExternalIO {
@@ -49,6 +51,10 @@ public class ExternalIO {
 		}
 		
 		return mExternalStorageAvailable;
+	}
+	
+	public static boolean isRoot(File directory) {
+		return (directory.getParent() == null || directory.equals(Environment.getExternalStorageDirectory()));
 	}
 	
 	
