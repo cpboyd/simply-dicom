@@ -69,6 +69,7 @@ public class DcmBrowser extends FragmentActivity
 	
 	// Drawer stuff
 	private boolean 		mDrawerOpen = false;
+	private boolean 		mFragmented = false;
     private DrawerLayout 	mDrawerLayout;
     private ListView 		mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -92,6 +93,7 @@ public class DcmBrowser extends FragmentActivity
         // Check whether the activity is using the layout version with
         // the fragment_container FrameLayout. If so, we must add the first fragment
         if (findViewById(R.id.fragment_container) != null) {
+        	mFragmented = true;
             // However, if we're being restored from a previous state,
             // then we don't need to do anything and should return or else
             // we could end up with overlapping fragments.
@@ -369,7 +371,8 @@ public class DcmBrowser extends FragmentActivity
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         // If the nav drawer is open, hide action items related to the content view
-        mDrawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        if (mFragmented)
+        	mDrawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
         //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
         return super.onPrepareOptionsMenu(menu);
     }
@@ -397,13 +400,15 @@ public class DcmBrowser extends FragmentActivity
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
+        if (mFragmented)
+        	mDrawerToggle.syncState();
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Pass any configuration change to the drawer toggls
-        mDrawerToggle.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggles
+        if (mFragmented)
+        	mDrawerToggle.onConfigurationChanged(newConfig);
     }
 }

@@ -41,7 +41,9 @@ public class DcmInfoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, 
         Bundle savedInstanceState) {
-    	if (container == null) {
+    	Log.i("cpb","DcmInfoFrag: creation");
+    	///Causes issue with landscape view
+    	/*if (container == null) {
             // We have different layouts, and in one of them this
             // fragment's containing frame doesn't exist.  The fragment
             // may still be created from its saved state, but there is
@@ -49,26 +51,32 @@ public class DcmInfoFragment extends Fragment {
             // won't be displayed.  Note this is not needed -- we could
             // just run the code below, where we would create and return
             // the view hierarchy; it would just never be used.
+
+        	Log.i("cpb","DcmInfoFrag: null");
             return null;
-        }
+        }*/
 
         // If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
+        	Log.i("cpb","DcmInfoFrag: savedInstance");
             mPosition	= savedInstanceState.getInt(DcmVar.POSITION);
         	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.FILELIST);
             mCurrDir 	= savedInstanceState.getString(DcmVar.CURRDIR);
         }
 
+    	Log.i("cpb","DcmInfoFrag: view");
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.dcm_info, container, false);
 
+    	Log.i("cpb","DcmInfoFrag: buttons");
         mLoadButton = (Button) view.findViewById(R.id.loadButton);
         mLoadButton.setEnabled(false);
         mArticle 	= (TextView) view.findViewById(R.id.article);
         mArticle.setText("Test");
-        
+
+    	Log.i("cpb","DcmInfoFrag: return");
         return view;
     }
 
