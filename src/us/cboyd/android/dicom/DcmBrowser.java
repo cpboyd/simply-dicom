@@ -25,7 +25,6 @@ package us.cboyd.android.dicom;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -49,6 +48,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -261,11 +261,11 @@ public class DcmBrowser extends FragmentActivity
 	/** onCreateOptionsMenu generates an options menu on the action bar */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		
-		menu.add(0, DcmVar.ABOUT, 1, "About");
-		
-		return true;
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.dcmlist, menu);
+	    // Need to manually add icons to the Options menu above API v11
+	    //menu.getItem(R.id.about).setIcon(R.drawable.ic_action_about);
+	    return true;
 	}
 
 	/** onMenuItemSelected handles if something from the options menu is selected */
@@ -274,11 +274,11 @@ public class DcmBrowser extends FragmentActivity
 		
 		switch (item.getItemId()) {
 			
-		case DcmVar.ABOUT:
+		case R.id.about:
 			Dialog dialog = new Dialog(this);
-       	dialog.setContentView(R.layout.dialog_about);
-       	dialog.setTitle(getResources().getString(R.string.app_name));
-       	dialog.show();
+			dialog.setContentView(R.layout.dialog_about);
+       		dialog.setTitle(getResources().getString(R.string.app_name));
+       		dialog.show();
 			return true;
 		
 		default:

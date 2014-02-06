@@ -39,9 +39,10 @@
 			android:longClickable="true">
 				
 			<Button android:id="@+id/loadButton"
-				android:layout_width="36dp"
-				android:layout_height="36dp"
-				android:background="@drawable/ic_action_accept"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:drawableLeft="@drawable/button_accept"
+				android:text="@string/menu_load"
 				android:onClick="load" />
 			
 		</LinearLayout>
