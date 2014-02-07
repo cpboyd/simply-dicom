@@ -60,30 +60,71 @@
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
     
-    <!-- DICOM Info Tags -->
+    <!-- Abbreviations -->
+    <string name="abbr_dicom">Digital Imaging and Communications in Medicine</string>
+    <string name="abbr_nema">National Electrical Manufacturers Association</string>
+    <string name="abbr_vr">Value Representation</string>
+    <string name="abbr_vm">Value Multiplicity</string>
+    <!-- Value Representations -->
+    <string name="vr_ae">Application Entity</string>
+    <string name="vr_as">Age String</string>
+    <string name="vr_at">Attribute Tag</string>
+    <string name="vr_da">Date</string>
+    <string name="vr_ds">Decimal String</string>
+    <string name="vr_dt">Date/Time</string>
+    <string name="vr_fl">Floating Point Single (4 bytes)</string>
+    <string name="vr_fd">Floating Point Double (8 bytes)</string>
+    <string name="vr_is">Integer String</string>
+    <string name="vr_lt">Long Text</string>
+    <string name="vr_ob">Other Byte</string>
+    <string name="vr_of">Other Float</string>
+    <string name="vr_ow">Other Word</string>
+    <string name="vr_pn">Person Name</string>
+    <string name="vr_sh">Short String</string>
+    <string name="vr_sl">Signed Long</string>
+    <string name="vr_sq">Sequence of Items</string>
+    <string name="vr_ss">Signed Short</string>
+    <string name="vr_st">Short Text</string>
+    <string name="vr_tm">Time</string>
+    <string name="vr_ui">Unique Identifier</string>
+    <string name="vr_ul">Unsigned Long</string>
+    <string name="vr_un">Unknown</string>
+    <string name="vr_us">Unsigned Short</string>
+    <string name="vr_ut">Unlimited Text</string>
+    <!-- Patient Position -->
+    <string name="pos_hfp">Head First-Prone</string>
+    <string name="pos_hfs">Head First-Supine</string>
+    <string name="pos_hfdr">Head First-Decubitus Right</string>
+    <string name="pos_hfdl">Head First-Decubitus Left</string>
+    <string name="pos_ffdr">Feet First-Decubitus Right</string>
+    <string name="pos_ffdl">Feet First-Decubitus Left</string>
+    <string name="pos_ffp">Feet First-Prone</string>
+    <string name="pos_ffs">Feet First-Supine</string>
+    
+    <!-- DICOM Info Tags: tag;VR;name;VM -->
     <!-- SOP Common -->
-    <string name="dcm_00080016">(0008, 0016) SOP Class UID VR:UI VM:1</string>
-    <string name="dcm_00080018">(0008, 0018) SOP Instance UID VR:UI VM:1</string>
+    <string name="dcm_00080016">(0008,0016);UI;SOP Class UID;VM:1</string>
+    <string name="dcm_00080018">(0008,0018);UI;SOP Instance UID;VM:1</string>
     <!-- Patient -->
-    <string name="dcm_00100010">(0010, 0010) Patient\'s Name VR:PN VM:1</string>
-    <string name="dcm_00100020">(0010, 0020) Patient ID VR:LO VM:1</string>
-    <string name="dcm_00100030">(0010, 0030) Patient\'s Birth Date VR:DA VM:1</string>
-    <string name="dcm_00100040">(0010, 0040) Patient\'s Sex VR:CS VM:1</string>
+    <string name="dcm_00100010">(0010,0010);PN;Patient\'s Name;VM:1</string>
+    <string name="dcm_00100020">(0010,0020);LO;Patient ID;VM:1</string>
+    <string name="dcm_00100030">(0010,0030);DA;Patient\'s Birth Date;VM:1</string>
+    <string name="dcm_00100040">(0010,0040);CS;Patient\'s Sex;VM:1</string>
     <!-- Study -->
-    <string name="dcm_0020000D">(0020, 000D) Study Instance UID VR:UI VM:1</string>
-    <string name="dcm_00080020">(0008, 0020) Study Date VR:DA VM:1</string>
-    <string name="dcm_00080030">(0008, 0030) Study Time VR:TM VM:1</string>
-    <string name="dcm_00200010">(0020, 0010) Study ID VR:SH VM:1</string>
-    <string name="dcm_00080090">(0008, 0090) Referring Physician\'s Name VR:PN VM:1</string>
-    <string name="dcm_00080050">(0008, 0050) Accession Number VR:SH VM:1</string>
+    <string name="dcm_0020000D">(0020,000D);UI;Study Instance UID;VM:1</string>
+    <string name="dcm_00080020">(0008,0020);DA;Study Date;VM:1</string>
+    <string name="dcm_00080030">(0008,0030);TM;Study Time;VM:1</string>
+    <string name="dcm_00200010">(0020,0010);SH;Study ID;VM:1</string>
+    <string name="dcm_00080090">(0008,0090);PN;Referring Physician\'s Name;VM:1</string>
+    <string name="dcm_00080050">(0008,0050);SH;Accession Number;VM:1</string>
     <!-- Series -->
-    <string name="dcm_0020000E">(0020, 000E) Series Instance UID VR:UI VM:1</string>
-    <string name="dcm_00080021">(0008, 0021) Series Date VR:DA VM:1</string>
-    <string name="dcm_00080031">(0008, 0031) Series Time VR:TM VM:1</string>
-    <string name="dcm_00200011">(0020, 0011) Series Number VR:IS VM:1</string>
+    <string name="dcm_0020000E">(0020,000E);UI;Series Instance UID;VM:1</string>
+    <string name="dcm_00080021">(0008,0021);DA;Series Date;VM:1</string>
+    <string name="dcm_00080031">(0008,0031);TM;Series Time;VM:1</string>
+    <string name="dcm_00200011">(0020,0011);IS;Series Number;VM:1</string>
     <!-- Equipment -->
-    <string name="dcm_00080070">(0008, 0070) Manufacturer VR:LO VM:1</string>
-    <string name="dcm_00080080">(0008, 0080) Institution Name VR:LO VM:1</string>
+    <string name="dcm_00080070">(0008,0070);LO;Manufacturer;VM:1</string>
+    <string name="dcm_00080080">(0008,0080);LO;Institution Name;VM:1</string>
     
     
     <!-- Error Messages (Displayed to User) -->

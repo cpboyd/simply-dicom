@@ -262,7 +262,7 @@ public class DcmBrowser extends FragmentActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.dcmlist, menu);
+	    inflater.inflate(R.menu.dcm_main, menu);
 	    // Need to manually add icons to the Options menu above API v11
 	    //menu.getItem(R.id.about).setIcon(R.drawable.ic_action_about);
 	    return true;
