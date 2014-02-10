@@ -65,6 +65,7 @@
     <string name="abbr_nema">National Electrical Manufacturers Association</string>
     <string name="abbr_vr">Value Representation</string>
     <string name="abbr_vm">Value Multiplicity</string>
+    
     <!-- Value Representations -->
     <string name="vr_ae">Application Entity</string>
     <string name="vr_as">Age String</string>
@@ -91,6 +92,7 @@
     <string name="vr_un">Unknown</string>
     <string name="vr_us">Unsigned Short</string>
     <string name="vr_ut">Unlimited Text</string>
+    
     <!-- Patient Position -->
     <string name="pos_hfp">Head First-Prone</string>
     <string name="pos_hfs">Head First-Supine</string>
@@ -100,6 +102,83 @@
     <string name="pos_ffdl">Feet First-Decubitus Left</string>
     <string name="pos_ffp">Feet First-Prone</string>
     <string name="pos_ffs">Feet First-Supine</string>
+    
+    <!-- Modality -->
+    <string name="mod_ar">Autorefraction</string>
+    <string name="mod_au">Audio</string>
+    <string name="mod_bi">Biomagnetic Imaging</string>
+    <string name="mod_bdus">Bone Densitometry (ultrasound)</string>
+    <string name="mod_bms">Bone Densitometry (X-Ray)</string>
+    <string name="mod_cr">Computed Radiography</string>
+    <string name="mod_ct">Computed Tomography</string>
+    <string name="mod_dg">Diaphanography</string>
+    <string name="mod_doc">Document</string>
+    <string name="mod_dx">Digital Radiography</string>
+    <string name="mod_ecg">Electrocardiography</string>
+    <string name="mod_es">Endoscopy</string>
+    <string name="mod_eps">Cardiac Electrophysiology</string>
+    <string name="mod_fid">Fiducials</string>
+    <string name="mod_gm">General Microscopy</string>
+    <string name="mod_hc">Hard Copy</string>
+    <string name="mod_hd">Hemodynamic Waveform</string>
+    <string name="mod_io">Intra-oral Radiography</string>
+    <string name="mod_iol">Intraocular Lens Data</string>
+    <string name="mod_ivoct">Intravascular Optical Coherence Tomography</string>
+    <string name="mod_ivus">Intravascular Ultrasound</string>
+    <string name="mod_ker">Keratometry</string>
+    <string name="mod_ko">Key Object Selection</string>
+    <string name="mod_ls">Laser Surface Scan</string>
+    <string name="mod_len">Lensometry</string>
+    <string name="mod_mg">Mammography</string>
+    <string name="mod_mr">Magnetic Resonance</string>
+    <string name="mod_nm">Nuclear Medicine</string>
+    <string name="mod_oct">Optical Coherence Tomography (non-Ophthalmic)</string>
+    <string name="mod_op">Ophthalmic Photography</string>
+    <string name="mod_opm">Ophthalmic Mapping</string>
+    <string name="mod_opt">Ophthalmic Tomography</string>
+    <string name="mod_opv">Ophthalmic Visual Field</string>
+    <string name="mod_ot">Other</string>
+    <string name="mod_plan">Plan</string>
+    <string name="mod_pr">Presentation State</string>
+    <string name="mod_pt">Positron Emission Tomography (PET)</string>
+    <string name="mod_px">Panoramic X-Ray</string>
+    <string name="mod_reg">Registration</string>
+    <string name="mod_resp">Respiratory Waveform</string>
+    <string name="mod_rf">Radio Fluoroscopy</string>
+    <string name="mod_rg">Radiographic Imaging (conventional film/screen)</string>
+    <string name="mod_rtdose">Radiotherapy Dose</string>
+    <string name="mod_rtimage">Radiotherapy Image</string>
+    <string name="mod_rtplan">Radiotherapy Plan</string>
+    <string name="mod_rtrecord">RT Treatment Record</string>
+    <string name="mod_rtstruct">Radiotherapy Structure Set</string>
+    <string name="mod_seg">Segmentation</string>
+    <string name="mod_sm">Slide Microscopy</string>
+    <string name="mod_smr">Stereometric Relationship</string>
+    <string name="mod_sr">SR Document</string>
+    <string name="mod_srf">Subjective Refraction</string>
+    <string name="mod_us">Ultrasound</string>
+    <string name="mod_va">Visual Acuity</string>
+    <string name="mod_xa">X-Ray Angiography</string>
+    <string name="mod_xc">External-camera Photography</string>
+    <!-- Retired -->
+    <string name="mod_as">Angioscopy</string>
+    <string name="mod_cd">Color Flow Doppler</string>
+    <string name="mod_cf">Cinefluorography</string>
+    <string name="mod_cp">Culposcopy</string>
+    <string name="mod_cs">Cystoscopy</string>
+    <string name="mod_dd">Duplex Doppler</string>
+    <string name="mod_df">Digital Fluoroscopy</string>
+    <string name="mod_dm">Digital Microscopy</string>
+    <string name="mod_ds">Digital Subtraction Angiography</string>
+    <string name="mod_ec">Echocardiography</string>
+    <string name="mod_fa">Fluorescein Angiography</string>
+    <string name="mod_fs">Fundoscopy</string>
+    <string name="mod_lp">Laparoscopy</string>
+    <string name="mod_ma">Magnetic Resonance Angiography</string>
+    <string name="mod_ms">Magnetic Resonance Spectroscopy</string>
+    <string name="mod_st">Single-Photon Emission Computed Tomography (SPECT)</string>
+    <string name="mod_vf">Videofluorography</string>
+    <string name="mod_vf">Ophthalmic Refraction</string>
     
     <!-- DICOM Info Tags: tag;VR;name;VM -->
     <!-- SOP Common -->
