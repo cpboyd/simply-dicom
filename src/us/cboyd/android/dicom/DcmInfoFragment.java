@@ -11,6 +11,8 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomInputStream;
 
+import us.cboyd.android.shared.Internals;
+
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
@@ -20,7 +22,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
@@ -37,6 +41,10 @@ public class DcmInfoFragment extends Fragment {
     private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
     private static TextView mArticle;
+	
+	/**  Array adapter for the tag listing. */
+	private ArrayList<String> mTags = new ArrayList<String>();
+	private ArrayAdapter<String> mAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, 
@@ -140,6 +148,23 @@ public class DcmInfoFragment extends Fragment {
 				} else {
 					mLoadButton.setEnabled(true);
 				}
+				
+				// Create an array adapter for the list view, using the files array
+		        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.file_list_item_2, android.R.id.text1, mTags) {
+		        	  @Override
+		        	  public View getView(int position, View convertView, ViewGroup parent) {
+		        	    View view = super.getView(position, convertView, parent);
+		        	    ImageView icon = (ImageView) view.findViewById(R.id.icon);
+		        	    TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+		        	    TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+		        	    
+		        	    text1.setText(Internals.getString("dcm_" + mTags.get(position), view));
+		        	    text2.setText(mDicomObject.getString(Integer.parseInt(mTags.get(position))));
+		        	  }
+		        	};
+				//mAdapter = new ArrayAdapter<String>(getActivity(), layout, mDirList);
+				setListAdapter(mAdapter);
+				
 			} catch (Exception ex) {
 	            Resources res = getResources();
 				AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
