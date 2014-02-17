@@ -181,6 +181,7 @@
     <string name="mod_vf">Ophthalmic Refraction</string>
     
     <!-- DICOM Info Tags: tag;VR;name;VM -->
+    <string name="dcm_unknown">(????,????);??;UNKNOWN;VM:?</string>
     <!-- SOP Common -->
     <string name="dcm_00080016">(0008,0016);UI;SOP Class UID;VM:1</string>
     <string name="dcm_00080018">(0008,0018);UI;SOP Instance UID;VM:1</string>
@@ -217,4 +218,26 @@
     <!-- Internal Log Messages -->
     <string name="tag_ocv">OCVSample::DICOM::Activity</string>
     <string name="ocv_load">OpenCV loaded successfully.</string>
+    
+    <!-- DICOM Info Tags -->
+    <string-array name="dcmtag_default">
+        <item>00080016</item>
+	    <item>00080018</item>
+	    <item>00100010</item>
+	    <item>00100020</item>
+	    <item>00100030</item>
+	    <item>00100040</item>
+	    <item>0020000D</item>
+	    <item>00080020</item>
+	    <item>00080030</item>
+	    <item>00200010</item>
+	    <item>00080090</item>
+	    <item>00080050</item>
+	    <item>0020000E</item>
+	    <item>00080021</item>
+	    <item>00080031</item>
+	    <item>00200011</item>
+	    <item>00080070</item>
+	    <item>00080080</item>
+    </string-array>
 </resources>

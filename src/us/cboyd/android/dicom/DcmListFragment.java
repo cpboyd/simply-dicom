@@ -239,7 +239,6 @@ public class DcmListFragment extends ListFragment {
 			mIsRoot = 1;
 		}
 		
-		
         // Create an array adapter for the list view, using the files array
         mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.file_list_item_2, android.R.id.text1, mDirList) {
         	  @Override
