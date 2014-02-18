@@ -41,6 +41,7 @@ public class DcmInfoFragment extends Fragment {
     private static Button 	mLoadButton;
     private static TextView mArticle;
     private static ListView mTagList;
+    private static Resources mRes;
 	
 	/**  Array adapter for the tag listing. */
 	//private ArrayList<String> mTags = new ArrayList<String>();
@@ -80,11 +81,11 @@ public class DcmInfoFragment extends Fragment {
         View view = inflater.inflate(R.layout.dcm_info, container, false);
 
     	Log.i("cpb","DcmInfoFrag: buttons");
-        mLoadButton = (Button) view.findViewById(R.id.loadButton);
+        mLoadButton = (Button) view.findViewById(R.id.bttn_load);
         mLoadButton.setEnabled(false);
         mArticle 	= (TextView) view.findViewById(R.id.article);
         mArticle.setText("Test");
-        mTagList 	= (ListView) view.findViewById(R.id.dcmTags);
+        mTagList 	= (ListView) view.findViewById(R.id.list_tags);
 
     	Log.i("cpb","DcmInfoFrag: return");
         return view;
@@ -132,8 +133,8 @@ public class DcmInfoFragment extends Fragment {
 	    	try {
 				// Read in the DicomObject
 				DicomInputStream dis = new DicomInputStream(new FileInputStream(getDicomFile()));
-				//dicomObject = dis.readDicomObject();
-				mDicomObject = dis.readFileMetaInformation();
+				//mDicomObject = dis.readFileMetaInformation();
+				mDicomObject = dis.readDicomObject();
 				dis.close();
 				
 				// Get the SOP Class element
@@ -152,20 +153,34 @@ public class DcmInfoFragment extends Fragment {
 				}
 				
 				// TODO: Add selector for info tag listing
-				mTags = getResources().getStringArray(R.array.dcmtag_default);
-				
+				mRes  = getResources();
+				mTags = mRes.getStringArray(R.array.dcmtag_default);
+				Log.i("cpb", "List test: " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
 				// Create an array adapter for the list view, using the files array
-		        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.file_list_item_2, android.R.id.text1, mTags) {
+		        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.tag_list_item_2, android.R.id.text1, mTags) {
 	        	  	@Override
 	        	  	public View getView(int position, View convertView, ViewGroup parent) {
+	        	  		Log.i("cpb","List: 1 : " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
 						View view = super.getView(position, convertView, parent);
-						//ImageView icon = (ImageView) view.findViewById(R.id.icon);
+						TextView tag1 = (TextView) view.findViewById(R.id.tag1);
+						TextView tag2 = (TextView) view.findViewById(R.id.tag2);
+						TextView tag3 = (TextView) view.findViewById(R.id.tag3);
 						TextView text1 = (TextView) view.findViewById(android.R.id.text1);
 						TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 						//int tag = Tag.toTag(mTags.get(position));
+						
 						int tag = Tag.toTag(mTags[position]);
-						text1.setText(DcmRes.getTag(tag, view));
-						text2.setText(mDicomObject.getString(tag));
+						tag1.setText("(" + mTags[position].subSequence(0, 4) + ",");
+						tag2.setText(" " + mTags[position].subSequence(4, 8) + ")");
+
+	        	  		Log.i("cpb","List: 2");
+						String temp = DcmRes.getTag(tag, mRes);
+						String[] temp2 = temp.split(";");
+						tag3.setText("VR: " + temp2[0]);
+						text1.setText(temp2[1]);
+						temp = mDicomObject.getString(tag);
+						text2.setText(temp);
+	        	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
 						return view;
 	        	  	}
 	        	};

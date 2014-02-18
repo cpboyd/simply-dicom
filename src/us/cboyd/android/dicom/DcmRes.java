@@ -1,5 +1,6 @@
 package us.cboyd.android.dicom;
 
+import android.content.res.Resources;
 import android.view.View;
 
 public class DcmRes {
@@ -49,7 +50,7 @@ public class DcmRes {
 		}
 	}
 	
-	public static String getTag(int tag, View view) {
-	    return view.getResources().getString(getTagId(tag));
+	public static String getTag(int tag, Resources res) {
+	    return res.getString(getTagId(tag));
 	}
 }

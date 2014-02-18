@@ -29,10 +29,37 @@
     android:minHeight="?android:attr/listPreferredItemHeight"
 >
 
-    <ImageView android:id="@+id/icon"
-        android:layout_gravity="center_vertical"
-        android:layout_width="36dip"
-        android:layout_height="36dip"/>
+    <LinearLayout
+	    android:layout_width="wrap_content"
+	    android:layout_height="match_parent"
+	    android:orientation="vertical"
+	    android:background="?android:attr/activatedBackgroundIndicator"
+	    android:minHeight="?android:attr/listPreferredItemHeight"
+	>
+        <TextView android:id="@+id/tag1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"
+	        android:layout_marginTop="6dip"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	    />
+	
+	    <TextView android:id="@+id/tag2"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"
+	        android:layout_alignStart="@id/tag1"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	    />
+	
+	    <TextView android:id="@+id/tag3"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"
+	        android:layout_gravity="bottom|right"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	    />
+	</LinearLayout>
     
 	<TwoLineListItem
 	    android:paddingTop="2dip"

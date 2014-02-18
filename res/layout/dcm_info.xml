@@ -30,37 +30,38 @@
 	    android:layout_height="wrap_content"
 	    android:padding="16dp"
 	    android:textSize="18sp" />
-	<FrameLayout
-	   	android:layout_width="match_parent" 
-        android:layout_height="wrap_content">
-		<ImageView android:id="@+id/demoImage"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:scaleType="matrix" />
-	</FrameLayout>
+	
+	<LinearLayout android:id="@+id/fileSelection"
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical"
+		android:background="#99333333"
+		android:longClickable="true">
+			
+		<Button android:id="@+id/bttn_load"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:drawableLeft="@drawable/button_accept"
+			android:text="@string/menu_load"
+			android:onClick="load" />
+		
+		<FrameLayout
+		   	android:layout_width="wrap_content" 
+	        android:layout_height="wrap_content">
+			<ImageView android:id="@+id/demoImage"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:scaleType="matrix" />
+		</FrameLayout>
+			
+	</LinearLayout>
 	
     <ListView
-        android:id="@+id/dcmTags"
+        android:id="@+id/list_tags"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
         android:background="#111"/>
-	
-	<LinearLayout android:id="@+id/fileSelection"
-			android:orientation="horizontal"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:gravity="center_vertical"
-			android:background="#99333333"
-			android:longClickable="true">
-				
-			<Button android:id="@+id/loadButton"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:drawableLeft="@drawable/button_accept"
-				android:text="@string/menu_load"
-				android:onClick="load" />
-			
-		</LinearLayout>
 </LinearLayout>

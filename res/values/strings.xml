@@ -181,30 +181,30 @@
     <string name="mod_vf">Ophthalmic Refraction</string>
     
     <!-- DICOM Info Tags: tag;VR;name;VM -->
-    <string name="dcm_unknown">(????,????);??;UNKNOWN;VM:?</string>
+    <string name="dcm_unknown">UN;UNKNOWN;VM:?</string>
     <!-- SOP Common -->
-    <string name="dcm_00080016">(0008,0016);UI;SOP Class UID;VM:1</string>
-    <string name="dcm_00080018">(0008,0018);UI;SOP Instance UID;VM:1</string>
+    <string name="dcm_00080016">UI;SOP Class UID;VM:1</string>
+    <string name="dcm_00080018">UI;SOP Instance UID;VM:1</string>
     <!-- Patient -->
-    <string name="dcm_00100010">(0010,0010);PN;Patient\'s Name;VM:1</string>
-    <string name="dcm_00100020">(0010,0020);LO;Patient ID;VM:1</string>
-    <string name="dcm_00100030">(0010,0030);DA;Patient\'s Birth Date;VM:1</string>
-    <string name="dcm_00100040">(0010,0040);CS;Patient\'s Sex;VM:1</string>
+    <string name="dcm_00100010">PN;Patient\'s Name;VM:1</string>
+    <string name="dcm_00100020">LO;Patient ID;VM:1</string>
+    <string name="dcm_00100030">DA;Patient\'s Birth Date;VM:1</string>
+    <string name="dcm_00100040">CS;Patient\'s Sex;VM:1</string>
     <!-- Study -->
-    <string name="dcm_0020000D">(0020,000D);UI;Study Instance UID;VM:1</string>
-    <string name="dcm_00080020">(0008,0020);DA;Study Date;VM:1</string>
-    <string name="dcm_00080030">(0008,0030);TM;Study Time;VM:1</string>
-    <string name="dcm_00200010">(0020,0010);SH;Study ID;VM:1</string>
-    <string name="dcm_00080090">(0008,0090);PN;Referring Physician\'s Name;VM:1</string>
-    <string name="dcm_00080050">(0008,0050);SH;Accession Number;VM:1</string>
+    <string name="dcm_0020000D">UI;Study Instance UID;VM:1</string>
+    <string name="dcm_00080020">DA;Study Date;VM:1</string>
+    <string name="dcm_00080030">TM;Study Time;VM:1</string>
+    <string name="dcm_00200010">SH;Study ID;VM:1</string>
+    <string name="dcm_00080090">PN;Referring Physician\'s Name;VM:1</string>
+    <string name="dcm_00080050">SH;Accession Number;VM:1</string>
     <!-- Series -->
-    <string name="dcm_0020000E">(0020,000E);UI;Series Instance UID;VM:1</string>
-    <string name="dcm_00080021">(0008,0021);DA;Series Date;VM:1</string>
-    <string name="dcm_00080031">(0008,0031);TM;Series Time;VM:1</string>
-    <string name="dcm_00200011">(0020,0011);IS;Series Number;VM:1</string>
+    <string name="dcm_0020000E">UI;Series Instance UID;VM:1</string>
+    <string name="dcm_00080021">DA;Series Date;VM:1</string>
+    <string name="dcm_00080031">TM;Series Time;VM:1</string>
+    <string name="dcm_00200011">IS;Series Number;VM:1</string>
     <!-- Equipment -->
-    <string name="dcm_00080070">(0008,0070);LO;Manufacturer;VM:1</string>
-    <string name="dcm_00080080">(0008,0080);LO;Institution Name;VM:1</string>
+    <string name="dcm_00080070">LO;Manufacturer;VM:1</string>
+    <string name="dcm_00080080">LO;Institution Name;VM:1</string>
     
     
     <!-- Error Messages (Displayed to User) -->
