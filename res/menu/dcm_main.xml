@@ -4,7 +4,17 @@
           android:icon="@drawable/ic_new_game"
           android:title="@string/new_game"
           android:showAsAction="ifRoom"/> -->
-    <item android:id="@+id/about"
+    <item
+     android:id="@+id/show_hidden" 
+     android:title="@string/menu_hidden" 
+     android:checkable="true" />
+    
+    <item
+     android:id="@+id/show_info" 
+     android:title="@string/menu_taginfo" 
+     android:checkable="true" />
+    
+    <item android:id="@+id/app_about"
           android:icon="@drawable/ic_action_about"
           android:title="@string/menu_about"
           android:showAsAction="ifRoom" />

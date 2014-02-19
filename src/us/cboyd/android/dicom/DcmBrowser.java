@@ -274,11 +274,20 @@ public class DcmBrowser extends FragmentActivity
 		
 		switch (item.getItemId()) {
 			
-		case R.id.about:
+		case R.id.app_about:
 			Dialog dialog = new Dialog(this);
 			dialog.setContentView(R.layout.dialog_about);
        		dialog.setTitle(getResources().getString(R.string.app_name));
        		dialog.show();
+			return true;
+			
+		case R.id.show_hidden:
+			item.setChecked(!item.isChecked());
+			mListFragment.setHidden(item.isChecked());
+			return true;
+			
+		case R.id.show_info:
+			item.setChecked(!item.isChecked());
 			return true;
 		
 		default:

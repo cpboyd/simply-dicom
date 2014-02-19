@@ -61,7 +61,8 @@ public class DcmListFragment extends ListFragment {
 	
 	/** Current directory. */
 	private File 	mCurrDir;
-	private int 	mIsRoot = 1;
+	private boolean mShowHidden = false;
+	private int 	mIsRoot 	= 1;
 	private ArrayList<String> mDirList = new ArrayList<String>();
 	private ArrayList<String> mFileList = new ArrayList<String>();
 	
@@ -199,6 +200,7 @@ public class DcmListFragment extends ListFragment {
 
 		// Loop on all non-hidden files
 		for (File path : mCurrDir.listFiles(new NotHidFilter())) {
+			if (!path.isHidden() || mShowHidden)
 			// If it's a directory, add it to mDirList.
 			if (path.isDirectory()) {
 				mDirList.add(path.getName());
@@ -268,5 +270,11 @@ public class DcmListFragment extends ListFragment {
 		//mAdapter = new ArrayAdapter<String>(getActivity(), layout, mDirList);
 		setListAdapter(mAdapter);
 	}
+	
+	public void setHidden(boolean show) {
+		mShowHidden = show;
+		setDir();
+	}
+	
 
 }
