@@ -42,6 +42,7 @@ public class DcmInfoFragment extends Fragment {
     private static TextView mArticle;
     private static ListView mTagList;
     private static Resources mRes;
+    private static boolean 	mTagInfo = false;
 	
 	/**  Array adapter for the tag listing. */
 	//private ArrayList<String> mTags = new ArrayList<String>();
@@ -165,6 +166,7 @@ public class DcmInfoFragment extends Fragment {
 						TextView tag1 = (TextView) view.findViewById(R.id.tag1);
 						TextView tag2 = (TextView) view.findViewById(R.id.tag2);
 						TextView tag3 = (TextView) view.findViewById(R.id.tag3);
+						TextView tag4 = (TextView) view.findViewById(R.id.tag4);
 						TextView text1 = (TextView) view.findViewById(android.R.id.text1);
 						TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 						//int tag = Tag.toTag(mTags.get(position));
@@ -176,8 +178,19 @@ public class DcmInfoFragment extends Fragment {
 	        	  		Log.i("cpb","List: 2");
 						String temp = DcmRes.getTag(tag, mRes);
 						String[] temp2 = temp.split(";");
-						tag3.setText("VR: " + temp2[0]);
-						text1.setText(temp2[1]);
+						// Only display VR/VM if the option is selected
+						if (mTagInfo) {
+							// Check to make sure that we have all the necessary info.
+							if (temp2.length > 2) {
+								tag3.setText("VR: " + temp2[1]);
+								tag4.setText("VM: " + temp2[2]);
+							} else {
+								// If not all info was found, display question marks.
+								tag3.setText("VR: ??");
+								tag4.setText("VM: ?");
+							}
+						}
+						text1.setText(temp2[0]);
 						temp = mDicomObject.getString(tag);
 						text2.setText(temp);
 	        	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);

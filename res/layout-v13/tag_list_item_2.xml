@@ -21,6 +21,10 @@
  * THE SOFTWARE.
  -->
 
+<!-- android:textAppearance="?android:attr/textAppearanceListItem" -->
+<!-- android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"  -->
+<!-- android:layout_marginEnd="?android:attr/listPreferredItemPaddingEnd" -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -32,6 +36,8 @@
     <LinearLayout
 	    android:layout_width="wrap_content"
 	    android:layout_height="match_parent"
+	    android:layout_gravity="left"
+	    android:gravity="center_vertical|left"
 	    android:orientation="vertical"
 	    android:background="?android:attr/activatedBackgroundIndicator"
 	    android:minHeight="?android:attr/listPreferredItemHeight"
@@ -39,6 +45,7 @@
         <TextView android:id="@+id/tag1"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
+	        android:typeface="monospace"
 	        android:layout_marginStart="8dip"
 	        android:layout_marginTop="6dip"
 	        android:textAppearance="?android:attr/textAppearanceSmall"
@@ -47,16 +54,9 @@
 	    <TextView android:id="@+id/tag2"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
+	        android:typeface="monospace"
 	        android:layout_marginStart="8dip"
 	        android:layout_alignStart="@id/tag1"
-	        android:textAppearance="?android:attr/textAppearanceSmall"
-	    />
-	
-	    <TextView android:id="@+id/tag3"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_marginStart="8dip"
-	        android:layout_gravity="bottom|right"
 	        android:textAppearance="?android:attr/textAppearanceSmall"
 	    />
 	</LinearLayout>
@@ -64,13 +64,12 @@
 	<TwoLineListItem
 	    android:paddingTop="2dip"
 	    android:paddingBottom="2dip"
-	    android:layout_width="match_parent"
+	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
+	    android:layout_weight="1"
 	    android:mode="twoLine"
 	>
 	
-	        <!-- android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"  -->
-	        <!-- android:textAppearance="?android:attr/textAppearanceListItem" -->
 	    <TextView android:id="@android:id/text1"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
@@ -84,9 +83,37 @@
 	        android:layout_height="wrap_content"
 	        android:layout_below="@android:id/text1"
 	        android:layout_alignStart="@android:id/text1"
-	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
 	    />
 	
 	</TwoLineListItem>
+	
+	<LinearLayout
+	    android:layout_width="wrap_content"
+	    android:layout_height="match_parent"
+	    android:layout_gravity="right"
+	    android:gravity="center_vertical|left"
+	    android:orientation="vertical"
+	    android:background="?android:attr/activatedBackgroundIndicator"
+	    android:minHeight="?android:attr/listPreferredItemHeight"
+	>
+        <TextView android:id="@+id/tag3"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:typeface="monospace"
+	        android:layout_marginEnd="8dip"
+	        android:layout_marginTop="6dip"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	    />
+	
+	    <TextView android:id="@+id/tag4"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:typeface="monospace"
+	        android:layout_marginEnd="8dip"
+	        android:layout_alignStart="@id/tag3"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	    />
+	</LinearLayout>
 	
 </LinearLayout>
