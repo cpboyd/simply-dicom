@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Christopher Boyd
+ * Copyright (C) 2013-2014 Christopher Boyd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ package us.cboyd.android.dicom;
  * @version 0.3
  *
  */
+
 public class DcmVar {
     /** Axis Orientation */
     public static final int TRANSVERSE 	= 0,

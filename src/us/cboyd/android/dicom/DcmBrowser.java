@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Christopher Boyd
+ * Copyright (C) 2013-2014 Christopher Boyd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -101,8 +101,9 @@ public class DcmBrowser extends FragmentActivity
                 return;
             }
 
-            // Create an instance of DcmListFragment
+            // Create an instance of DcmListFragment & DcmInfoFragment
             mListFragment = new DcmListFragment();
+            mInfoFragment = new DcmInfoFragment();
 
             // In case this activity was started with special instructions from an Intent,
             // pass the Intent's extras to the fragment as arguments
@@ -144,7 +145,9 @@ public class DcmBrowser extends FragmentActivity
             };
             mDrawerLayout.setDrawerListener(mDrawerToggle);
         } else {
-        	mListFragment = (DcmListFragment) getFragmentManager().findFragmentById(R.id.dcmlist_fragment);
+        	FragmentManager fragManager = getFragmentManager();
+        	mListFragment = (DcmListFragment) fragManager.findFragmentById(R.id.dcmlist_fragment);
+        	mInfoFragment = (DcmInfoFragment) fragManager.findFragmentById(R.id.dcminfo_fragment);
         }
     }
     
@@ -288,6 +291,7 @@ public class DcmBrowser extends FragmentActivity
 			
 		case R.id.show_info:
 			item.setChecked(!item.isChecked());
+			mInfoFragment.refreshTagList(item.isChecked());
 			return true;
 		
 		default:
@@ -331,7 +335,7 @@ public class DcmBrowser extends FragmentActivity
             // If file info frag is available, we're in two-pane layout...
 
             // Call a method in the DcmInfoFragment to update its content
-            mInfoFragment = infoFrag;
+            //mInfoFragment = infoFrag;
     		mInfoFragment.updateDicomInfo(position, fileList, currDir.getPath());
         } else {
             // If the frag is not available, we're in the one-pane layout and must swap frags...
@@ -342,7 +346,6 @@ public class DcmBrowser extends FragmentActivity
             actionBar.setDisplayHomeAsUpEnabled(true);
 
             // Create fragment and give it an argument for the selected article
-            mInfoFragment = new DcmInfoFragment();
             Bundle args = new Bundle();
             args.putInt(DcmVar.POSITION, position);
             args.putStringArrayList(DcmVar.FILELIST, fileList);

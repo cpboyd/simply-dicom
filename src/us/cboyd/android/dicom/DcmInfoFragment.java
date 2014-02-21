@@ -1,3 +1,26 @@
+/*
+ * Copyright (C) 2013-2014 Christopher Boyd
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package us.cboyd.android.dicom;
 
 import java.io.FileInputStream;
@@ -42,12 +65,12 @@ public class DcmInfoFragment extends Fragment {
     private static TextView mArticle;
     private static ListView mTagList;
     private static Resources mRes;
-    private static boolean 	mTagInfo = false;
+    private static boolean 	mTagInfo 		= false;
 	
 	/**  Array adapter for the tag listing. */
 	//private ArrayList<String> mTags = new ArrayList<String>();
     private String[] mTags;
-	private ArrayAdapter<String> mAdapter;
+	private ArrayAdapter<String> mAdapter 	= null;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, 
@@ -152,53 +175,11 @@ public class DcmInfoFragment extends Fragment {
 				} else {
 					mLoadButton.setEnabled(true);
 				}
-				
+
 				// TODO: Add selector for info tag listing
 				mRes  = getResources();
 				mTags = mRes.getStringArray(R.array.dcmtag_default);
-				Log.i("cpb", "List test: " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
-				// Create an array adapter for the list view, using the files array
-		        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.tag_list_item_2, android.R.id.text1, mTags) {
-	        	  	@Override
-	        	  	public View getView(int position, View convertView, ViewGroup parent) {
-	        	  		Log.i("cpb","List: 1 : " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
-						View view = super.getView(position, convertView, parent);
-						TextView tag1 = (TextView) view.findViewById(R.id.tag1);
-						TextView tag2 = (TextView) view.findViewById(R.id.tag2);
-						TextView tag3 = (TextView) view.findViewById(R.id.tag3);
-						TextView tag4 = (TextView) view.findViewById(R.id.tag4);
-						TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-						TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-						//int tag = Tag.toTag(mTags.get(position));
-						
-						int tag = Tag.toTag(mTags[position]);
-						tag1.setText("(" + mTags[position].subSequence(0, 4) + ",");
-						tag2.setText(" " + mTags[position].subSequence(4, 8) + ")");
-
-	        	  		Log.i("cpb","List: 2");
-						String temp = DcmRes.getTag(tag, mRes);
-						String[] temp2 = temp.split(";");
-						// Only display VR/VM if the option is selected
-						if (mTagInfo) {
-							// Check to make sure that we have all the necessary info.
-							if (temp2.length > 2) {
-								tag3.setText("VR: " + temp2[1]);
-								tag4.setText("VM: " + temp2[2]);
-							} else {
-								// If not all info was found, display question marks.
-								tag3.setText("VR: ??");
-								tag4.setText("VM: ?");
-							}
-						}
-						text1.setText(temp2[0]);
-						temp = mDicomObject.getString(tag);
-						text2.setText(temp);
-	        	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
-						return view;
-	        	  	}
-	        	};
-				//Set the TagList's ArrayAdapter
-				mTagList.setAdapter(mAdapter);
+				refreshTagList();
 				
 			} catch (Exception ex) {
 	            Resources res = getResources();
@@ -226,8 +207,61 @@ public class DcmInfoFragment extends Fragment {
         } else {
         	mArticle.setText("Example");
         }
-
     }
+
+    public void refreshTagList(boolean extraInfo) {
+    	mTagInfo = extraInfo;
+    	
+    	if (mAdapter != null) {
+    		refreshTagList();
+    	}
+    }
+    
+    public void refreshTagList() {
+		// Create an array adapter for the list view, using the files array
+        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.tag_list_item_2, android.R.id.text1, mTags) {
+    	  	@Override
+    	  	public View getView(int position, View convertView, ViewGroup parent) {
+    	  		Log.i("cpb","List: 1 : " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
+				View view = super.getView(position, convertView, parent);
+				TextView tag1 = (TextView) view.findViewById(R.id.tag1);
+				TextView tag2 = (TextView) view.findViewById(R.id.tag2);
+				TextView tag3 = (TextView) view.findViewById(R.id.tag3);
+				TextView tag4 = (TextView) view.findViewById(R.id.tag4);
+				TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+				TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+				//int tag = Tag.toTag(mTags.get(position));
+				
+				int tag = Tag.toTag(mTags[position]);
+				tag1.setText("(" + mTags[position].subSequence(0, 4) + ",");
+				tag2.setText(" " + mTags[position].subSequence(4, 8) + ")");
+
+    	  		Log.i("cpb","List: 2");
+				String temp = DcmRes.getTag(tag, mRes);
+				String[] temp2 = temp.split(";");
+				// Only display VR/VM if the option is selected
+				if (mTagInfo) {
+					// Check to make sure that we have all the necessary info.
+					if (temp2.length > 2) {
+						tag3.setText("VR: " + temp2[1]);
+						tag4.setText("VM: " + temp2[2]);
+					} else {
+						// If not all info was found, display question marks.
+						tag3.setText("VR: ??");
+						tag4.setText("VM: ?");
+					}
+				}
+				text1.setText(temp2[0]);
+				temp = mDicomObject.getString(tag);
+				text2.setText(temp);
+    	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
+				return view;
+    	  	}
+    	};
+		//Set the TagList's ArrayAdapter
+		mTagList.setAdapter(mAdapter);
+    }
+    
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
