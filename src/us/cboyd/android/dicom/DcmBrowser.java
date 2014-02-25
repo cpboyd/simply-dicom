@@ -326,16 +326,11 @@ public class DcmBrowser extends FragmentActivity
     		// TODO: Error
     		return;
     	}
-        
-        // Capture the article fragment from the activity layout
-        DcmInfoFragment infoFrag = (DcmInfoFragment)
-                getFragmentManager().findFragmentById(R.id.dcminfo_fragment);
 
-        if (infoFrag != null) {
-            // If file info frag is available, we're in two-pane layout...
+        if (!mFragmented) {
+            // If we're in the two-pane layout...
 
             // Call a method in the DcmInfoFragment to update its content
-            //mInfoFragment = infoFrag;
     		mInfoFragment.updateDicomInfo(position, fileList, currDir.getPath());
         } else {
             // If the frag is not available, we're in the one-pane layout and must swap frags...

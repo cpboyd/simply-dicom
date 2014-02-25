@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- <item android:id="@+id/data"
-          android:icon="@drawable/ic_new_game"
-          android:title="@string/new_game"
-          android:showAsAction="ifRoom"/> -->
     <item
      android:id="@+id/show_hidden" 
      android:title="@string/menu_hidden" 
