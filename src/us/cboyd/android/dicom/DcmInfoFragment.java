@@ -33,11 +33,18 @@ import org.dcm4che2.data.SpecificCharacterSet;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomInputStream;
+import org.opencv.android.Utils;
+import org.opencv.contrib.Contrib;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -64,6 +71,7 @@ public class DcmInfoFragment extends Fragment {
     private static Button 	mLoadButton;
     private static TextView mArticle;
     private static ListView mTagList;
+    private static ImageView mImageView;
     private static Resources mRes;
     private static boolean 	mTagInfo 		= false;
 	
@@ -107,6 +115,7 @@ public class DcmInfoFragment extends Fragment {
     	Log.i("cpb","DcmInfoFrag: buttons");
         mLoadButton = (Button) view.findViewById(R.id.bttn_load);
         mLoadButton.setEnabled(false);
+        mImageView 	= (ImageView) view.findViewById(R.id.demoImage);
         mArticle 	= (TextView) view.findViewById(R.id.article);
         mArticle.setText("Test");
         mTagList 	= (ListView) view.findViewById(R.id.list_tags);
@@ -170,10 +179,29 @@ public class DcmInfoFragment extends Fragment {
 					SOPClass = "null";
 				Log.i("cpb", "SOP Class: " + SOPClass);
 				
+				// TODO: DICOMDIR support
 				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
 					mLoadButton.setEnabled(false);
 				} else {
 					mLoadButton.setEnabled(true);
+					int rows = mDicomObject.getInt(Tag.Rows);
+					int cols = mDicomObject.getInt(Tag.Columns);
+					Mat temp = new Mat(rows, cols, CvType.CV_32S);
+					temp.put(0, 0, mDicomObject.getInts(Tag.PixelData));
+					// [Y, X] or [row, column]
+					double[] spacing = mDicomObject.getDoubles(Tag.PixelSpacing);
+
+					// Determine the minmax
+					Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
+					double  diff 	= minmax.maxVal - minmax.minVal;
+					temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
+					
+					// Set the image
+					Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
+					Log.w("cpb","test3");
+					Utils.matToBitmap(temp, imageBitmap, true);
+					Log.w("cpb","test4");
+					mImageView.setImageBitmap(imageBitmap);
 				}
 
 				// TODO: Add selector for info tag listing
