@@ -327,13 +327,8 @@ public class DcmBrowser extends FragmentActivity
     		return;
     	}
 
-        if (!mFragmented) {
-            // If we're in the two-pane layout...
-
-            // Call a method in the DcmInfoFragment to update its content
-    		mInfoFragment.updateDicomInfo(position, fileList, currDir.getPath());
-        } else {
-            // If the frag is not available, we're in the one-pane layout and must swap frags...
+        if (mFragmented && mListFragment.isVisible()) {
+            // If we're in the one-pane layout and need to swap fragments
         	
         	// Enable the Home/Up button to allow the user to go back to 
         	ActionBar actionBar = getActionBar();
@@ -352,14 +347,18 @@ public class DcmBrowser extends FragmentActivity
             // and add the transaction to the back stack so the user can navigate back
             transaction.replace(R.id.fragment_container, mInfoFragment);
             transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            if (mListFragment.isVisible())
-            	transaction.addToBackStack(null);
+            transaction.addToBackStack(null);
 
             // Commit the transaction
             transaction.commit();
             
             // set up the drawer's list view with items and click listener
             mDrawerList.setAdapter(mListFragment.getListAdapter());
+        } else {
+            // If we're in the two-pane layout or already displaying the DcmInfoFragment
+
+            // Call a method in the DcmInfoFragment to update its content
+    		mInfoFragment.updateDicomInfo(position, fileList, currDir.getPath());
         }
         setTitle(fileList.get(position));
     }

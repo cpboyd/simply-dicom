@@ -34,8 +34,9 @@
 	<LinearLayout android:id="@+id/fileSelection"
 		android:orientation="horizontal"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:gravity="center_vertical"
+		android:layout_height="0dip"
+	    android:layout_weight="1"
+		android:gravity="center"
 		android:background="#99333333"
 		android:longClickable="true">
 			
@@ -47,12 +48,13 @@
 			android:onClick="load" />
 		
 		<FrameLayout
-		   	android:layout_width="wrap_content" 
-	        android:layout_height="wrap_content">
+		   	android:layout_width="0dip" 
+	        android:layout_height="match_parent"
+	    	android:layout_weight="1">
 			<ImageView android:id="@+id/demoImage"
-			    android:layout_width="wrap_content"
-			    android:layout_height="wrap_content"
-			    android:scaleType="matrix" />
+			    android:layout_width="match_parent"
+			    android:layout_height="match_parent"
+			    android:scaleType="fitCenter" />
 		</FrameLayout>
 			
 	</LinearLayout>
@@ -60,7 +62,8 @@
     <ListView
         android:id="@+id/list_tags"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dip"
+	    android:layout_weight="4"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
         android:background="#111"/>

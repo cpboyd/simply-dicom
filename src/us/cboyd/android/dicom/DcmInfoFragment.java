@@ -45,7 +45,9 @@ import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -189,11 +191,12 @@ public class DcmInfoFragment extends Fragment {
 					Mat temp = new Mat(rows, cols, CvType.CV_32S);
 					temp.put(0, 0, mDicomObject.getInts(Tag.PixelData));
 					// [Y, X] or [row, column]
-					double[] spacing = mDicomObject.getDoubles(Tag.PixelSpacing);
+					double[] spacing 	= mDicomObject.getDoubles(Tag.PixelSpacing);
+					double 	scaleY2X 	= spacing[1] / spacing[0];
 
 					// Determine the minmax
 					Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
-					double  diff 	= minmax.maxVal - minmax.minVal;
+					double 	diff 	= minmax.maxVal - minmax.minVal;
 					temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
 					
 					// Set the image
@@ -202,6 +205,7 @@ public class DcmInfoFragment extends Fragment {
 					Utils.matToBitmap(temp, imageBitmap, true);
 					Log.w("cpb","test4");
 					mImageView.setImageBitmap(imageBitmap);
+					mImageView.setScaleX((float) scaleY2X);
 				}
 
 				// TODO: Add selector for info tag listing
