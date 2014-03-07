@@ -71,7 +71,6 @@ public class DcmInfoFragment extends Fragment {
     private static int 			mPosition 	 = 0;
     private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
-    private static TextView mArticle;
     private static ListView mTagList;
     private static ImageView mImageView;
     private static Resources mRes;
@@ -118,8 +117,6 @@ public class DcmInfoFragment extends Fragment {
         mLoadButton = (Button) view.findViewById(R.id.bttn_load);
         mLoadButton.setEnabled(false);
         mImageView 	= (ImageView) view.findViewById(R.id.demoImage);
-        mArticle 	= (TextView) view.findViewById(R.id.article);
-        mArticle.setText("Test");
         mTagList 	= (ListView) view.findViewById(R.id.list_tags);
 
     	Log.i("cpb","DcmInfoFrag: return");
@@ -231,13 +228,6 @@ public class DcmInfoFragment extends Fragment {
 			}
     	} else {
     		mLoadButton.setEnabled(false);
-        }
-    	
-        if (mDicomObject == null) {
-            mArticle.setText("NULL");
-    		mLoadButton.setEnabled(false);
-        } else {
-        	mArticle.setText("Example");
         }
     }
 

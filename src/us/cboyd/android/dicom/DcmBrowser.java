@@ -72,7 +72,7 @@ public class DcmBrowser extends FragmentActivity
 	private boolean 		mFragmented = false;
     private DrawerLayout 	mDrawerLayout;
     private ListView 		mDrawerList;
-    private ActionBarDrawerToggle mDrawerToggle;
+    private ActionBarDrawerToggle mDrawerToggle = null;
 
     private CharSequence 	mDrawerTitle;
     private CharSequence 	mTitle;
@@ -113,37 +113,7 @@ public class DcmBrowser extends FragmentActivity
             getFragmentManager().beginTransaction()
             		.add(R.id.fragment_container, mListFragment).commit();
             
-            // Drawer stuff
-        	mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-            mDrawerList = (ListView) findViewById(R.id.left_drawer);
-
-            // set a custom shadow that overlays the main content when the drawer opens
-            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-            // set up the drawer's list view with items and click listener
-            /*mDrawerList.setAdapter(new ArrayAdapter<String>(this,
-                    R.layout.drawer_list_item, mPlanetTitles));*/
-            mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-
-            // ActionBarDrawerToggle ties together the the proper interactions
-            // between the sliding drawer and the action bar app icon
-            mDrawerToggle = new ActionBarDrawerToggle(
-                    this,                  /* host Activity */
-                    mDrawerLayout,         /* DrawerLayout object */
-                    R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
-                    R.string.drawer_open,  /* "open drawer" description for accessibility */
-                    R.string.drawer_close  /* "close drawer" description for accessibility */
-                    ) {
-                public void onDrawerClosed(View view) {
-                    getActionBar().setTitle(mTitle);
-                    invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
-                }
-
-                public void onDrawerOpened(View drawerView) {
-                    getActionBar().setTitle(mDrawerTitle);
-                    invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
-                }
-            };
-            mDrawerLayout.setDrawerListener(mDrawerToggle);
+            generateDrawer();
         } else {
         	FragmentManager fragManager = getFragmentManager();
         	mListFragment = (DcmListFragment) fragManager.findFragmentById(R.id.dcmlist_fragment);
@@ -383,6 +353,40 @@ public class DcmBrowser extends FragmentActivity
         return super.onPrepareOptionsMenu(menu);
     }
     
+    private void generateDrawer() {
+        // Drawer stuff
+    	mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        // set up the drawer's list view with items and click listener
+        /*mDrawerList.setAdapter(new ArrayAdapter<String>(this,
+                R.layout.drawer_list_item, mPlanetTitles));*/
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the sliding drawer and the action bar app icon
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+                ) {
+            public void onDrawerClosed(View view) {
+                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+    
 	/* The click listener for ListView in the navigation drawer */
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
         @Override
@@ -406,8 +410,12 @@ public class DcmBrowser extends FragmentActivity
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        if (mFragmented)
+        if (mFragmented) {
+        	if (mDrawerToggle == null) {
+        		generateDrawer();
+        	}
         	mDrawerToggle.syncState();
+        }
     }
 
     @Override
