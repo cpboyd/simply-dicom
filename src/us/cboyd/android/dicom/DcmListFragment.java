@@ -242,13 +242,13 @@ public class DcmListFragment extends ListFragment {
 		}
 		
         // Create an array adapter for the list view, using the files array
-        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.file_list_item_2, android.R.id.text1, mDirList) {
+        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.item_file, R.id.fileName, mDirList) {
         	  @Override
         	  public View getView(int position, View convertView, ViewGroup parent) {
         	    View view = super.getView(position, convertView, parent);
         	    ImageView icon = (ImageView) view.findViewById(R.id.icon);
-        	    TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-        	    TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+        	    TextView text1 = (TextView) view.findViewById(R.id.fileName);
+        	    TextView text2 = (TextView) view.findViewById(R.id.secondLine);
 
         	    text1.setText(mDirList.get(position));
         	    if ((mIsRoot == 0) && (position == 0)) {
