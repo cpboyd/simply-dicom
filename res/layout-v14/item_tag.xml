@@ -1,0 +1,69 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="?android:attr/activatedBackgroundIndicator"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    
+    android:padding="6dip">
+    
+    <TextView
+        android:id="@+id/tag1"
+        
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="6dip"
+        
+        android:typeface="monospace"
+        android:textSize="17sp"
+    />
+    
+    <TextView
+        android:id="@+id/tagOpt"
+        
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="6dip"
+        
+        android:typeface="monospace"
+        android:textSize="17sp"
+    />
+
+    <TextView
+        android:id="@+id/tagName"
+
+        android:layout_width="fill_parent"
+        android:layout_height="26dip" 
+        
+        android:layout_toRightOf="@id/tag1"
+        android:layout_toLeftOf="@id/tagOpt"
+        android:layout_alignParentBottom="true"
+        android:layout_alignWithParentIfMissing="true"
+        
+        android:singleLine="true"
+        android:ellipsize="marquee"
+	    android:textAppearance="?android:attr/textAppearanceSmall"
+    />
+
+    <TextView
+        android:id="@+id/tagField"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        
+        android:layout_toRightOf="@id/tag1"
+        android:layout_toLeftOf="@id/tagOpt"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/tagName"
+        android:layout_alignWithParentIfMissing="true"
+        
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+	    android:textAppearance="?android:attr/textAppearanceListItem"
+    />
+</RelativeLayout>

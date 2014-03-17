@@ -241,15 +241,15 @@ public class DcmInfoFragment extends Fragment {
     
     public void refreshTagList() {
 		// Create an array adapter for the list view, using the files array
-        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.tag_list_item_2, android.R.id.text1, mTags) {
+        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.item_tag, R.id.tagName, mTags) {
     	  	@Override
     	  	public View getView(int position, View convertView, ViewGroup parent) {
     	  		Log.i("cpb","List: 1 : " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
 				View view = super.getView(position, convertView, parent);
 				TextView tag1 = (TextView) view.findViewById(R.id.tag1);
-				TextView tag3 = (TextView) view.findViewById(R.id.tag3);
-				TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-				TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+				TextView tagOpt = (TextView) view.findViewById(R.id.tagOpt);
+				TextView text1 = (TextView) view.findViewById(R.id.tagName);
+				TextView text2 = (TextView) view.findViewById(R.id.tagField);
 				//int tag = Tag.toTag(mTags.get(position));
 				
 				int tag = Tag.toTag(mTags[position]);
@@ -263,10 +263,10 @@ public class DcmInfoFragment extends Fragment {
 				if (mTagInfo) {
 					// Check to make sure that we have all the necessary info.
 					if (temp2.length > 2) {
-						tag3.setText("VR: " + temp2[1] + "\nVM: " + temp2[2]);
+						tagOpt.setText("VR: " + temp2[1] + "\nVM: " + temp2[2]);
 					} else {
 						// If not all info was found, display question marks.
-						tag3.setText("VR: ??\nVM: ?");
+						tagOpt.setText("VR: ??\nVM: ?");
 					}
 				}
 				text1.setText(temp2[0]);
