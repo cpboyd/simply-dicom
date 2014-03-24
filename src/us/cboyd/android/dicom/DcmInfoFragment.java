@@ -34,20 +34,16 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomInputStream;
 import org.opencv.android.Utils;
-import org.opencv.contrib.Contrib;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -259,19 +255,15 @@ public class DcmInfoFragment extends Fragment {
     	  		Log.i("cpb","List: 2");
 				String temp = DcmRes.getTag(tag, mRes);
 				String[] temp2 = temp.split(";");
+				text1.setText(temp2[0]);
+				DicomElement de = mDicomObject.get(tag);
+				//SpecificCharacterSet for US_ASCII
+				SpecificCharacterSet cs = new SpecificCharacterSet("");
 				// Only display VR/VM if the option is selected
 				if (mTagInfo) {
-					// Check to make sure that we have all the necessary info.
-					if (temp2.length > 2) {
-						tagOpt.setText("VR: " + temp2[1] + "\nVM: " + temp2[2]);
-					} else {
-						// If not all info was found, display question marks.
-						tagOpt.setText("VR: ??\nVM: ?");
-					}
+					tagOpt.setText("VR: " + de.vr() + "\nVM: " + de.vm(cs));
 				}
-				text1.setText(temp2[0]);
-				temp = mDicomObject.getString(tag);
-				text2.setText(temp);
+				text2.setText(de.toString());
     	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
 				return view;
     	  	}
