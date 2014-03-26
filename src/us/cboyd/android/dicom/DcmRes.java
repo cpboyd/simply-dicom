@@ -3710,7 +3710,6 @@ public class DcmRes {
 							return R.string.dcm_unknown;
 					}
 				}
-				return R.string.dcm_unknown;
 		}
 	}
 }
