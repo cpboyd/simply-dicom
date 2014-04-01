@@ -32,6 +32,7 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.SpecificCharacterSet;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
+import org.dcm4che2.data.VR;
 import org.dcm4che2.io.DicomInputStream;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -257,13 +258,22 @@ public class DcmInfoFragment extends Fragment {
 				String[] temp2 = temp.split(";");
 				text1.setText(temp2[0]);
 				DicomElement de = mDicomObject.get(tag);
+				VR dvr = de.vr();
+				
 				//SpecificCharacterSet for US_ASCII
-				SpecificCharacterSet cs = new SpecificCharacterSet("");
+				SpecificCharacterSet cs = new SpecificCharacterSet("US-ASCII");
 				// Only display VR/VM if the option is selected
 				if (mTagInfo) {
-					tagOpt.setText("VR: " + de.vr() + "\nVM: " + de.vm(cs));
+					tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
 				}
-				text2.setText(de.toString());
+				String dStr = de.getString(cs, false);
+				if (dvr == VR.UI) {
+					temp = DcmRes.getUID(dStr, mRes);
+					temp2 = temp.split(";");
+					text2.setText(temp2[0]);
+				} else {
+					text2.setText(dStr);
+				}
     	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
 				return view;
     	  	}
