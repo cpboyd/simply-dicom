@@ -263,7 +263,12 @@ public class DcmBrowser extends FragmentActivity
 			item.setChecked(!item.isChecked());
 			mInfoFragment.refreshTagList(item.isChecked());
 			return true;
-		
+			
+		case R.id.debug_mode:
+			item.setChecked(!item.isChecked());
+			mInfoFragment.changeMode(item.isChecked());
+			return true;
+			
 		default:
 			return super.onMenuItemSelected(featureId, item);
 			

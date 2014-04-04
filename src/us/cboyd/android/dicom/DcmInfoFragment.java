@@ -24,7 +24,10 @@
 package us.cboyd.android.dicom;
 
 import java.io.FileInputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.dcm4che2.data.DicomElement;
@@ -45,6 +48,7 @@ import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,6 +76,7 @@ public class DcmInfoFragment extends Fragment {
     private static ImageView mImageView;
     private static Resources mRes;
     private static boolean 	mTagInfo 		= false;
+    private static boolean 	mDebugMode		= false;
 	
 	/**  Array adapter for the tag listing. */
 	//private ArrayList<String> mTags = new ArrayList<String>();
@@ -227,6 +232,14 @@ public class DcmInfoFragment extends Fragment {
     		mLoadButton.setEnabled(false);
         }
     }
+    
+    public void changeMode(boolean extraInfo) {
+    	mDebugMode = extraInfo;
+    	
+    	if (mAdapter != null) {
+    		refreshTagList();
+    	}
+    }
 
     public void refreshTagList(boolean extraInfo) {
     	mTagInfo = extraInfo;
@@ -267,10 +280,55 @@ public class DcmInfoFragment extends Fragment {
 					tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
 				}
 				String dStr = de.getString(cs, false);
-				if (dvr == VR.UI) {
+				if (mDebugMode) {
+					text2.setText(dStr);
+				}
+				else if (dvr == VR.UI) {
 					temp = DcmRes.getUID(dStr, mRes);
 					temp2 = temp.split(";");
 					text2.setText(temp2[0]);
+				} else if (dvr == VR.DA){
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+					try {
+						Date vDate = sdf.parse(dStr);
+						String dPat = DateFormat.getBestDateTimePattern(
+								getResources().getConfiguration().locale, "MMMMdyyyy");
+						sdf.applyPattern(dPat);
+						text2.setText(sdf.format(vDate));
+					} catch (ParseException e) {
+						text2.setText(dStr);
+					}
+				} else if (dvr == VR.DT){
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
+					try {
+						// Note: The DICOM standard allows for 6 fractional seconds,
+						// but Java can only handle 3.
+						//
+						// Therefore, we must limit the string length.
+						// Use concat to re-append the time-zone.
+						Date vDate = sdf.parse(
+								dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
+						String dPat = DateFormat.getBestDateTimePattern(
+								getResources().getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
+						sdf.applyPattern(dPat);
+						text2.setText(sdf.format(vDate));
+					} catch (ParseException e) {
+						text2.setText(dStr);
+					}
+				} else if (dvr == VR.TM){
+					SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
+					try {
+						// Note: The DICOM standard allows for 6 fractional seconds,
+						// but Java can only handle 3.
+						// Therefore, we must limit the string length.
+						Date vDate = sdf.parse(dStr.substring(0, 10));
+						String dPat = DateFormat.getBestDateTimePattern(
+								getResources().getConfiguration().locale, "HHmmssSSS");
+						sdf.applyPattern(dPat);
+						text2.setText(sdf.format(vDate));
+					} catch (ParseException e) {
+						text2.setText(dStr);
+					}
 				} else {
 					text2.setText(dStr);
 				}

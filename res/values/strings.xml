@@ -27,6 +27,7 @@
     <string name="menu_about">About</string>
     <string name="menu_hidden">Show hidden files</string>
     <string name="menu_taginfo">Show VR/VM for tags</string>
+    <string name="menu_debug">Debug Mode</string>
     <string name="menu_data">Data Representation</string>
     <string name="menu_load">Load</string>
     <string-array name="menu_array">
