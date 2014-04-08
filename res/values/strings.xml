@@ -29,7 +29,7 @@
     <string name="menu_taginfo">Show VR/VM for tags</string>
     <string name="menu_debug">Debug Mode</string>
     <string name="menu_data">Data Representation</string>
-    <string name="menu_load">Load</string>
+    <string name="menu_load">Load Series</string>
     <string-array name="menu_array">
         <item>Show hidden files</item>
         <item>Data Representation</item>
@@ -5055,7 +5055,7 @@
     <string name="err_mesg_disk">Please connect or insert external storage.</string>
     <string name="err_close">Close app.</string>
     <string name="err_title_read">ERROR: Failed to read file</string>
-    <string name="err_mesg_read">Error opening </string>
+    <string name="err_mesg_read">"Error opening "</string>
     <string name="err_ok">OK</string>
     
     <!-- Internal Log Messages -->

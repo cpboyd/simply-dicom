@@ -24,8 +24,14 @@
  android:orientation="vertical"
  android:layout_width="match_parent"
  android:layout_height="match_parent">
+	    	
+   	<TextView android:id="@+id/text_fileError"
+	    android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+	    android:textAppearance="?android:attr/textAppearanceMedium" />
 	
-	<LinearLayout android:id="@+id/fileSelection"
+	<LinearLayout android:id="@+id/linL_fileSelection"
 		android:orientation="horizontal"
 		android:layout_width="match_parent"
 		android:layout_height="0dip"

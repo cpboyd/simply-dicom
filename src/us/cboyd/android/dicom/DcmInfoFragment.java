@@ -56,6 +56,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -73,6 +74,8 @@ public class DcmInfoFragment extends Fragment {
     private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
     private static ListView mTagList;
+    private static TextView mErrText;
+    private static LinearLayout mImLayout;
     private static ImageView mImageView;
     private static Resources mRes;
     private static boolean 	mTagInfo 		= false;
@@ -120,6 +123,8 @@ public class DcmInfoFragment extends Fragment {
         mLoadButton.setEnabled(false);
         mImageView 	= (ImageView) view.findViewById(R.id.demoImage);
         mTagList 	= (ListView) view.findViewById(R.id.list_tags);
+        mErrText 	= (TextView) view.findViewById(R.id.text_fileError);
+        mImLayout 	= (LinearLayout) view.findViewById(R.id.linL_fileSelection);
 
     	Log.i("cpb","DcmInfoFrag: return");
         return view;
@@ -182,9 +187,9 @@ public class DcmInfoFragment extends Fragment {
 				
 				// TODO: DICOMDIR support
 				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
-					mLoadButton.setEnabled(false);
+					showImage(false);
 				} else {
-					mLoadButton.setEnabled(true);
+					showImage(true);
 					int rows = mDicomObject.getInt(Tag.Rows);
 					int cols = mDicomObject.getInt(Tag.Columns);
 					Mat temp = new Mat(rows, cols, CvType.CV_32S);
@@ -213,23 +218,13 @@ public class DcmInfoFragment extends Fragment {
 				refreshTagList();
 				
 			} catch (Exception ex) {
+				showImage(false);
 	            Resources res = getResources();
-				AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-				builder.setMessage(res.getString(R.string.err_mesg_read) + mFileList.get(mPosition)
-						+ "\n\n" + ex.getMessage())
-					   .setTitle(res.getString(R.string.err_title_read))
-				       .setCancelable(false)
-				       .setPositiveButton(res.getString(R.string.err_ok), new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                // Do nothing
-				           }
-				       });
-				AlertDialog alertDialog = builder.create();
-				alertDialog.show();
-				
+	            mErrText.setText(res.getString(R.string.err_mesg_read) + mFileList.get(mPosition)
+						+ "\n\n" + ex.getMessage());
 			}
     	} else {
-    		mLoadButton.setEnabled(false);
+    		showImage(false);
         }
     }
     
@@ -275,18 +270,60 @@ public class DcmInfoFragment extends Fragment {
 				
 				//SpecificCharacterSet for US_ASCII
 				SpecificCharacterSet cs = new SpecificCharacterSet("US-ASCII");
+				
 				// Only display VR/VM if the option is selected
 				if (mTagInfo) {
 					tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
 				}
+				
 				String dStr = de.getString(cs, false);
-				if (mDebugMode) {
+    	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
+    	  		
+    	  		// If the string is null, display nothing.
+    	  		if (dStr == null) {
+					text2.setText("");
+					
+				// If in Debug mode, just display the string as-is without any special processing.
+    	  		} else if (mDebugMode) {
 					text2.setText(dStr);
-				}
-				else if (dvr == VR.UI) {
+					
+				// Otherwise, make the fields easier to read.
+				// Start by formatting the Person Names.
+				} else if (dvr == VR.PN) {
+					// Family Name^Given Name^Middle Name^Prefix^Suffix
+					temp2 = dStr.split("\\^");
+					// May omit '^' for trailing null component groups.
+					// Use a switch-case statement to deal with this.
+					switch (temp2.length) {
+						// Last, First
+						case 2:
+							temp = temp2[0] + ", " + temp2[1];
+							break;
+						// Last, First Middle
+						case 3:
+							temp = temp2[0] + ", " + temp2[1] + " " + temp2[2];
+							break;
+						// Last, Prefix First Middle
+						case 4:
+							temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2];
+							break;
+						// Last, Prefix First Middle, Suffix
+						case 5:
+							temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2] 
+											+ ", " + temp2[4];
+							break;
+						// All other cases, just display the unmodified string.
+						default:
+							temp = dStr;
+					}
+					text2.setText(temp);
+				// Translate the known UIDs into plain-text.
+				} else if (dvr == VR.UI) {
 					temp = DcmRes.getUID(dStr, mRes);
+					// Only want the first field containing the plain-text name.
 					temp2 = temp.split(";");
 					text2.setText(temp2[0]);
+				// Format the date according to the current locale.
 				} else if (dvr == VR.DA){
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 					try {
@@ -296,8 +333,10 @@ public class DcmInfoFragment extends Fragment {
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {
+						// If the date string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
+				// Format the date & time according to the current locale.
 				} else if (dvr == VR.DT){
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
 					try {
@@ -313,8 +352,10 @@ public class DcmInfoFragment extends Fragment {
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {
+						// If the date string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
+				// Format the time according to the current locale.
 				} else if (dvr == VR.TM){
 					SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
 					try {
@@ -327,12 +368,13 @@ public class DcmInfoFragment extends Fragment {
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {
+						// If the time string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
 				} else {
 					text2.setText(dStr);
 				}
-    	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
+				
 				return view;
     	  	}
     	};
@@ -348,5 +390,16 @@ public class DcmInfoFragment extends Fragment {
         outState.putInt(DcmVar.POSITION, mPosition);
         outState.putStringArrayList(DcmVar.FILELIST, mFileList);
         outState.putString(DcmVar.FILELIST, mCurrDir);
+    }
+    
+    public void showImage(boolean isImage) {
+    	mLoadButton.setEnabled(isImage);
+    	if (isImage) {
+    		mImLayout.setVisibility(View.VISIBLE);
+    		mErrText.setVisibility(View.GONE);
+    	} else {
+    		mImLayout.setVisibility(View.GONE);
+    		mErrText.setVisibility(View.VISIBLE);
+    	}
     }
 }
