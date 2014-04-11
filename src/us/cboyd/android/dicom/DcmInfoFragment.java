@@ -117,16 +117,19 @@ public class DcmInfoFragment extends Fragment {
     	Log.i("cpb","DcmInfoFrag: view");
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.dcm_info, container, false);
-
-    	Log.i("cpb","DcmInfoFrag: buttons");
-        mLoadButton = (Button) view.findViewById(R.id.bttn_load);
-        mLoadButton.setEnabled(false);
-        mImageView 	= (ImageView) view.findViewById(R.id.demoImage);
-        mTagList 	= (ListView) view.findViewById(R.id.list_tags);
+        
         mErrText 	= (TextView) view.findViewById(R.id.text_fileError);
-        mImLayout 	= (LinearLayout) view.findViewById(R.id.linL_fileSelection);
-
-    	Log.i("cpb","DcmInfoFrag: return");
+        
+        // ImLayout Elements
+        mImLayout 	= (LinearLayout)	view.findViewById(R.id.linL_fileSelection);
+        mImageView 	= (ImageView) 		view.findViewById(R.id.demoImage);
+        mLoadButton = (Button) 			view.findViewById(R.id.bttn_load);
+        mLoadButton.setEnabled(false);
+        
+        mTagList 	= (ListView) view.findViewById(R.id.list_tags);
+        
+        // Store a copy of the resources.
+		mRes  		= getResources();
         return view;
     }
 
@@ -188,6 +191,7 @@ public class DcmInfoFragment extends Fragment {
 				// TODO: DICOMDIR support
 				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
 					showImage(false);
+		            mErrText.setText(mRes.getString(R.string.err_dicomdir));
 				} else {
 					showImage(true);
 					int rows = mDicomObject.getInt(Tag.Rows);
@@ -213,18 +217,17 @@ public class DcmInfoFragment extends Fragment {
 				}
 
 				// TODO: Add selector for info tag listing
-				mRes  = getResources();
 				mTags = mRes.getStringArray(R.array.dcmtag_default);
 				refreshTagList();
 				
 			} catch (Exception ex) {
 				showImage(false);
-	            Resources res = getResources();
-	            mErrText.setText(res.getString(R.string.err_mesg_read) + mFileList.get(mPosition)
+	            mErrText.setText(mRes.getString(R.string.err_file_read) + mFileList.get(mPosition)
 						+ "\n\n" + ex.getMessage());
 			}
     	} else {
     		showImage(false);
+            mErrText.setText(mRes.getString(R.string.err_unknown_state));
         }
     }
     
@@ -329,7 +332,7 @@ public class DcmInfoFragment extends Fragment {
 					try {
 						Date vDate = sdf.parse(dStr);
 						String dPat = DateFormat.getBestDateTimePattern(
-								getResources().getConfiguration().locale, "MMMMdyyyy");
+								mRes.getConfiguration().locale, "MMMMdyyyy");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {
@@ -348,7 +351,7 @@ public class DcmInfoFragment extends Fragment {
 						Date vDate = sdf.parse(
 								dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
 						String dPat = DateFormat.getBestDateTimePattern(
-								getResources().getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
+								mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {
@@ -364,7 +367,7 @@ public class DcmInfoFragment extends Fragment {
 						// Therefore, we must limit the string length.
 						Date vDate = sdf.parse(dStr.substring(0, 10));
 						String dPat = DateFormat.getBestDateTimePattern(
-								getResources().getConfiguration().locale, "HHmmssSSS");
+								mRes.getConfiguration().locale, "HHmmssSSS");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
 					} catch (ParseException e) {

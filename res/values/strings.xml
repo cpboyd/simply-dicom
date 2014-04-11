@@ -5054,8 +5054,9 @@
     <string name="err_title_disk">ERROR: No external storage found.</string>
     <string name="err_mesg_disk">Please connect or insert external storage.</string>
     <string name="err_close">Close app.</string>
-    <string name="err_title_read">ERROR: Failed to read file</string>
-    <string name="err_mesg_read">"Error opening "</string>
+    <string name="err_file_read">"ERROR: Failed to read file "</string>
+    <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
+    <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
     <string name="err_ok">OK</string>
     
     <!-- Internal Log Messages -->
