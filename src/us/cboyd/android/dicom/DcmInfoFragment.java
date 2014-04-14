@@ -335,7 +335,7 @@ public class DcmInfoFragment extends Fragment {
 								mRes.getConfiguration().locale, "MMMMdyyyy");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
-					} catch (ParseException e) {
+					} catch (Exception e) {
 						// If the date string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
@@ -354,7 +354,7 @@ public class DcmInfoFragment extends Fragment {
 								mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
-					} catch (ParseException e) {
+					} catch (Exception e) {
 						// If the date string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
@@ -370,7 +370,7 @@ public class DcmInfoFragment extends Fragment {
 								mRes.getConfiguration().locale, "HHmmssSSS");
 						sdf.applyPattern(dPat);
 						text2.setText(sdf.format(vDate));
-					} catch (ParseException e) {
+					} catch (Exception e) {
 						// If the time string couldn't be parsed, display the unmodified string.
 						text2.setText(dStr);
 					}
