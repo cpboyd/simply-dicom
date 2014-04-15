@@ -26,7 +26,6 @@ package us.cboyd.android.dicom;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 import us.cboyd.android.shared.ExternalIO;
 import us.cboyd.shared.NotHidFilter;
@@ -35,6 +34,7 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -74,6 +74,9 @@ public class DcmListFragment extends ListFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+    	// Retain this fragment across configuration changes.
+    	setRetainInstance(true);
+		
 		// Check if the external storage is available
 		if (ExternalIO.checkStorage()) {
 			
@@ -86,9 +89,7 @@ public class DcmListFragment extends ListFragment {
 				// Set the top directory
 				mCurrDir = Environment.getExternalStorageDirectory();
 			}
-			
 		}
-		
 	}
 	
 	/** onStart makes the fragment visible to the user 
@@ -99,9 +100,7 @@ public class DcmListFragment extends ListFragment {
 
         // When in two-pane layout, set the listview to highlight the selected list item
         // (We do this during onStart because at the point the listview is available.)
-        //if (getFragmentManager().findFragmentById(R.id.dcmlist_fragment) != null) {
         getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        //}
     }
 
     @Override

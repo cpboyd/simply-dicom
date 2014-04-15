@@ -83,6 +83,23 @@ public class DcmBrowser extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dcm_browser);
         
+        FragmentManager fragManager = getFragmentManager();
+        
+        // Restore the retained fragments, if this is a configuration change.
+        if (mListFragment == null) {
+        	mListFragment = new DcmListFragment();
+
+            // In case this activity was started with special instructions from an Intent,
+            // pass the Intent's extras to the fragment as arguments
+            mListFragment.setArguments(getIntent().getExtras());
+        } else {
+        	//mListFragment.
+        }
+        	
+        if (mInfoFragment == null) {
+            mInfoFragment = new DcmInfoFragment();
+        }
+        
         // Specify that the Home/Up button should not be enabled,
         // since there is no hierarchical parent yet.
         ActionBar actionBar = getActionBar();
@@ -93,31 +110,21 @@ public class DcmBrowser extends FragmentActivity
         // Check whether the activity is using the layout version with
         // the fragment_container FrameLayout. If so, we must add the first fragment
         if (findViewById(R.id.fragment_container) != null) {
+        	Log.i("cpb", "mListFrag: One-pane");
         	mFragmented = true;
-            // However, if we're being restored from a previous state,
-            // then we don't need to do anything and should return or else
-            // we could end up with overlapping fragments.
-            if (savedInstanceState != null) {
-                return;
-            }
-
-            // Create an instance of DcmListFragment & DcmInfoFragment
-            mListFragment = new DcmListFragment();
-            mInfoFragment = new DcmInfoFragment();
-
-            // In case this activity was started with special instructions from an Intent,
-            // pass the Intent's extras to the fragment as arguments
-            mListFragment.setArguments(getIntent().getExtras());
 
             // Add the fragment to the 'fragment_container' FrameLayout
-            getFragmentManager().beginTransaction()
-            		.add(R.id.fragment_container, mListFragment).commit();
+        	fragManager.beginTransaction().add(R.id.fragment_container, mListFragment).commit();
             
             generateDrawer();
         } else {
-        	FragmentManager fragManager = getFragmentManager();
-        	mListFragment = (DcmListFragment) fragManager.findFragmentById(R.id.dcmlist_fragment);
-        	mInfoFragment = (DcmInfoFragment) fragManager.findFragmentById(R.id.dcminfo_fragment);
+        	Log.i("cpb", "mListFrag: Two-pane");
+        	mFragmented = false;
+        	
+            // Add the fragments to the respective FrameLayouts
+        	fragManager.beginTransaction().add(R.id.fragment_left, 	mListFragment).commit();
+        	fragManager.executePendingTransactions();
+        	fragManager.beginTransaction().add(R.id.fragment_right, mInfoFragment).commit();
         }
     }
     
@@ -149,6 +156,19 @@ public class DcmBrowser extends FragmentActivity
 
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mLoaderCallback);
 		super.onResume();
+	}
+	
+	/** Called when orientation changes. */
+	@Override
+    public void onSaveInstanceState(Bundle outState) {
+		FragmentManager fragManager = getFragmentManager();
+		// Remove existing fragments from associated views.
+    	fragManager.popBackStackImmediate(null, fragManager.POP_BACK_STACK_INCLUSIVE);
+    	fragManager.beginTransaction().remove(mListFragment).commit();
+    	fragManager.beginTransaction().remove(mInfoFragment).commit();
+    	fragManager.executePendingTransactions();
+    	
+        super.onSaveInstanceState(outState);
 	}
 	
 	////openCV

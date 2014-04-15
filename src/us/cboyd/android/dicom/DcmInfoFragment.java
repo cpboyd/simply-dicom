@@ -85,24 +85,21 @@ public class DcmInfoFragment extends Fragment {
 	//private ArrayList<String> mTags = new ArrayList<String>();
     private String[] mTags;
 	private ArrayAdapter<String> mAdapter 	= null;
+	
+
+	/** onCreate is called to do initial creation of the fragment. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	  	super.onCreate(savedInstanceState);
+
+    	// Retain this fragment across configuration changes.
+    	setRetainInstance(true);
+  	}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, 
         Bundle savedInstanceState) {
     	Log.i("cpb","DcmInfoFrag: creation");
-    	///Causes issue with landscape view
-    	/*if (container == null) {
-            // We have different layouts, and in one of them this
-            // fragment's containing frame doesn't exist.  The fragment
-            // may still be created from its saved state, but there is
-            // no reason to try to create its view hierarchy because it
-            // won't be displayed.  Note this is not needed -- we could
-            // just run the code below, where we would create and return
-            // the view hierarchy; it would just never be used.
-
-        	Log.i("cpb","DcmInfoFrag: null");
-            return null;
-        }*/
 
         // If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
@@ -113,8 +110,7 @@ public class DcmInfoFragment extends Fragment {
         	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.FILELIST);
             mCurrDir 	= savedInstanceState.getString(DcmVar.CURRDIR);
         }
-
-    	Log.i("cpb","DcmInfoFrag: view");
+        
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.dcm_info, container, false);
         
