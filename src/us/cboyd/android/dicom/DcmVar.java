@@ -42,7 +42,9 @@ public class DcmVar {
     							CURRDIR = "currdir",
     							FILELIST = "filelist",
     							POSITION = "position",
-    							DCMFILE = "DCMFile";
+    							DCMFILE = "DCMFile",
+    							FRAGLIST = "fragList",
+    							FRAGINFO = "fragInfo";
 	
     /** Menu Items */
     public static final int 	ABOUT 	= 0;

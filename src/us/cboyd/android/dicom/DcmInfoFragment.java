@@ -83,7 +83,7 @@ public class DcmInfoFragment extends Fragment {
 	
 	/**  Array adapter for the tag listing. */
 	//private ArrayList<String> mTags = new ArrayList<String>();
-    private String[] mTags;
+    private static String[] mTags;
 	private ArrayAdapter<String> mAdapter 	= null;
 	
 

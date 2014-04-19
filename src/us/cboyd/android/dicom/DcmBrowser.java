@@ -84,18 +84,22 @@ public class DcmBrowser extends FragmentActivity
         setContentView(R.layout.dcm_browser);
         
         FragmentManager fragManager = getFragmentManager();
+        if (savedInstanceState != null) {
+	        mListFragment = (DcmListFragment) fragManager.getFragment(savedInstanceState, DcmVar.FRAGLIST);
+	        mInfoFragment = (DcmInfoFragment) fragManager.getFragment(savedInstanceState, DcmVar.FRAGINFO);
+
+			// Remove existing fragments from associated views.
+	    	fragManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+	    	fragManager.beginTransaction().remove(mListFragment).commit();
+	    	fragManager.beginTransaction().remove(mInfoFragment).commit();
+	    	fragManager.executePendingTransactions();
+        }
         
         // Restore the retained fragments, if this is a configuration change.
         if (mListFragment == null) {
         	mListFragment = new DcmListFragment();
-
-            // In case this activity was started with special instructions from an Intent,
-            // pass the Intent's extras to the fragment as arguments
-            mListFragment.setArguments(getIntent().getExtras());
-        } else {
-        	//mListFragment.
         }
-        	
+        
         if (mInfoFragment == null) {
             mInfoFragment = new DcmInfoFragment();
         }
@@ -106,7 +110,7 @@ public class DcmBrowser extends FragmentActivity
         // enable ActionBar app icon to behave as action to toggle nav drawer
         actionBar.setDisplayHomeAsUpEnabled(false);
         actionBar.setHomeButtonEnabled(false);
-
+        
         // Check whether the activity is using the layout version with
         // the fragment_container FrameLayout. If so, we must add the first fragment
         if (findViewById(R.id.fragment_container) != null) {
@@ -123,7 +127,6 @@ public class DcmBrowser extends FragmentActivity
         	
             // Add the fragments to the respective FrameLayouts
         	fragManager.beginTransaction().add(R.id.fragment_left, 	mListFragment).commit();
-        	fragManager.executePendingTransactions();
         	fragManager.beginTransaction().add(R.id.fragment_right, mInfoFragment).commit();
         }
     }
@@ -162,13 +165,16 @@ public class DcmBrowser extends FragmentActivity
 	@Override
     public void onSaveInstanceState(Bundle outState) {
 		FragmentManager fragManager = getFragmentManager();
-		// Remove existing fragments from associated views.
-    	fragManager.popBackStackImmediate(null, fragManager.POP_BACK_STACK_INCLUSIVE);
-    	fragManager.beginTransaction().remove(mListFragment).commit();
-    	fragManager.beginTransaction().remove(mInfoFragment).commit();
-    	fragManager.executePendingTransactions();
+    	// If the fragment hasn't already been added to the FragmentManager, add it.
+		// Otherwise, it can't be put in the Bundle.
+    	if (!mInfoFragment.isAdded()) {
+    		fragManager.beginTransaction().add(mInfoFragment, null).commit();
+    	}
     	
         super.onSaveInstanceState(outState);
+		outState.putString(DcmVar.CURRDIR, mListFragment.getDir().getAbsolutePath());
+    	fragManager.putFragment(outState, DcmVar.FRAGLIST, mListFragment);
+    	fragManager.putFragment(outState, DcmVar.FRAGINFO, mInfoFragment);
 	}
 	
 	////openCV
@@ -342,10 +348,7 @@ public class DcmBrowser extends FragmentActivity
             // and add the transaction to the back stack so the user can navigate back
             transaction.replace(R.id.fragment_container, mInfoFragment);
             transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            transaction.addToBackStack(null);
-
-            // Commit the transaction
-            transaction.commit();
+            transaction.addToBackStack(null).commit();
             
             // set up the drawer's list view with items and click listener
             mDrawerList.setAdapter(mListFragment.getListAdapter());

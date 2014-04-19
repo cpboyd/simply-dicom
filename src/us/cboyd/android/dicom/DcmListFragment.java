@@ -34,7 +34,7 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
 import android.os.Environment;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -74,9 +74,6 @@ public class DcmListFragment extends ListFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-    	// Retain this fragment across configuration changes.
-    	setRetainInstance(true);
-		
 		// Check if the external storage is available
 		if (ExternalIO.checkStorage()) {
 			
@@ -84,7 +81,7 @@ public class DcmListFragment extends ListFragment {
 				String currDir = savedInstanceState.getString(DcmVar.CURRDIR);
 				
 				mCurrDir = (currDir == null) ? Environment.getExternalStorageDirectory()
-						: new File(savedInstanceState.getString(DcmVar.CURRDIR));
+						: new File(currDir);
 			} else {
 				// Set the top directory
 				mCurrDir = Environment.getExternalStorageDirectory();
@@ -157,7 +154,6 @@ public class DcmListFragment extends ListFragment {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		
 		// Save the top directory absolute path
 		outState.putString(DcmVar.CURRDIR, mCurrDir.getAbsolutePath());
 	}
