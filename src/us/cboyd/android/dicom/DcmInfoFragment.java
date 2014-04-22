@@ -323,7 +323,7 @@ public class DcmInfoFragment extends Fragment {
 					temp2 = temp.split(";");
 					text2.setText(temp2[0]);
 				// Format the date according to the current locale.
-				} else if (dvr == VR.DA){
+				} else if ((dvr == VR.DA) && (android.os.Build.VERSION.SDK_INT >= 18)) {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 					try {
 						Date vDate = sdf.parse(dStr);
@@ -336,7 +336,7 @@ public class DcmInfoFragment extends Fragment {
 						text2.setText(dStr);
 					}
 				// Format the date & time according to the current locale.
-				} else if (dvr == VR.DT){
+				} else if ((dvr == VR.DT) && (android.os.Build.VERSION.SDK_INT >= 18)) {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
 					try {
 						// Note: The DICOM standard allows for 6 fractional seconds,
@@ -355,7 +355,7 @@ public class DcmInfoFragment extends Fragment {
 						text2.setText(dStr);
 					}
 				// Format the time according to the current locale.
-				} else if (dvr == VR.TM){
+				} else if ((dvr == VR.TM) && (android.os.Build.VERSION.SDK_INT >= 18)) {
 					SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
 					try {
 						// Note: The DICOM standard allows for 6 fractional seconds,
