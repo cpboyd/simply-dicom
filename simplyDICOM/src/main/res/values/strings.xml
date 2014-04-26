@@ -5065,6 +5065,8 @@
     
     <!-- DICOM Info Tags -->
     <string-array name="dcmtag_default">
+        <item>00280004</item>
+        <item>00020010</item>
         <item>00080016</item>
 	    <item>00080018</item>
 	    <item>00100010</item>
