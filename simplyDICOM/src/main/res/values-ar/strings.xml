@@ -22,9 +22,6 @@
  -->
 <resources>
     <string name="app_name">Simply DICOM</string>
-    <string-array name="menu_array">
-        <item>About</item>
-    </string-array>
     <string-array name="planes_array">
         <item>مستعرض</item>
         <item>إكليلي</item>

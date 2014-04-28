@@ -22,7 +22,7 @@
  -->
 <resources>
     <string name="app_name">Simply DICOM</string>
-    <string name="app_about">Simply DICOM\n\nThis DICOM image viewer utilizes the OpenCV and dcm4che2 libraries.\n\nThis app is currently in public beta.  If you experience any errors, please email me.\n\nAuthor: Christopher Boyd\nE-mail: xpboyd@gmail.com\nCopyright 2013–2014</string>
+    <string name="app_about">Simply DICOM\n\nThis DICOM image viewer utilizes the OpenCV and dcm4che2 libraries.\n\nThis app is currently in public beta.  If you experience any errors, please email me.\n\nAuthor: Christopher Boyd\nE-mail: help@simplydicom.com\nCopyright 2013–2014</string>
     <!-- Menus -->
     <string name="menu_about">About</string>
     <string name="menu_hidden">Show hidden files</string>
@@ -5056,6 +5056,8 @@
     <string name="err_close">Close app.</string>
     <string name="err_file_read">"ERROR: Failed to read file "</string>
     <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
+    <string name="err_jpeg">Compressed/JPEG images are not currently supported.</string>
+    <string name="err_null_image">Pixel data is null.</string>
     <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
     <string name="err_ok">OK</string>
     
@@ -5065,8 +5067,8 @@
     
     <!-- DICOM Info Tags -->
     <string-array name="dcmtag_default">
-        <item>00280004</item>
         <item>00020010</item>
+        <item>00280004</item>
         <item>00080016</item>
 	    <item>00080018</item>
 	    <item>00100010</item>

@@ -176,40 +176,56 @@ public class DcmInfoFragment extends Fragment {
 				dis.close();
 				
 				// Get the SOP Class element
+                SpecificCharacterSet cs = new SpecificCharacterSet("");
 				DicomElement de = mDicomObject.get(Tag.MediaStorageSOPClassUID);
 				String SOPClass = "";
 				if (de != null)
-					SOPClass = de.getString(new SpecificCharacterSet(""), true);
+					SOPClass = de.getString(cs, true);
 				else
 					SOPClass = "null";
 				Log.i("cpb", "SOP Class: " + SOPClass);
-				
-				// TODO: DICOMDIR support
-				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
-					showImage(false);
-		            mErrText.setText(mRes.getString(R.string.err_dicomdir));
-				} else {
-					showImage(true);
-					int rows = mDicomObject.getInt(Tag.Rows);
-					int cols = mDicomObject.getInt(Tag.Columns);
-					Mat temp = new Mat(rows, cols, CvType.CV_32S);
-					temp.put(0, 0, mDicomObject.getInts(Tag.PixelData));
-					// [Y, X] or [row, column]
-					double[] spacing 	= mDicomObject.getDoubles(Tag.PixelSpacing);
-					double 	scaleY2X 	= spacing[1] / spacing[0];
 
-					// Determine the minmax
-					Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
-					double 	diff 	= minmax.maxVal - minmax.minVal;
-					temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
-					
-					// Set the image
-					Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
-					Log.w("cpb","test3");
-					Utils.matToBitmap(temp, imageBitmap, true);
-					Log.w("cpb","test4");
-					mImageView.setImageBitmap(imageBitmap);
-					mImageView.setScaleX((float) scaleY2X);
+                // Get the Transfer Syntax element
+                de = mDicomObject.get(Tag.TransferSyntaxUID);
+                String TransferSyntax = "";
+                if (de != null)
+                    TransferSyntax = de.getString(cs, true);
+                else
+                    TransferSyntax = "null";
+                Log.i("cpb", "Transfer Syntax: " + TransferSyntax);
+
+                showImage(false);
+				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
+                    // TODO: DICOMDIR support
+		            mErrText.setText(mRes.getString(R.string.err_dicomdir));
+				} else if (TransferSyntax.startsWith("1.2.840.10008.1.2.4.")) {
+                    // TODO: JPEG support
+                    mErrText.setText(mRes.getString(R.string.err_jpeg));
+                } else if (TransferSyntax.startsWith("1.2.840.10008.1.2")) {
+                    de= mDicomObject.get(Tag.PixelData);
+                    if (de == null) {
+                        mErrText.setText(mRes.getString(R.string.err_null_image));
+                    } else {
+                        showImage(true);
+                        int rows = mDicomObject.getInt(Tag.Rows);
+                        int cols = mDicomObject.getInt(Tag.Columns);
+                        Mat temp = new Mat(rows, cols, CvType.CV_32S);
+                        temp.put(0, 0, de.getInts(true));
+                        // [Y, X] or [row, column]
+                        double[] spacing = mDicomObject.getDoubles(Tag.PixelSpacing);
+                        double scaleY2X = spacing[1] / spacing[0];
+
+                        // Determine the minmax
+                        Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
+                        double diff = minmax.maxVal - minmax.minVal;
+                        temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
+
+                        // Set the image
+                        Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
+                        Utils.matToBitmap(temp, imageBitmap, true);
+                        mImageView.setImageBitmap(imageBitmap);
+                        mImageView.setScaleX((float) scaleY2X);
+                    }
 				}
 
 				// TODO: Add selector for info tag listing
@@ -248,7 +264,6 @@ public class DcmInfoFragment extends Fragment {
         mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.item_tag, R.id.tagName, mTags) {
     	  	@Override
     	  	public View getView(int position, View convertView, ViewGroup parent) {
-    	  		Log.i("cpb","List: 1 : " + mDicomObject.getString(Tag.MediaStorageSOPClassUID));
 				View view = super.getView(position, convertView, parent);
 				TextView tag1 = (TextView) view.findViewById(R.id.tag1);
 				TextView tagOpt = (TextView) view.findViewById(R.id.tagOpt);
@@ -257,123 +272,122 @@ public class DcmInfoFragment extends Fragment {
 				//int tag = Tag.toTag(mTags.get(position));
 				
 				int tag = Tag.toTag(mTags[position]);
-				tag1.setText("(" + mTags[position].subSequence(0, 4) + ",\n " 
-								 + mTags[position].subSequence(4, 8) + ")");
+				tag1.setText("(" + mTags[position].subSequence(0, 4) + ",\n "
+                        + mTags[position].subSequence(4, 8) + ")");
 
-    	  		Log.i("cpb","List: 2");
 				String temp = DcmRes.getTag(tag, mRes);
 				String[] temp2 = temp.split(";");
 				text1.setText(temp2[0]);
 				DicomElement de = mDicomObject.get(tag);
-				VR dvr = de.vr();
-				
-				//SpecificCharacterSet for US_ASCII
-				SpecificCharacterSet cs = new SpecificCharacterSet("US-ASCII");
-				
-				// Only display VR/VM if the option is selected
-				if (mTagInfo) {
-					tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
-				}
-				
-				String dStr = de.getString(cs, false);
-    	  		Log.i("cpb","List: " + Integer.toHexString(tag) + " : " + temp);
-    	  		
-    	  		// If the string is null, display nothing.
-    	  		if (dStr == null) {
-					text2.setText("");
-					
-				// If in Debug mode, just display the string as-is without any special processing.
-    	  		} else if (mDebugMode) {
-					text2.setText(dStr);
-					
-				// Otherwise, make the fields easier to read.
-				// Start by formatting the Person Names.
-				} else if (dvr == VR.PN) {
-					// Family Name^Given Name^Middle Name^Prefix^Suffix
-					temp2 = dStr.split("\\^");
-					// May omit '^' for trailing null component groups.
-					// Use a switch-case statement to deal with this.
-					switch (temp2.length) {
-						// Last, First
-						case 2:
-							temp = temp2[0] + ", " + temp2[1];
-							break;
-						// Last, First Middle
-						case 3:
-							temp = temp2[0] + ", " + temp2[1] + " " + temp2[2];
-							break;
-						// Last, Prefix First Middle
-						case 4:
-							temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2];
-							break;
-						// Last, Prefix First Middle, Suffix
-						case 5:
-							temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2] 
-											+ ", " + temp2[4];
-							break;
-						// All other cases, just display the unmodified string.
-						default:
-							temp = dStr;
-					}
-					text2.setText(temp);
-				// Translate the known UIDs into plain-text.
-				} else if (dvr == VR.UI) {
-					temp = DcmRes.getUID(dStr, mRes);
-					// Only want the first field containing the plain-text name.
-					temp2 = temp.split(";");
-					text2.setText(temp2[0]);
-				// Format the date according to the current locale.
-				} else if ((dvr == VR.DA) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-					try {
-						Date vDate = sdf.parse(dStr);
-						String dPat = DateFormat.getBestDateTimePattern(
-								mRes.getConfiguration().locale, "MMMMdyyyy");
-						sdf.applyPattern(dPat);
-						text2.setText(sdf.format(vDate));
-					} catch (Exception e) {
-						// If the date string couldn't be parsed, display the unmodified string.
-						text2.setText(dStr);
-					}
-				// Format the date & time according to the current locale.
-				} else if ((dvr == VR.DT) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
-					try {
-						// Note: The DICOM standard allows for 6 fractional seconds,
-						// but Java can only handle 3.
-						//
-						// Therefore, we must limit the string length.
-						// Use concat to re-append the time-zone.
-						Date vDate = sdf.parse(
-								dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
-						String dPat = DateFormat.getBestDateTimePattern(
-								mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
-						sdf.applyPattern(dPat);
-						text2.setText(sdf.format(vDate));
-					} catch (Exception e) {
-						// If the date string couldn't be parsed, display the unmodified string.
-						text2.setText(dStr);
-					}
-				// Format the time according to the current locale.
-				} else if ((dvr == VR.TM) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-					SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
-					try {
-						// Note: The DICOM standard allows for 6 fractional seconds,
-						// but Java can only handle 3.
-						// Therefore, we must limit the string length.
-						Date vDate = sdf.parse(dStr.substring(0, 10));
-						String dPat = DateFormat.getBestDateTimePattern(
-								mRes.getConfiguration().locale, "HHmmssSSS");
-						sdf.applyPattern(dPat);
-						text2.setText(sdf.format(vDate));
-					} catch (Exception e) {
-						// If the time string couldn't be parsed, display the unmodified string.
-						text2.setText(dStr);
-					}
-				} else {
-					text2.setText(dStr);
-				}
-				
+                if (de != null) {
+                    VR dvr = de.vr();
+
+                    //SpecificCharacterSet for US_ASCII
+                    SpecificCharacterSet cs = new SpecificCharacterSet("US-ASCII");
+
+                    // Only display VR/VM if the option is selected
+                    if (mTagInfo) {
+                        tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
+                    }
+
+                    String dStr = de.getString(cs, false);
+
+                    // If the string is null, display nothing.
+                    if (dStr == null) {
+                        text2.setText("");
+
+                        // If in Debug mode, just display the string as-is without any special processing.
+                    } else if (mDebugMode) {
+                        text2.setText(dStr);
+
+                        // Otherwise, make the fields easier to read.
+                        // Start by formatting the Person Names.
+                    } else if (dvr == VR.PN) {
+                        // Family Name^Given Name^Middle Name^Prefix^Suffix
+                        temp2 = dStr.split("\\^");
+                        // May omit '^' for trailing null component groups.
+                        // Use a switch-case statement to deal with this.
+                        switch (temp2.length) {
+                            // Last, First
+                            case 2:
+                                temp = temp2[0] + ", " + temp2[1];
+                                break;
+                            // Last, First Middle
+                            case 3:
+                                temp = temp2[0] + ", " + temp2[1] + " " + temp2[2];
+                                break;
+                            // Last, Prefix First Middle
+                            case 4:
+                                temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2];
+                                break;
+                            // Last, Prefix First Middle, Suffix
+                            case 5:
+                                temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2]
+                                        + ", " + temp2[4];
+                                break;
+                            // All other cases, just display the unmodified string.
+                            default:
+                                temp = dStr;
+                        }
+                        text2.setText(temp);
+                        // Translate the known UIDs into plain-text.
+                    } else if (dvr == VR.UI) {
+                        temp = DcmRes.getUID(dStr, mRes);
+                        // Only want the first field containing the plain-text name.
+                        temp2 = temp.split(";");
+                        text2.setText(temp2[0]);
+                        // Format the date according to the current locale.
+                    } else if ((dvr == VR.DA) && (android.os.Build.VERSION.SDK_INT >= 18)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                        try {
+                            Date vDate = sdf.parse(dStr);
+                            String dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.getConfiguration().locale, "MMMMdyyyy");
+                            sdf.applyPattern(dPat);
+                            text2.setText(sdf.format(vDate));
+                        } catch (Exception e) {
+                            // If the date string couldn't be parsed, display the unmodified string.
+                            text2.setText(dStr);
+                        }
+                        // Format the date & time according to the current locale.
+                    } else if ((dvr == VR.DT) && (android.os.Build.VERSION.SDK_INT >= 18)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
+                        try {
+                            // Note: The DICOM standard allows for 6 fractional seconds,
+                            // but Java can only handle 3.
+                            //
+                            // Therefore, we must limit the string length.
+                            // Use concat to re-append the time-zone.
+                            Date vDate = sdf.parse(
+                                    dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
+                            String dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
+                            sdf.applyPattern(dPat);
+                            text2.setText(sdf.format(vDate));
+                        } catch (Exception e) {
+                            // If the date string couldn't be parsed, display the unmodified string.
+                            text2.setText(dStr);
+                        }
+                        // Format the time according to the current locale.
+                    } else if ((dvr == VR.TM) && (android.os.Build.VERSION.SDK_INT >= 18)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
+                        try {
+                            // Note: The DICOM standard allows for 6 fractional seconds,
+                            // but Java can only handle 3.
+                            // Therefore, we must limit the string length.
+                            Date vDate = sdf.parse(dStr.substring(0, 10));
+                            String dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.getConfiguration().locale, "HHmmssSSS");
+                            sdf.applyPattern(dPat);
+                            text2.setText(sdf.format(vDate));
+                        } catch (Exception e) {
+                            // If the time string couldn't be parsed, display the unmodified string.
+                            text2.setText(dStr);
+                        }
+                    } else {
+                        text2.setText(dStr);
+                    }
+                }
 				return view;
     	  	}
     	};
