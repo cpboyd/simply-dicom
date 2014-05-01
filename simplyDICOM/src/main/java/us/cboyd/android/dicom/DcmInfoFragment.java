@@ -23,12 +23,22 @@
 
 package us.cboyd.android.dicom;
 
-import java.io.FileInputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import android.app.Fragment;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.os.Build;
+import android.os.Bundle;
+import android.text.format.DateFormat;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
@@ -42,23 +52,11 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-import android.app.AlertDialog;
-import android.app.Fragment;
-import android.content.DialogInterface;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.os.Bundle;
-import android.text.format.DateFormat;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.TextView;
+import java.io.FileInputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * DICOM InfoFragment
@@ -178,20 +176,16 @@ public class DcmInfoFragment extends Fragment {
 				// Get the SOP Class element
                 SpecificCharacterSet cs = new SpecificCharacterSet("");
 				DicomElement de = mDicomObject.get(Tag.MediaStorageSOPClassUID);
-				String SOPClass = "";
+				String SOPClass = "null";
 				if (de != null)
 					SOPClass = de.getString(cs, true);
-				else
-					SOPClass = "null";
 				Log.i("cpb", "SOP Class: " + SOPClass);
 
                 // Get the Transfer Syntax element
                 de = mDicomObject.get(Tag.TransferSyntaxUID);
-                String TransferSyntax = "";
+                String TransferSyntax = "null";
                 if (de != null)
                     TransferSyntax = de.getString(cs, true);
-                else
-                    TransferSyntax = "null";
                 Log.i("cpb", "Transfer Syntax: " + TransferSyntax);
 
                 showImage(false);
@@ -226,7 +220,9 @@ public class DcmInfoFragment extends Fragment {
                         mImageView.setImageBitmap(imageBitmap);
                         mImageView.setScaleX((float) scaleY2X);
                     }
-				}
+				} else {
+                    mErrText.setText(mRes.getString(R.string.err_unknown_dicom));
+                }
 
 				// TODO: Add selector for info tag listing
 				mTags = mRes.getStringArray(R.array.dcmtag_default);
@@ -337,51 +333,55 @@ public class DcmInfoFragment extends Fragment {
                         temp2 = temp.split(";");
                         text2.setText(temp2[0]);
                         // Format the date according to the current locale.
-                    } else if ((dvr == VR.DA) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                        try {
-                            Date vDate = sdf.parse(dStr);
-                            String dPat = DateFormat.getBestDateTimePattern(
-                                    mRes.getConfiguration().locale, "MMMMdyyyy");
-                            sdf.applyPattern(dPat);
-                            text2.setText(sdf.format(vDate));
-                        } catch (Exception e) {
-                            // If the date string couldn't be parsed, display the unmodified string.
-                            text2.setText(dStr);
-                        }
+                    } else if (Build.VERSION.SDK_INT >= 18) {
+                        if (dvr == VR.DA) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                            try {
+                                Date vDate = sdf.parse(dStr);
+                                String dPat = DateFormat.getBestDateTimePattern(
+                                        mRes.getConfiguration().locale, "MMMMdyyyy");
+                                sdf.applyPattern(dPat);
+                                text2.setText(sdf.format(vDate));
+                            } catch (Exception e) {
+                                // If the date string couldn't be parsed, display the unmodified string.
+                                text2.setText(dStr);
+                            }
                         // Format the date & time according to the current locale.
-                    } else if ((dvr == VR.DT) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
-                        try {
-                            // Note: The DICOM standard allows for 6 fractional seconds,
-                            // but Java can only handle 3.
-                            //
-                            // Therefore, we must limit the string length.
-                            // Use concat to re-append the time-zone.
-                            Date vDate = sdf.parse(
-                                    dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
-                            String dPat = DateFormat.getBestDateTimePattern(
-                                    mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
-                            sdf.applyPattern(dPat);
-                            text2.setText(sdf.format(vDate));
-                        } catch (Exception e) {
-                            // If the date string couldn't be parsed, display the unmodified string.
-                            text2.setText(dStr);
-                        }
+                        } else if (dvr == VR.DT) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
+                            try {
+                                // Note: The DICOM standard allows for 6 fractional seconds,
+                                // but Java can only handle 3.
+                                //
+                                // Therefore, we must limit the string length.
+                                // Use concat to re-append the time-zone.
+                                Date vDate = sdf.parse(
+                                        dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
+                                String dPat = DateFormat.getBestDateTimePattern(
+                                        mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
+                                sdf.applyPattern(dPat);
+                                text2.setText(sdf.format(vDate));
+                            } catch (Exception e) {
+                                // If the date string couldn't be parsed, display the unmodified string.
+                                text2.setText(dStr);
+                            }
                         // Format the time according to the current locale.
-                    } else if ((dvr == VR.TM) && (android.os.Build.VERSION.SDK_INT >= 18)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
-                        try {
-                            // Note: The DICOM standard allows for 6 fractional seconds,
-                            // but Java can only handle 3.
-                            // Therefore, we must limit the string length.
-                            Date vDate = sdf.parse(dStr.substring(0, 10));
-                            String dPat = DateFormat.getBestDateTimePattern(
-                                    mRes.getConfiguration().locale, "HHmmssSSS");
-                            sdf.applyPattern(dPat);
-                            text2.setText(sdf.format(vDate));
-                        } catch (Exception e) {
-                            // If the time string couldn't be parsed, display the unmodified string.
+                        } else if (dvr == VR.TM) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
+                            try {
+                                // Note: The DICOM standard allows for 6 fractional seconds,
+                                // but Java can only handle 3.
+                                // Therefore, we must limit the string length.
+                                Date vDate = sdf.parse(dStr.substring(0, 10));
+                                String dPat = DateFormat.getBestDateTimePattern(
+                                        mRes.getConfiguration().locale, "HHmmssSSS");
+                                sdf.applyPattern(dPat);
+                                text2.setText(sdf.format(vDate));
+                            } catch (Exception e) {
+                                // If the time string couldn't be parsed, display the unmodified string.
+                                text2.setText(dStr);
+                            }
+                        } else {
                             text2.setText(dStr);
                         }
                     } else {

@@ -20,7 +20,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+
     <string name="app_name">Simply DICOM</string>
     <string name="app_about">Simply DICOM\n\nThis DICOM image viewer utilizes the OpenCV and dcm4che2 libraries.\n\nThis app is currently in public beta.  If you experience any errors, please email me.\n\nAuthor: Christopher Boyd\nE-mail: help@simplydicom.com\nCopyright 2013–2014</string>
     <!-- Menus -->
@@ -5058,6 +5060,7 @@
     <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
     <string name="err_jpeg">Compressed/JPEG images are not currently supported.</string>
     <string name="err_null_image">Pixel data is null.</string>
+    <string name="err_unknown_dicom">Unknown DICOM transfer syntax.</string>
     <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
     <string name="err_ok">OK</string>
     

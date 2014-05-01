@@ -23,24 +23,24 @@
 
 package us.cboyd.android.dicom;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-
-import us.cboyd.android.shared.ExternalIO;
-import us.cboyd.shared.NotHidFilter;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import us.cboyd.android.shared.ExternalIO;
+import us.cboyd.shared.NotHidFilter;
 
 /**
  * DICOM ListFragment
@@ -145,7 +145,8 @@ public class DcmListFragment extends ListFragment {
 		// Otherwise, display info about the DICOM file selected.
 		} else {
 	        // Notify the parent activity of selected item
-	        mCallback.onFileSelected(position, (ArrayList<String>) mFileList.clone(), mCurrDir);
+            ArrayList<String> listCopy = new ArrayList<String>(mFileList);
+	        mCallback.onFileSelected(position, listCopy, mCurrDir);
 		}
 		
 	}
@@ -175,18 +176,19 @@ public class DcmListFragment extends ListFragment {
 			return;
 		// If this fragment is visible:
 		if (this.isVisible()) {
-			// If the directory is the external storage directory or there is no parent,
-			// stop showing the Home/Up button.
-			if (mCurrDir.getParent() == null
-					|| mCurrDir.equals(Environment.getExternalStorageDirectory())) {
-				ActionBar actionBar = getActivity().getActionBar();
-		        actionBar.setHomeButtonEnabled(false);
-		        actionBar.setDisplayHomeAsUpEnabled(false);
-			} else {
-				ActionBar actionBar = getActivity().getActionBar();
-		        actionBar.setHomeButtonEnabled(true);
-		        actionBar.setDisplayHomeAsUpEnabled(true);
-			}
+            ActionBar actionBar = getActivity().getActionBar();
+            if (actionBar != null) {
+                // If the directory is the external storage directory or there is no parent,
+                // stop showing the Home/Up button.
+                if (mCurrDir.getParent() == null
+                        || mCurrDir.equals(Environment.getExternalStorageDirectory())) {
+                    actionBar.setHomeButtonEnabled(false);
+                    actionBar.setDisplayHomeAsUpEnabled(false);
+                } else {
+                    actionBar.setHomeButtonEnabled(true);
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+                }
+            }
 		}
 		
 		// Clear the directory and file lists
