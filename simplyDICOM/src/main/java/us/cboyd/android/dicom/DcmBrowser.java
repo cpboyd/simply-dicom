@@ -23,14 +23,6 @@
 
 package us.cboyd.android.dicom;
 
-import java.io.File;
-import java.util.ArrayList;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-
-import us.cboyd.android.shared.ExternalIO;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -41,7 +33,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
@@ -53,6 +44,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+
+import java.io.File;
+import java.util.ArrayList;
+
+import us.cboyd.android.shared.ExternalIO;
 
 /**
  * DICOM Browser
@@ -241,19 +241,9 @@ public class DcmBrowser extends FragmentActivity
 	
 	/** navigateUp replicates "Back" functionality for the Home/Up key. */
 	public boolean navigateUp() {
-		File temp = mListFragment.getDir();
 		if (mListFragment.isVisible()) {
-			if (ExternalIO.isRoot(temp)) {
-				ActionBar actionBar = getActionBar();
-		        actionBar.setHomeButtonEnabled(false);
-		        actionBar.setDisplayHomeAsUpEnabled(false);
-		        return false;
-			} else {
-				temp = temp.getParentFile();
-				mListFragment.setDir(temp);
-			}
+			mListFragment.setSelection(0);
 		}
-		onDirectorySelected(temp);
 		return true;
 	}
 
@@ -303,7 +293,7 @@ public class DcmBrowser extends FragmentActivity
 	}
 	
 	public String getFolderTitle(File currDir) {
-		if (currDir.equals(Environment.getExternalStorageDirectory())) {
+		if (currDir == null) {
 			return getResources().getString(R.string.app_name);
 		} else {
 			return currDir.getName();
