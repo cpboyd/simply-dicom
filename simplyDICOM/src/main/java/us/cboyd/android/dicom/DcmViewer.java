@@ -23,28 +23,6 @@
 
 package us.cboyd.android.dicom;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.io.DicomInputStream;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.contrib.Contrib;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
-
-import us.cboyd.android.shared.ExternalIO;
-import us.cboyd.android.shared.ImageContrastView;
-import us.cboyd.android.shared.MultiGestureDetector;
-import us.cboyd.shared.Geometry;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -67,6 +45,29 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
+import org.dcm4che2.io.DicomInputStream;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.contrib.Contrib;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import us.cboyd.android.shared.ExternalIO;
+import us.cboyd.android.shared.ImageContrastView;
+import us.cboyd.android.shared.MultiGestureDetector;
+import us.cboyd.shared.Geometry;
 
 /**
  * DICOMViewer Class
@@ -105,6 +106,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
     private DicomObject 		mDicomObject 	= null;
     private ImageView 			mImageView;
     private ImageContrastView 	mCmapView;
+    private String              mCurrFilename;
     /// OLD:
     private Button 			mPreviousButton, mNextButton;
     private TextView 		mIndexTextView, mCountTextView;
@@ -190,6 +192,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			// Get the files array = get the files contained
 			// in the parent of the current file
 			mFilePath = currentFile.getParentFile();
+            mCurrFilename = currentFile.getName();
 			
 			// If the files array is null or its length is less than 1,
 			// there is an error because it must at least contain 1 file:
@@ -291,20 +294,19 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			double[] startPos 	= mDicomObject.getDoubles(Tag.ImagePositionPatient);
 			mInstance 	= new int[] {instanceNum - 1, rows/2, cols/2};
 			mMatList 	= new ArrayList<Mat>();
-		    int i = 0;
-		    for(i = 1; i < instanceNum; i++) {
+
+		    for(int i = 1; i < instanceNum; i++) {
 		    	mMatList.add(new Mat(rows, cols, CvType.CV_32S));
 		    }
 		    mMatList.add(mMat);
 		    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum);
 			DicomObject cdo = null;
-			for(i = 0; i < mFileList.size(); i++) {
-				if (i != mCurrentFileIndex) {
+			for(String currFile : mFileList) {
+				if (!currFile.equals(mCurrFilename)) {
 					// Read in the DicomObject
 					try {
 						DicomInputStream dis;
-						Log.i("cpb", "Filename: " + mFileList.get(i));
-						dis = new DicomInputStream(new File(mFilePath, mFileList.get(i)));
+						dis = new DicomInputStream(new File(mFilePath, currFile));
 						cdo = dis.readDicomObject();
 						dis.close();
 					} catch (IOException e) {
@@ -336,7 +338,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 									spacing[1] / mPixelSpacing[2], mPixelSpacing[2] / spacing[0]};
 						}
 						mImageCount++;
-					    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum + " i: " + i);
+					    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum + " currFile: " + currFile);
 					}
 				}
 			}
@@ -608,8 +610,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	
 	/**
 	 * Update the current image
-	 * 
-	 * @param image
+	 *
 	 */
 	private void updateImage() {
 		Core.MinMaxLocResult minmax = Core.minMaxLoc(mMat);
