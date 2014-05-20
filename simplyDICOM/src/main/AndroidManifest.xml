@@ -21,7 +21,7 @@
  * THE SOFTWARE.
  -->
 <manifest package="us.cboyd.android.dicom"
-      xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.5.1" android:versionCode="8">
+      xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.5.2" android:versionCode="9">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <application 
         android:allowBackup="true"
