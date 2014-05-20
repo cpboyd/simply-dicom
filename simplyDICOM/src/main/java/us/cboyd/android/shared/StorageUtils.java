@@ -113,6 +113,13 @@ public class StorageUtils {
                     StringTokenizer tokens = new StringTokenizer(line, " ");
                     String unused = tokens.nextToken(); //device
                     String mount_point = tokens.nextToken(); //mount point
+                    String mount_dir = mount_point.substring(mount_point.lastIndexOf("/") + 1);
+                    String[] storageDirs = (new File("/storage/")).list();
+                    if (storageDirs != null) {
+                        if (mount_point.startsWith("/mnt/media_r") && Arrays.asList(storageDirs).contains(mount_dir)) {
+                            mount_point = "/storage/" + mount_dir;
+                        }
+                    }
                     if (paths.contains(mount_point)) {
                         continue;
                     }

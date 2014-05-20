@@ -82,7 +82,7 @@ public class DcmBrowser extends FragmentActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dcm_browser);
-        
+
         FragmentManager fragManager = getFragmentManager();
         if (savedInstanceState != null) {
 	        mListFragment = (DcmListFragment) fragManager.getFragment(savedInstanceState, DcmVar.FRAGLIST);
