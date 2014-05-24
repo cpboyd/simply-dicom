@@ -62,6 +62,9 @@
 -keep class org.dcm4che2.** {
   public protected private *;
 }
+-keep class org.opencv.** {
+  public protected private *;
+}
 
 -libraryjars libs
 -keep class android.support.** {

@@ -328,7 +328,8 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						}
                         mMatList.get(instanceNum - 1).put(0, 0, cdo.getInts(Tag.PixelData));
 
-						if ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0])) {
+						if ((spacing != null) &&
+                                ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0]))) {
 							double[] nextPos = cdo.getDoubles(Tag.ImagePositionPatient);
 							// mPixelSpacing{X, Y, Z}
 							mPixelSpacing = new double[] {spacing[1], spacing[0], 
