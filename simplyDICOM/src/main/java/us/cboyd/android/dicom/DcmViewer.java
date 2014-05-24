@@ -321,13 +321,13 @@ public class DcmViewer extends Activity implements OnTouchListener,
 							showExitAlertDialog("ERROR: Loading DICOM Series",
 									"The number of rows and columns varies between instances/images.");
 						}
+
 						instanceNum = cdo.getInt(Tag.InstanceNumber);
-						if (instanceNum > mMatList.size()) {
-							for(int j = 0; j < (instanceNum - mMatList.size()); j++) {
-						    	mMatList.add(new Mat(rows, cols, CvType.CV_32S));
-						    }
+						while (instanceNum > mMatList.size()) {
+                            mMatList.add(new Mat(rows, cols, CvType.CV_32S));
 						}
-						mMatList.get(instanceNum - 1).put(0, 0, cdo.getInts(Tag.PixelData));
+                        mMatList.get(instanceNum - 1).put(0, 0, cdo.getInts(Tag.PixelData));
+
 						if ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0])) {
 							double[] nextPos = cdo.getDoubles(Tag.ImagePositionPatient);
 							// mPixelSpacing{X, Y, Z}

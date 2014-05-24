@@ -53,6 +53,9 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -166,6 +169,9 @@ public class DcmInfoFragment extends Fragment {
     	mDicomObject = null;
     	if ((mCurrDir != null) && (mFileList != null)
     			&& (mPosition >= 0) && (mPosition < mFileList.size())) {
+            DicomElement de;
+            String SOPClass = "null";
+            String TransferSyntax = "null";
 	    	try {
 				// Read in the DicomObject
 				DicomInputStream dis = new DicomInputStream(new FileInputStream(getDicomFile()));
@@ -175,19 +181,29 @@ public class DcmInfoFragment extends Fragment {
 				
 				// Get the SOP Class element
                 SpecificCharacterSet cs = new SpecificCharacterSet("");
-				DicomElement de = mDicomObject.get(Tag.MediaStorageSOPClassUID);
-				String SOPClass = "null";
+				de = mDicomObject.get(Tag.MediaStorageSOPClassUID);
 				if (de != null)
 					SOPClass = de.getString(cs, true);
 				Log.i("cpb", "SOP Class: " + SOPClass);
 
                 // Get the Transfer Syntax element
                 de = mDicomObject.get(Tag.TransferSyntaxUID);
-                String TransferSyntax = "null";
                 if (de != null)
                     TransferSyntax = de.getString(cs, true);
                 Log.i("cpb", "Transfer Syntax: " + TransferSyntax);
 
+            } catch (IOException ex) {
+                showImage(false);
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                ex.printStackTrace(pw);
+                mErrText.setText(mRes.getString(R.string.err_file_read) + mFileList.get(mPosition)
+                        + "\n\nIO Exception: " + ex.getMessage() + "\n\n" + sw.toString());
+                pw.close();
+                return;
+            }
+
+            try {
                 showImage(false);
 				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
                     // TODO: DICOMDIR support
@@ -230,8 +246,12 @@ public class DcmInfoFragment extends Fragment {
 				
 			} catch (Exception ex) {
 				showImage(false);
-	            mErrText.setText(mRes.getString(R.string.err_file_read) + mFileList.get(mPosition)
-						+ "\n\n" + ex.getMessage());
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                ex.printStackTrace(pw);
+	            mErrText.setText(mRes.getString(R.string.err_file_display) + mFileList.get(mPosition)
+						+ "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
+                pw.close();
 			}
     	} else {
     		showImage(false);
