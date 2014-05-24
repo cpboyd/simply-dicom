@@ -223,7 +223,10 @@ public class DcmInfoFragment extends Fragment {
                         temp.put(0, 0, de.getInts(true));
                         // [Y, X] or [row, column]
                         double[] spacing = mDicomObject.getDoubles(Tag.PixelSpacing);
-                        double scaleY2X = spacing[1] / spacing[0];
+                        double scaleY2X = 1.0d;
+                        if (spacing != null) {
+                            scaleY2X = spacing[1] / spacing[0];
+                        }
 
                         // Determine the minmax
                         Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
