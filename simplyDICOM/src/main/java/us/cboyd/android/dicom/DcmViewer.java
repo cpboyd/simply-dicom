@@ -112,8 +112,6 @@ public class DcmViewer extends Activity implements OnTouchListener,
     private TextView 		mIndexTextView, mCountTextView;
     private SeekBar 		mIndexSeekBar;
     private LinearLayout 	mNavigationBar;
-    /// OLD FILE:
-    private int mCurrentFileIndex;
     
     private MultiGestureDetector mMultiDetector;
 
@@ -174,6 +172,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			// Get the File object for the current file
 			File currentFile = new File(fileName);
 			Log.i("cpb","Loading file...");
+            System.gc();
 			// Read in the DicomObject
 			try {
 				DicomInputStream dis;
@@ -205,13 +204,13 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			} else {
 				
 				// Get the file index in the array
-				mCurrentFileIndex = getIndex(currentFile);
+				int currFileIndex = getIndex(currentFile);
 				
 				// If the current file index is negative
 				// or greater or equal to the files array
 				// length there is an error
-				if (mCurrentFileIndex < 0
-						|| mCurrentFileIndex >= mFileList.size()) {
+				if (currFileIndex < 0
+						|| currFileIndex >= mFileList.size()) {
 					
 					showExitAlertDialog("ERROR: Loading file",
 							"This image file could not be found.");
@@ -227,11 +226,11 @@ public class DcmViewer extends Activity implements OnTouchListener,
 					} else {
 						
 						// Set the visibility of the previous button
-						if (mCurrentFileIndex == 0) {
+						if (currFileIndex == 0) {
 							
 							mPreviousButton.setVisibility(View.INVISIBLE);
 							
-						} else if (mCurrentFileIndex == (mFileList.size() - 1)) {
+						} else if (currFileIndex == (mFileList.size() - 1)) {
 							
 							mNextButton.setVisibility(View.INVISIBLE);
 							
@@ -292,6 +291,10 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			int 	instanceNum = mDicomObject.getInt(Tag.InstanceNumber);
 			double[] spacing 	= mDicomObject.getDoubles(Tag.PixelSpacing);
 			double[] startPos 	= mDicomObject.getDoubles(Tag.ImagePositionPatient);
+//            if ((instanceNum < 1) || (mFileList.size() == 1)) {
+//                mNavigationBar.setVisibility(View.INVISIBLE);
+//                return;
+//            }
 			mInstance 	= new int[] {instanceNum - 1, rows/2, cols/2};
 			mMatList 	= new ArrayList<Mat>();
 
@@ -301,11 +304,17 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		    mMatList.add(mMat);
 		    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum);
 			DicomObject cdo = null;
+            mDicomObject = null;
+            DicomInputStream dis = null;
 			for(String currFile : mFileList) {
+                Log.i("cpb", "Loop: " + currFile);
 				if (!currFile.equals(mCurrFilename)) {
+                    cdo = null;
+                    dis = null;
+                    Log.i("cpb", "Attempting GC");
+                    System.gc();
 					// Read in the DicomObject
 					try {
-						DicomInputStream dis;
 						dis = new DicomInputStream(new File(mFilePath, currFile));
 						cdo = dis.readDicomObject();
 						dis.close();
@@ -313,6 +322,26 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+
+                    // Check the instance number
+                    instanceNum = cdo.getInt(Tag.InstanceNumber);
+                    // Spacing definition moved up
+                    if ((spacing != null) &&
+                            ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0]))) {
+                        double[] nextPos = cdo.getDoubles(Tag.ImagePositionPatient);
+                        // mPixelSpacing{X, Y, Z}
+                        mPixelSpacing = new double[] {spacing[1], spacing[0],
+                                Math.abs(startPos[2] - nextPos[2])};
+                        // mScaleY2X = mScaleSpacing[mAxis]
+                        mScaleSpacing = new double[] {spacing[1] / spacing[0],
+                                spacing[1] / mPixelSpacing[2], mPixelSpacing[2] / spacing[0]};
+                    }
+                    // If it's less than 1, continue to the next image.
+                    if (instanceNum < 1) {
+                        Log.i("cpb", "Skipping file because no instance number");
+                        continue;
+                    }
+
 					int rows2 = cdo.getInt(Tag.Rows);
 					int cols2 = cdo.getInt(Tag.Columns);
 					if (studyUID.equals(cdo.getString(Tag.StudyInstanceUID)) &&
@@ -322,22 +351,13 @@ public class DcmViewer extends Activity implements OnTouchListener,
 									"The number of rows and columns varies between instances/images.");
 						}
 
-						instanceNum = cdo.getInt(Tag.InstanceNumber);
-						while (instanceNum > mMatList.size()) {
+                        // If there isn't enough space in the list, allocate more.
+						while (mMatList.size() < instanceNum) {
                             mMatList.add(new Mat(rows, cols, CvType.CV_32S));
 						}
+
                         mMatList.get(instanceNum - 1).put(0, 0, cdo.getInts(Tag.PixelData));
 
-						if ((spacing != null) &&
-                                ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0]))) {
-							double[] nextPos = cdo.getDoubles(Tag.ImagePositionPatient);
-							// mPixelSpacing{X, Y, Z}
-							mPixelSpacing = new double[] {spacing[1], spacing[0], 
-									Math.abs(startPos[2] - nextPos[2])};
-							// mScaleY2X = mScaleSpacing[mAxis]
-							mScaleSpacing = new double[] {spacing[1] / spacing[0],
-									spacing[1] / mPixelSpacing[2], mPixelSpacing[2] / spacing[0]};
-						}
 						mImageCount++;
 					    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum + " currFile: " + currFile);
 					}
