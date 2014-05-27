@@ -347,8 +347,9 @@ public class DcmViewer extends Activity implements OnTouchListener,
 					if (studyUID.equals(cdo.getString(Tag.StudyInstanceUID)) &&
 					 	seriesUID.equals(cdo.getString(Tag.SeriesInstanceUID))) {
 						if (rows != rows2 || cols != cols2) {
-							showExitAlertDialog("ERROR: Loading DICOM Series",
+							Log.i("cpb", "Skipping file... " +
 									"The number of rows and columns varies between instances/images.");
+                            continue;
 						}
 
                         // If there isn't enough space in the list, allocate more.

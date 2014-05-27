@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/list_ffirst"
+        android:title="@string/menu_ffirst"
+        android:checkable="true" />
+
+    <item
      android:id="@+id/show_hidden" 
      android:title="@string/menu_hidden" 
      android:checkable="true" />

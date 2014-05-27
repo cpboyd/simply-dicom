@@ -52,6 +52,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -70,8 +71,8 @@ import java.util.List;
  */
 public class DcmInfoFragment extends Fragment {
     private static String 		mCurrDir 	 = null;
+    private static String 		mCurrFile 	 = null;
     private static DicomObject 	mDicomObject = null;
-    private static int 			mPosition 	 = 0;
     private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
     private static ListView mTagList;
@@ -107,9 +108,9 @@ public class DcmInfoFragment extends Fragment {
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
         	Log.i("cpb","DcmInfoFrag: savedInstance");
-            mPosition	= savedInstanceState.getInt(DcmVar.POSITION);
         	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.FILELIST);
             mCurrDir 	= savedInstanceState.getString(DcmVar.CURRDIR);
+            mCurrFile   = savedInstanceState.getString(DcmVar.CURRFILE);
         }
         
         // Inflate the layout for this fragment
@@ -140,41 +141,34 @@ public class DcmInfoFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             // Set article based on argument passed in
-            updateDicomInfo(args.getInt(DcmVar.POSITION),
-            		args.getStringArrayList(DcmVar.FILELIST), args.getString(DcmVar.CURRDIR));
-        } else if ((mCurrDir != null) && (mFileList != null) && (mPosition != 0)) {
+            updateDicomInfo(args.getStringArrayList(DcmVar.FILELIST),
+                    args.getString(DcmVar.CURRDIR), args.getString(DcmVar.CURRFILE));
+        } else if ((mCurrDir != null) && (mFileList != null) && (mCurrFile != null)) {
             // Set article based on saved instance state defined during onCreateView
-            updateDicomInfo(mPosition, mFileList, mCurrDir);
+            updateDicomInfo(mFileList, mCurrDir, mCurrFile);
         }
-    }
-    
-    public String getDicomFile() {
-    	Log.i("cpb", "File DIR: " + mCurrDir);
-    	Log.i("cpb", "File ID: " + mPosition + " FileList count: " + mFileList.size());
-    	return mCurrDir + '/' + mFileList.get(mPosition);
     }
     
     public List<String> getFileList() {
     	return mFileList;
     }
 
-    public void updateDicomInfo(int position, ArrayList<String> dirList, String currDir) {
-    	mPosition 	= position;
+    public void updateDicomInfo(ArrayList<String> dirList, String currDir, String currFile) {
     	mFileList 	= dirList;
     	mCurrDir 	= currDir;
+        mCurrFile   = currFile;
     	updateDicomInfo();
     }
 
     public void updateDicomInfo() {
     	mDicomObject = null;
-    	if ((mCurrDir != null) && (mFileList != null)
-    			&& (mPosition >= 0) && (mPosition < mFileList.size())) {
+    	if ((mCurrDir != null) && (mFileList != null) && (mCurrFile != null)) {
             DicomElement de;
             String SOPClass = "null";
             String TransferSyntax = "null";
 	    	try {
 				// Read in the DicomObject
-				DicomInputStream dis = new DicomInputStream(new FileInputStream(getDicomFile()));
+				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrDir, mCurrFile)));
 				//mDicomObject = dis.readFileMetaInformation();
 				mDicomObject = dis.readDicomObject();
 				dis.close();
@@ -197,7 +191,7 @@ public class DcmInfoFragment extends Fragment {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-                mErrText.setText(mRes.getString(R.string.err_file_read) + mFileList.get(mPosition)
+                mErrText.setText(mRes.getString(R.string.err_file_read) + mCurrFile
                         + "\n\nIO Exception: " + ex.getMessage() + "\n\n" + sw.toString());
                 pw.close();
                 return;
@@ -252,7 +246,7 @@ public class DcmInfoFragment extends Fragment {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-	            mErrText.setText(mRes.getString(R.string.err_file_display) + mFileList.get(mPosition)
+	            mErrText.setText(mRes.getString(R.string.err_file_display) + mCurrFile
 						+ "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
                 pw.close();
 			}
@@ -423,9 +417,9 @@ public class DcmInfoFragment extends Fragment {
         super.onSaveInstanceState(outState);
 
         // Save the current article selection in case we need to recreate the fragment
-        outState.putInt(DcmVar.POSITION, mPosition);
         outState.putStringArrayList(DcmVar.FILELIST, mFileList);
-        outState.putString(DcmVar.FILELIST, mCurrDir);
+        outState.putString(DcmVar.CURRDIR, mCurrDir);
+        outState.putString(DcmVar.CURRFILE, mCurrFile);
     }
     
     public void showImage(boolean isImage) {
@@ -437,5 +431,10 @@ public class DcmInfoFragment extends Fragment {
     		mImLayout.setVisibility(View.GONE);
     		mErrText.setVisibility(View.VISIBLE);
     	}
+    }
+
+    // TODO: Remove function (needed for DcmViewer)
+    public String getDicomFile() {
+        return mCurrDir + '/' + mCurrFile;
     }
 }

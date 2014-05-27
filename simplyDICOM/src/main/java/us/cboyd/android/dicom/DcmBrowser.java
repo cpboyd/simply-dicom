@@ -269,6 +269,11 @@ public class DcmBrowser extends FragmentActivity
        		dialog.setTitle(getResources().getString(R.string.app_name));
        		dialog.show();
 			return true;
+
+        case R.id.list_ffirst:
+            item.setChecked(!item.isChecked());
+            mListFragment.listFilesFirst(item.isChecked());
+            return true;
 			
 		case R.id.show_hidden:
 			item.setChecked(!item.isChecked());
@@ -310,14 +315,7 @@ public class DcmBrowser extends FragmentActivity
 		}
     }
 	
-    public void onFileSelected(int position, ArrayList<String> fileList, File currDir) {
-        // The user selected a DICOM file from the DcmListFragment
-    	position -= 1;
-    	if ((position < 0) || (position > fileList.size())) {
-    		// TODO: Error
-    		return;
-    	}
-
+    public void onFileSelected(ArrayList<String> fileList, File currDir, String currFile) {
         if (mFragmented && mListFragment.isVisible()) {
             // If we're in the one-pane layout and need to swap fragments
         	
@@ -328,9 +326,9 @@ public class DcmBrowser extends FragmentActivity
 
             // Create fragment and give it an argument for the selected article
             Bundle args = new Bundle();
-            args.putInt(DcmVar.POSITION, position);
             args.putStringArrayList(DcmVar.FILELIST, fileList);
             args.putString(DcmVar.CURRDIR, currDir.getPath());
+            args.putString(DcmVar.CURRFILE, currFile);
             mInfoFragment.setArguments(args);
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
@@ -346,9 +344,9 @@ public class DcmBrowser extends FragmentActivity
             // If we're in the two-pane layout or already displaying the DcmInfoFragment
 
             // Call a method in the DcmInfoFragment to update its content
-    		mInfoFragment.updateDicomInfo(position, fileList, currDir.getPath());
+    		mInfoFragment.updateDicomInfo(fileList, currDir.getPath(), currFile);
         }
-        setTitle(fileList.get(position));
+        setTitle(currFile);
     }
 
     /** Load the current DICOM series */

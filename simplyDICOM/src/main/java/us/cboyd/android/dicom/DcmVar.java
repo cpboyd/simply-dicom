@@ -38,11 +38,12 @@ public class DcmVar {
     						SAGGITAL 	= 2;
 
     /** Bundle Key / Intent Extra */
-    public final static String 	DIRLIST = "dirlist",
-    							CURRDIR = "currdir",
+    public final static String 	DIRLIST  = "dirlist",
+    							CURRDIR  = "currdir",
+                                CURRFILE = "currfile",
     							FILELIST = "filelist",
     							POSITION = "position",
-    							DCMFILE = "DCMFile",
+    							DCMFILE  = "DCMFile",
     							FRAGLIST = "fragList",
     							FRAGINFO = "fragInfo";
 	

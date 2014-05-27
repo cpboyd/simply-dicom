@@ -57,13 +57,14 @@ public class DcmListFragment extends ListFragment {
     // The container Activity must implement this interface so the frag can deliver messages
     public interface OnFileSelectedListener {
         /** Called by DcmListFragment when a list item is selected */
-        public void onFileSelected(int position, ArrayList<String> dirList, File currDir);
+        public void onFileSelected(ArrayList<String> dirList, File currDir, String currFile);
         public void onDirectorySelected(File currDir);
     }
 	
 	/** Current directory. */
 	private File 	mCurrDir, mRootDir;
 	private boolean mShowHidden = false;
+    private boolean mFilesFirst = false;
     private boolean mIsStorage, mIsRoot;
 	private ArrayList<String> mDirList = new ArrayList<String>();
 	private ArrayList<String> mFileList = new ArrayList<String>();
@@ -167,14 +168,15 @@ public class DcmListFragment extends ListFragment {
             }
 
             // If it's a directory:
-            if (position > mFileList.size()) {
+            if ((mFilesFirst && (position > mFileList.size())) ||
+               (!mFilesFirst && (position < mDirList.size()-mFileList.size()))){
                 setDir(new File(mCurrDir, itemName));
                 mCallback.onDirectorySelected(mCurrDir);
                 // Otherwise, display info about the DICOM file selected.
             } else {
                 // Notify the parent activity of selected item
                 ArrayList<String> listCopy = new ArrayList<String>(mFileList);
-                mCallback.onFileSelected(position, listCopy, mCurrDir);
+                mCallback.onFileSelected(listCopy, mCurrDir, itemName);
             }
         }
 		
@@ -196,7 +198,11 @@ public class DcmListFragment extends ListFragment {
 	/** Set the current directory and update the list. */
 	public void setDir(File directory) {
 		mCurrDir    = directory;
-        mIsStorage  = false;
+        if (directory == null) {
+            mIsStorage = true;
+        } else {
+            mIsStorage = false;
+        }
 		setDir();
 	}
 	
@@ -270,7 +276,11 @@ public class DcmListFragment extends ListFragment {
                 Collections.sort(mFileList, String.CASE_INSENSITIVE_ORDER);
 
                 // Pre-pend mFileList to mDirList
-                mDirList.addAll(0, mFileList);
+                if (mFilesFirst) {
+                    mDirList.addAll(0, mFileList);
+                } else {
+                    mDirList.addAll(mFileList);
+                }
             }
 
             // If not at the root directory, add the ability to go up to the parent directory.
@@ -315,7 +325,8 @@ public class DcmListFragment extends ListFragment {
                             text2.setText("Up to parent directory");
                         }
                     // Directory
-                    } else if (position > mFileList.size()) {
+                    } else if ((mFilesFirst && (position > mFileList.size())) ||
+                              (!mFilesFirst && (position < mDirList.size()-mFileList.size()))){
                         icon.setImageResource(R.drawable.ic_action_collection);
                         text2.setText("Directory");
                     // Otherwise, display info about the file.
@@ -335,6 +346,10 @@ public class DcmListFragment extends ListFragment {
 		mShowHidden = show;
 		setDir();
 	}
-	
+
+    public void listFilesFirst(boolean checked) {
+        mFilesFirst = checked;
+        setDir();
+    }
 
 }
