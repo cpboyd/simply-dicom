@@ -20,27 +20,23 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.shared;
+apply plugin: 'com.android.library'
 
-import java.io.File;
-import java.io.FileFilter;
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
 
-/**
- * No-Hidden FileFilter:
- * List only files & folders that aren't hidden.
- * 
- * @author Christopher Boyd
- *
- */
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 21
+        versionCode 24100
+        versionName "2.4.10"
+    }
 
-public class NotHidFilter implements FileFilter {
-	
-	/* 
-	 * Indicates whether a specific file should be included in a pathname list.
-	 */
-	public boolean accept(File path) {
-		// Return true if the path isn't hidden.
-		return !path.isHidden();
-	}
-	
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 }

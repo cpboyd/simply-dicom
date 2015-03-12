@@ -20,27 +20,5 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<resources>
-    <string name="app_name">simplyDICOM</string>
-    <string-array name="planes_array">
-        <item>Transversal</item>
-        <item>Coronal</item>
-        <item>Sagital</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>Cinza</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">Invert</string>
-</resources>
+
+<manifest package="org.opencv" />

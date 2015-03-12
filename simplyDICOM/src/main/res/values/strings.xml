@@ -1,33 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 
- * Copyright (C) 2013 Christopher Boyd
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- -->
+
+<!--
+  ~ Copyright (C) 2013 - 2015. Christopher Boyd
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in
+  ~ all copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  ~ THE SOFTWARE.
+  -->
 <resources xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingTranslation">
 
-    <string name="app_name">Simply DICOM</string>
-    <string name="app_about">Simply DICOM\n\nThis DICOM image viewer utilizes the OpenCV and dcm4che2 libraries.\n\nThis app is currently in public beta.  If you experience any errors, please email me.\n\nAuthor: Christopher Boyd\nE-mail: help@simplydicom.com\nCopyright 2013–2014</string>
+    <string name="app_name">simplyDICOM</string>
+    <string name="app_about">This DICOM image viewer utilizes the OpenCV and dcm4che3 libraries.\n\nThis app is currently in public beta.  If you experience any errors, please email me.\n\nAuthor: Christopher Boyd\nE-mail: help@simplydicom.com\nCopyright 2013–2015</string>
     <!-- Menus -->
     <string name="menu_about">About</string>
-    <string name="menu_ffirst">List files first</string>
+    <string name="menu_ffirst">Files before folders</string>
     <string name="menu_hidden">Show hidden files</string>
     <string name="menu_taginfo">Show VR/VM for tags</string>
     <string name="menu_debug">Debug Mode</string>
@@ -5049,9 +5050,9 @@
 	<string name="uid_1_2_840_10008_6_1_934">Intravascular OCT Flush Agent;Context</string>
     
     <!-- Error Messages (Displayed to User) -->
-    <string name="err_title_disk">ERROR: No external storage found.</string>
+    <string name="err_title_disk">ERROR: No storage found.</string>
     <string name="err_mesg_disk">Please connect or insert external storage.</string>
-    <string name="err_close">Close app.</string>
+    <string name="err_close">Exit</string>
     <string name="err_file_read">"ERROR: Failed to read file "</string>
     <string name="err_file_display">"ERROR: Failed to display image for "</string>
     <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
@@ -5067,6 +5068,7 @@
     
     <!-- DICOM Info Tags -->
     <string-array name="dcmtag_default">
+        <item>00020002</item>
         <item>00020010</item>
         <item>00280004</item>
         <item>00080016</item>
@@ -5088,4 +5090,27 @@
 	    <item>00080070</item>
 	    <item>00080080</item>
     </string-array>
+    <integer-array name="dcmint_default">
+        <item>0x00020002</item>
+        <item>0x00020010</item>
+        <item>0x00280004</item>
+        <item>0x00080016</item>
+        <item>0x00080018</item>
+        <item>0x00100010</item>
+        <item>0x00100020</item>
+        <item>0x00100030</item>
+        <item>0x00100040</item>
+        <item>0x0020000D</item>
+        <item>0x00080020</item>
+        <item>0x00080030</item>
+        <item>0x00200010</item>
+        <item>0x00080090</item>
+        <item>0x00080050</item>
+        <item>0x0020000E</item>
+        <item>0x00080021</item>
+        <item>0x00080031</item>
+        <item>0x00200011</item>
+        <item>0x00080070</item>
+        <item>0x00080080</item>
+    </integer-array>
 </resources>

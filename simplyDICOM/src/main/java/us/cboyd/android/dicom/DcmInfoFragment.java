@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2013-2014 Christopher Boyd
- * 
+ * Copyright (C) 2013 - 2015. Christopher Boyd
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,7 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- * 
  */
 
 package us.cboyd.android.dicom;
@@ -40,13 +39,12 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.SpecificCharacterSet;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.UID;
-import org.dcm4che2.data.VR;
-import org.dcm4che2.io.DicomInputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.SpecificCharacterSet;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.io.DicomInputStream;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -66,13 +64,13 @@ import java.util.List;
  * DICOM InfoFragment
  * 
  * @author Christopher Boyd
- * @version 0.3
+ * @version 0.6
  *
  */
 public class DcmInfoFragment extends Fragment {
     private static String 		mCurrDir 	 = null;
     private static String 		mCurrFile 	 = null;
-    private static DicomObject 	mDicomObject = null;
+    private static Attributes   mAttributes = null;
     private static ArrayList<String> mFileList 	 = null;
     private static Button 	mLoadButton;
     private static ListView mTagList;
@@ -161,29 +159,23 @@ public class DcmInfoFragment extends Fragment {
     }
 
     public void updateDicomInfo() {
-    	mDicomObject = null;
     	if ((mCurrDir != null) && (mFileList != null) && (mCurrFile != null)) {
-            DicomElement de;
             String SOPClass = "null";
             String TransferSyntax = "null";
 	    	try {
 				// Read in the DicomObject
 				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrDir, mCurrFile)));
-				//mDicomObject = dis.readFileMetaInformation();
-				mDicomObject = dis.readDicomObject();
+                mAttributes = dis.getFileMetaInformation();
+                dis.readAttributes(mAttributes, -1, -1);
+                mAttributes.trimToSize();
+                mAttributes.internalizeStringValues(true);
 				dis.close();
-				
+				SOPClass = mAttributes.getString(Tag.MediaStorageSOPClassUID);
+                TransferSyntax = mAttributes.getString(Tag.TransferSyntaxUID);
 				// Get the SOP Class element
-                SpecificCharacterSet cs = new SpecificCharacterSet("");
-				de = mDicomObject.get(Tag.MediaStorageSOPClassUID);
-				if (de != null)
-					SOPClass = de.getString(cs, true);
 				Log.i("cpb", "SOP Class: " + SOPClass);
 
                 // Get the Transfer Syntax element
-                de = mDicomObject.get(Tag.TransferSyntaxUID);
-                if (de != null)
-                    TransferSyntax = de.getString(cs, true);
                 Log.i("cpb", "Transfer Syntax: " + TransferSyntax);
 
             } catch (IOException ex) {
@@ -206,17 +198,17 @@ public class DcmInfoFragment extends Fragment {
                     // TODO: JPEG support
                     mErrText.setText(mRes.getString(R.string.err_jpeg));
                 } else if (TransferSyntax.startsWith("1.2.840.10008.1.2")) {
-                    de= mDicomObject.get(Tag.PixelData);
-                    if (de == null) {
+                    int[] pixels = mAttributes.getInts(Tag.PixelData);
+                    if (pixels == null) {
                         mErrText.setText(mRes.getString(R.string.err_null_image));
                     } else {
                         showImage(true);
-                        int rows = mDicomObject.getInt(Tag.Rows);
-                        int cols = mDicomObject.getInt(Tag.Columns);
+                        int rows = mAttributes.getInt(Tag.Rows, 1);
+                        int cols = mAttributes.getInt(Tag.Columns, 1);
                         Mat temp = new Mat(rows, cols, CvType.CV_32S);
-                        temp.put(0, 0, de.getInts(true));
+                        temp.put(0, 0, pixels);
                         // [Y, X] or [row, column]
-                        double[] spacing = mDicomObject.getDoubles(Tag.PixelSpacing);
+                        double[] spacing = mAttributes.getDoubles(Tag.PixelSpacing);
                         double scaleY2X = 1.0d;
                         if (spacing != null) {
                             scaleY2X = spacing[1] / spacing[0];
@@ -259,7 +251,7 @@ public class DcmInfoFragment extends Fragment {
     public void changeMode(boolean extraInfo) {
     	mDebugMode = extraInfo;
     	
-    	if (mAdapter != null) {
+    	if (mAdapter != null && this.isVisible()) {
     		refreshTagList();
     	}
     }
@@ -267,7 +259,7 @@ public class DcmInfoFragment extends Fragment {
     public void refreshTagList(boolean extraInfo) {
     	mTagInfo = extraInfo;
     	
-    	if (mAdapter != null) {
+    	if (mAdapter != null && this.isVisible()) {
     		refreshTagList();
     	}
     }
@@ -282,37 +274,36 @@ public class DcmInfoFragment extends Fragment {
 				TextView tagOpt = (TextView) view.findViewById(R.id.tagOpt);
 				TextView text1 = (TextView) view.findViewById(R.id.tagName);
 				TextView text2 = (TextView) view.findViewById(R.id.tagField);
-				//int tag = Tag.toTag(mTags.get(position));
-				
-				int tag = Tag.toTag(mTags[position]);
-				tag1.setText("(" + mTags[position].subSequence(0, 4) + ",\n "
-                        + mTags[position].subSequence(4, 8) + ")");
+
+				int tag = Integer.parseInt(mTags[position], 16);
+				tag1.setText("(" + mTags[position].substring(0, 4) + ",\n " + mTags[position].substring(4, 8) + ")");
 
 				String temp = DcmRes.getTag(tag, mRes);
 				String[] temp2 = temp.split(";");
 				text1.setText(temp2[0]);
-				DicomElement de = mDicomObject.get(tag);
-                if (de != null) {
-                    VR dvr = de.vr();
+                Object de = mAttributes.getValue(tag);
+                if (de == null) {
+                    text2.setText("");
+                    // Only display VR/VM if the option is selected
+                    if (mTagInfo) {
+                        tagOpt.setText("");
+                    }
+                } else {
+                    VR dvr = mAttributes.getVR(tag);
 
                     //SpecificCharacterSet for US_ASCII
-                    SpecificCharacterSet cs = new SpecificCharacterSet("US-ASCII");
+                    SpecificCharacterSet cs = SpecificCharacterSet.DEFAULT;
 
                     // Only display VR/VM if the option is selected
                     if (mTagInfo) {
-                        tagOpt.setText("VR: " + dvr.toString() + "\nVM: " + de.vm(cs));
+                        tagOpt.setText("VR: " + dvr.toString());// + "\nVM: " + dvr.vmOf(de));
                     }
 
-                    String dStr = de.getString(cs, false);
+                    String dStr = de.toString();
 
-                    // If the string is null, display nothing.
-                    if (dStr == null) {
-                        text2.setText("");
-
-                        // If in Debug mode, just display the string as-is without any special processing.
-                    } else if (mDebugMode) {
-                        text2.setText(dStr);
-
+                    // If in Debug mode, just display the string as-is without any special processing.
+                    if (mDebugMode) {
+                        text2.setText(de.toString());
                         // Otherwise, make the fields easier to read.
                         // Start by formatting the Person Names.
                     } else if (dvr == VR.PN) {

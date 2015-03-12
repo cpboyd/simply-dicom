@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ Copyright (C) 2013 - 2015. Christopher Boyd
   ~
@@ -21,26 +22,9 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string name="app_name">simplyDICOM</string>
-    <string-array name="planes_array">
-        <item>Transversal</item>
-        <item>Coronal</item>
-        <item>Sagital</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>Cinza</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">Invert</string>
+    <item name="red" type="color">#C62828</item>
+    <item name="red_dark" type="color">#B71C1C</item>
+    <item name="bg" type="color">#607D8B</item>
+    <item name="bg_dark" type="color">#37474F</item>
+    <item name="accent" type="color">#FF4081</item>
 </resources>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 - 2014. Christopher Boyd
+ * Copyright (C) 2013 - 2015. Christopher Boyd
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import us.cboyd.android.dicom.R;
+
 /**
  * Created by Christopher on 5/17/2014.
  */
@@ -71,7 +73,7 @@ public class StorageUtils {
         public String getDisplayName() {
             StringBuilder res = new StringBuilder();
             if (!removable) {
-                res.append("Internal SD card");
+                res.append("Internal Memory");
             } else if (number > 1) {
                 res.append("SD card " + number);
             } else {
@@ -81,6 +83,13 @@ public class StorageUtils {
                 res.append(" (Read only)");
             }
             return res.toString();
+        }
+
+        public int getIcon() {
+            if (!removable)
+                return R.drawable.ic_smartphone_white_36dp;
+            else
+                return R.drawable.ic_sd_storage_white_36dp;
         }
     }
 

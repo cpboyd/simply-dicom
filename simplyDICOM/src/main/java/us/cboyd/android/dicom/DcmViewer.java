@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2013-2014 Christopher Boyd
- * 
+ * Copyright (C) 2013 - 2015. Christopher Boyd
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,7 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- * 
  */
 
 package us.cboyd.android.dicom;
@@ -46,9 +45,9 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.io.DicomInputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.io.DicomInputStream;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -73,7 +72,7 @@ import us.cboyd.shared.Geometry;
  * DICOMViewer Class
  * 
  * @author Christopher Boyd
- * @version 0.2
+ * @version 0.6
  * 
  */
 public class DcmViewer extends Activity implements OnTouchListener,
@@ -100,10 +99,10 @@ public class DcmViewer extends Activity implements OnTouchListener,
     private double[] mScaleSpacing 	= new double[]{1.0d, 1.0d, 1.0d};
     private int 	mAxis 			= DcmVar.TRANSVERSE;
 
+    private Attributes          mAttributes     = null;
     private File 				mFilePath;
     private ArrayList<String> 	mFileList 		= null;
     private List<Mat> 			mMatList 		= null;
-    private DicomObject 		mDicomObject 	= null;
     private ImageView 			mImageView;
     private ImageContrastView 	mCmapView;
     private String              mCurrFilename;
@@ -143,32 +142,23 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		if (savedInstanceState != null) {
 			mFilePath = new File(savedInstanceState.getString(DcmVar.CURRDIR));
 			mFileList = savedInstanceState.getStringArrayList(DcmVar.FILELIST);
-			
 		// Get the intent
 		} else {
-			
 			Intent intent = getIntent();
 			
 			if (intent != null) {
-				
 				Bundle extras = intent.getExtras();
 				
-				fileName = extras == null ? null : extras.getString(DcmVar.DCMFILE);
-				mFileList = extras == null ? null : extras.getStringArrayList(DcmVar.FILELIST);
-				
+				fileName  = (extras == null) ? null : extras.getString(DcmVar.DCMFILE);
+				mFileList = (extras == null) ? null : extras.getStringArrayList(DcmVar.FILELIST);
 			}
-			
 		}
 		
 		// If the file name is null, alert the user and close the activity
 		if (fileName == null) {
-			
-			showExitAlertDialog("ERROR: Retrieving file",
-					"The file could not be found.");
-			
+			showExitAlertDialog("ERROR: Retrieving file", "The file could not be found.");
 		// Load the file
 		} else {
-			
 			// Get the File object for the current file
 			File currentFile = new File(fileName);
 			Log.i("cpb","Loading file...");
@@ -177,16 +167,18 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			try {
 				DicomInputStream dis;
 				dis = new DicomInputStream(currentFile);
-				mDicomObject = dis.readDicomObject();
+                mAttributes = dis.getFileMetaInformation();
+                dis.readAttributes(mAttributes, -1, -1);
+                mAttributes.trimToSize();
 				dis.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
-			mMat 	= new Mat(mDicomObject.getInt(Tag.Rows),
-							mDicomObject.getInt(Tag.Columns), CvType.CV_32S);
-			mMat.put(0, 0, mDicomObject.getInts(Tag.PixelData));
+			mMat 	= new Mat(mAttributes.getInt(Tag.Rows, 1),
+                    mAttributes.getInt(Tag.Columns, 1), CvType.CV_32S);
+			mMat.put(0, 0, mAttributes.getInts(Tag.PixelData));
 			
 			// Get the files array = get the files contained
 			// in the parent of the current file
@@ -197,50 +189,33 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			// there is an error because it must at least contain 1 file:
 			// the current file
 			if (mFileList == null || mFileList.size() < 1) {
-				
 				showExitAlertDialog("ERROR: Loading file",
 						"This directory contains no DICOM files.");
-				
 			} else {
-				
 				// Get the file index in the array
 				int currFileIndex = getIndex(currentFile);
 				
 				// If the current file index is negative
 				// or greater or equal to the files array
 				// length there is an error
-				if (currFileIndex < 0
-						|| currFileIndex >= mFileList.size()) {
-					
+				if (currFileIndex < 0 || currFileIndex >= mFileList.size()) {
 					showExitAlertDialog("ERROR: Loading file",
 							"This image file could not be found.");
-				
 				// Else initialize views and navigation bar
 				} else {
-					
 					// Check if the seek bar must be shown or not
 					if (mFileList.size() == 1) {
-						
 						mNavigationBar.setVisibility(View.INVISIBLE);
-						
 					} else {
-						
 						// Set the visibility of the previous button
 						if (currFileIndex == 0) {
-							
 							mPreviousButton.setVisibility(View.INVISIBLE);
-							
 						} else if (currFileIndex == (mFileList.size() - 1)) {
-							
 							mNextButton.setVisibility(View.INVISIBLE);
-							
 						}
-						
 					}
-					
 				}
 			}
-			
 		}
 		
 		// Set the seek bar change index listener
@@ -284,39 +259,44 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		}
 		
 		if (mMatList == null) {
-			int 	rows 		= mDicomObject.getInt(Tag.Rows);
-			int 	cols 		= mDicomObject.getInt(Tag.Columns);
-			String 	studyUID 	= mDicomObject.getString(Tag.StudyInstanceUID);
-			String 	seriesUID 	= mDicomObject.getString(Tag.SeriesInstanceUID);
-			int 	instanceNum = mDicomObject.getInt(Tag.InstanceNumber);
-			double[] spacing 	= mDicomObject.getDoubles(Tag.PixelSpacing);
-			double[] startPos 	= mDicomObject.getDoubles(Tag.ImagePositionPatient);
+			int 	rows 		= mAttributes.getInt(Tag.Rows, 1);
+			int 	cols 		= mAttributes.getInt(Tag.Columns, 1);
+			String 	studyUID 	= mAttributes.getString(Tag.StudyInstanceUID);
+			String 	seriesUID 	= mAttributes.getString(Tag.SeriesInstanceUID);
+			int 	instanceNum = mAttributes.getInt(Tag.InstanceNumber, -1);
+			double[] spacing 	= mAttributes.getDoubles(Tag.PixelSpacing);
+			double[] startPos 	= mAttributes.getDoubles(Tag.ImagePositionPatient);
 //            if ((instanceNum < 1) || (mFileList.size() == 1)) {
 //                mNavigationBar.setVisibility(View.INVISIBLE);
 //                return;
 //            }
-			mInstance 	= new int[] {instanceNum - 1, rows/2, cols/2};
+
+			mInstance 	= new int[] {Math.max(instanceNum - 1, 0), rows/2, cols/2};
 			mMatList 	= new ArrayList<Mat>();
 
 		    for(int i = 1; i < instanceNum; i++) {
 		    	mMatList.add(new Mat(rows, cols, CvType.CV_32S));
 		    }
-		    mMatList.add(mMat);
+            // If invalid instance number, don't add this to the matrix.
+            if (instanceNum > 0)
+		        mMatList.add(mMat);
 		    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum);
-			DicomObject cdo = null;
-            mDicomObject = null;
+			Attributes currDcm = null;
+            mAttributes = null;
             DicomInputStream dis = null;
 			for(String currFile : mFileList) {
                 Log.i("cpb", "Loop: " + currFile);
 				if (!currFile.equals(mCurrFilename)) {
-                    cdo = null;
+                    currDcm = null;
                     dis = null;
                     Log.i("cpb", "Attempting GC");
                     System.gc();
 					// Read in the DicomObject
 					try {
 						dis = new DicomInputStream(new File(mFilePath, currFile));
-						cdo = dis.readDicomObject();
+                        currDcm = dis.getFileMetaInformation();
+                        dis.readAttributes(currDcm, -1, -1);
+                        currDcm.trimToSize();
 						dis.close();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
@@ -324,11 +304,11 @@ public class DcmViewer extends Activity implements OnTouchListener,
 					}
 
                     // Check the instance number
-                    instanceNum = cdo.getInt(Tag.InstanceNumber);
+                    instanceNum = currDcm.getInt(Tag.InstanceNumber, -1);
                     // Spacing definition moved up
                     if ((spacing != null) &&
                             ((mInstance[0] == 0 && (instanceNum - 1) == 1) || (instanceNum == mInstance[0]))) {
-                        double[] nextPos = cdo.getDoubles(Tag.ImagePositionPatient);
+                        double[] nextPos = currDcm.getDoubles(Tag.ImagePositionPatient);
                         // mPixelSpacing{X, Y, Z}
                         mPixelSpacing = new double[] {spacing[1], spacing[0],
                                 Math.abs(startPos[2] - nextPos[2])};
@@ -342,10 +322,10 @@ public class DcmViewer extends Activity implements OnTouchListener,
                         continue;
                     }
 
-					int rows2 = cdo.getInt(Tag.Rows);
-					int cols2 = cdo.getInt(Tag.Columns);
-					if (studyUID.equals(cdo.getString(Tag.StudyInstanceUID)) &&
-					 	seriesUID.equals(cdo.getString(Tag.SeriesInstanceUID))) {
+					int rows2 = currDcm.getInt(Tag.Rows, 1);
+					int cols2 = currDcm.getInt(Tag.Columns, 1);
+					if (studyUID.equals(currDcm.getString(Tag.StudyInstanceUID)) &&
+					 	seriesUID.equals(currDcm.getString(Tag.SeriesInstanceUID))) {
 						if (rows != rows2 || cols != cols2) {
 							Log.i("cpb", "Skipping file... " +
 									"The number of rows and columns varies between instances/images.");
@@ -357,9 +337,11 @@ public class DcmViewer extends Activity implements OnTouchListener,
                             mMatList.add(new Mat(rows, cols, CvType.CV_32S));
 						}
 
-                        mMatList.get(instanceNum - 1).put(0, 0, cdo.getInts(Tag.PixelData));
-
-						mImageCount++;
+                        // If invalid instance number, don't add this to the matrix.
+                        if (instanceNum > 0) {
+                            mMatList.get(instanceNum - 1).put(0, 0, currDcm.getInts(Tag.PixelData));
+                            mImageCount++;
+                        }
 					    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum + " currFile: " + currFile);
 					}
 				}
@@ -445,7 +427,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			alertDialog.show();
 		}
 
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mLoaderCallback);
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_10, this, mLoaderCallback);
 		super.onResume();
 	}
 	
@@ -455,7 +437,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		mFileList 	= null;
 		mMat 		= null;
 		mMatList 	= null;
-		mDicomObject = null;
+		mAttributes = null;
 		
 		// Free the drawable callback
 		if (mImageView != null) {
@@ -471,11 +453,17 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	 */
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		
-		// Save the current file name
+        // If anything is null, don't save the state.
+        if ((mFilePath == null) || (mFileList == null)) {
+            outState = null;
+            return;
+        }
+		// Otherwise, save the current file name
 		outState.putString(DcmVar.CURRDIR, mFilePath.getAbsolutePath());
 		outState.putStringArrayList(DcmVar.FILELIST, mFileList);
+
+        // Always call the superclass so it can save the view hierarchy state
+        super.onSaveInstanceState(outState);
 	}
 	
 	// ---------------------------------------------------------------
@@ -660,9 +648,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		
 		// Set the image
 		Bitmap imageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-		Log.w("cpb","test3");
 		Utils.matToBitmap(temp, imageBitmap, true);
-		Log.w("cpb","test4");
 		mImageView.setImageBitmap(imageBitmap);
 	}
 	

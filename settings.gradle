@@ -20,27 +20,5 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.shared;
-
-import java.io.File;
-import java.io.FileFilter;
-
-/**
- * No-Hidden FileFilter:
- * List only files & folders that aren't hidden.
- * 
- * @author Christopher Boyd
- *
- */
-
-public class NotHidFilter implements FileFilter {
-	
-	/* 
-	 * Indicates whether a specific file should be included in a pathname list.
-	 */
-	public boolean accept(File path) {
-		// Return true if the path isn't hidden.
-		return !path.isHidden();
-	}
-	
-}
+include ':openCVLibrary2410'
+include ':simplyDICOM'

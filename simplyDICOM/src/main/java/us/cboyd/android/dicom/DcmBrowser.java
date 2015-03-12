@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2013-2014 Christopher Boyd
- * 
+ * Copyright (C) 2013 - 2015. Christopher Boyd
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,12 +18,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- * 
  */
 
 package us.cboyd.android.dicom;
 
-import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
@@ -33,10 +32,11 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.FragmentActivity;
+import android.os.Environment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -53,35 +53,37 @@ import java.io.File;
 import java.util.ArrayList;
 
 import us.cboyd.android.shared.ExternalIO;
+import us.cboyd.android.shared.StorageUtils;
+import us.cboyd.android.shared.adapters.StorageArrayAdapter;
 
 /**
  * DICOM Browser
  * 
  * @author Christopher Boyd
- * @version 0.3
+ * @version 0.6
  *
  */
-public class DcmBrowser extends FragmentActivity 
-        implements DcmListFragment.OnFileSelectedListener {
+public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelectedListener {
 	
 	private DcmListFragment mListFragment;
 	private DcmInfoFragment mInfoFragment;
+    private String          mAppName;
 	
 	// Drawer stuff
-	private boolean 		mDrawerOpen = false;
 	private boolean 		mFragmented = false;
     private DrawerLayout 	mDrawerLayout;
     private ListView 		mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle = null;
+    private Toolbar         mToolbar = null;
 
-    private CharSequence 	mDrawerTitle;
-    private CharSequence 	mTitle;
+    private CharSequence 	mDrawerTitle, mDrawerSubtitle, mTitle, mSubtitle;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dcm_browser);
+        mAppName = getResources().getString(R.string.app_name);
 
         FragmentManager fragManager = getFragmentManager();
         if (savedInstanceState != null) {
@@ -106,10 +108,8 @@ public class DcmBrowser extends FragmentActivity
         
         // Specify that the Home/Up button should not be enabled,
         // since there is no hierarchical parent yet.
-        ActionBar actionBar = getActionBar();
-        // enable ActionBar app icon to behave as action to toggle nav drawer
-        actionBar.setDisplayHomeAsUpEnabled(false);
-        actionBar.setHomeButtonEnabled(false);
+        mToolbar = (Toolbar) findViewById(R.id.dcmBrowser_toolbar);
+        mToolbar.setTitle(mAppName);
         
         // Check whether the activity is using the layout version with
         // the fragment_container FrameLayout. If so, we must add the first fragment
@@ -120,7 +120,8 @@ public class DcmBrowser extends FragmentActivity
             // Add the fragment to the 'fragment_container' FrameLayout
         	fragManager.beginTransaction().add(R.id.fragment_container, mListFragment).commit();
             
-            generateDrawer();
+            generateDrawer(mToolbar);
+            mDrawerToggle.setDrawerIndicatorEnabled(false);
         } else {
         	Log.i("cpb", "mListFrag: Two-pane");
         	mFragmented = false;
@@ -140,7 +141,8 @@ public class DcmBrowser extends FragmentActivity
             Resources res = getResources();
 			
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage(res.getString(R.string.err_mesg_disk))
+			builder.setMessage(res.getString(R.string.err_mesg_disk)
+                    + "\n\nState: " + Environment.getExternalStorageState())
 				   .setTitle(res.getString(R.string.err_title_disk))
 			       .setCancelable(false)
 			       .setPositiveButton(res.getString(R.string.err_close),
@@ -151,30 +153,47 @@ public class DcmBrowser extends FragmentActivity
 			       	});
 			AlertDialog alertDialog = builder.create();
 			alertDialog.show();
-			
 		// Else display data
 		} else {
 			mListFragment.setDir();
 		}
 
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mLoaderCallback);
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_10, this, mLoaderCallback);
+
+        // If the info fragment isn't visible, remove it from the fragment manager.
+        // Required because we add it in onSaveInstanceState()
+        if (!mInfoFragment.isVisible() && mInfoFragment.isAdded()) {
+            FragmentManager fragManager = getFragmentManager();
+            // Remove existing fragments from associated views.
+            fragManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            fragManager.beginTransaction().remove(mInfoFragment).commit();
+            fragManager.executePendingTransactions();
+        }
 		super.onResume();
 	}
 	
 	/** Called when orientation changes. */
 	@Override
     public void onSaveInstanceState(Bundle outState) {
+        // If directory is null, don't save state.
+        if (mListFragment.getDir() == null) {
+            outState = null;
+            return;
+        }
+
 		FragmentManager fragManager = getFragmentManager();
     	// If the fragment hasn't already been added to the FragmentManager, add it.
 		// Otherwise, it can't be put in the Bundle.
     	if (!mInfoFragment.isAdded()) {
     		fragManager.beginTransaction().add(mInfoFragment, null).commit();
     	}
-    	
-        super.onSaveInstanceState(outState);
+
+        // Otherwise, save the current directory.
 		outState.putString(DcmVar.CURRDIR, mListFragment.getDir().getAbsolutePath());
     	fragManager.putFragment(outState, DcmVar.FRAGLIST, mListFragment);
-    	fragManager.putFragment(outState, DcmVar.FRAGINFO, mInfoFragment);
+
+        // Always call the superclass so it can save the view hierarchy state
+        super.onSaveInstanceState(outState);
 	}
 	
 	////openCV
@@ -199,28 +218,42 @@ public class DcmBrowser extends FragmentActivity
 	public void onBackPressed() {
 		File temp = mListFragment.getDir();
 		if (!mListFragment.isVisible()) {
-			// Assume we're jumping back to the ListFragment
-			if (ExternalIO.isRoot(temp)) {
-				ActionBar actionBar = getActionBar();
-		        actionBar.setHomeButtonEnabled(false);
-		        actionBar.setDisplayHomeAsUpEnabled(false);
-			}
+            if (mToolbar != null) {
+                // Assume we're jumping back to the ListFragment
+                if (mListFragment.isStorage())
+                    mDrawerToggle.setDrawerIndicatorEnabled(false);
+
+                // Reset the Toolbar's title
+                mToolbar.setTitle(mDrawerTitle);
+                mToolbar.setSubtitle(mDrawerSubtitle);
+            }
 			FragmentManager fm = getFragmentManager();
 			if (fm.getBackStackEntryCount() > 0) {
 			    fm.popBackStack();
+                // If storage list, display the app name in title bar.
+                if (mListFragment.isStorage())
+                    onRootSelected(null);
+                else
+                    onDirectorySelected(temp);
+            // If there's no back stack, call super.onBackPressed().
 			} else {
 				super.onBackPressed();
 			}
 			
-		// If the directory is the external storage directory or there is no parent,
-		// super.onBackPressed(). Else go to parent directory.
-		} else if (ExternalIO.isRoot(temp)) {
+		// If the device is on the storage list, call super.onBackPressed().
+		} else if (mListFragment.isStorage()) {
 			super.onBackPressed();
+        // If the device is on the root directory, display the storage list.
+        } else if (mListFragment.isRoot()) {
+            mDrawerToggle.setDrawerIndicatorEnabled(false);
+            mListFragment.setDir(null);
+            onRootSelected(null);
+        // Otherwise, go to parent directory.
 		} else {
 			temp = temp.getParentFile();
 			mListFragment.setDir(temp);
+            onDirectorySelected(temp);
 		}
-		onDirectorySelected(temp);
 	}
 	
 	/** onOptionsItemSelected responds to action bar item */
@@ -232,11 +265,40 @@ public class DcmBrowser extends FragmentActivity
 	       return true;
 		}
 	    switch (item.getItemId()) {
-	    // Respond to the action bar's Up/Home button
-	    case android.R.id.home:
-	    	return navigateUp();
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                return navigateUp();
+            // Handle menu items here:
+            case R.id.app_about:
+                Dialog dialog = new Dialog(this);
+                dialog.setContentView(R.layout.dialog_about);
+                dialog.setTitle(mAppName);
+                dialog.show();
+                return true;
+
+            case R.id.list_ffirst:
+                item.setChecked(!item.isChecked());
+                mListFragment.listFilesFirst(item.isChecked());
+                return true;
+
+            case R.id.show_hidden:
+                item.setChecked(!item.isChecked());
+                mListFragment.setHidden(item.isChecked());
+                return true;
+
+            case R.id.show_info:
+                item.setChecked(!item.isChecked());
+                mInfoFragment.refreshTagList(item.isChecked());
+                return true;
+
+            case R.id.debug_mode:
+                item.setChecked(!item.isChecked());
+                mInfoFragment.changeMode(item.isChecked());
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
 	    }
-	    return super.onOptionsItemSelected(item);
 	}
 	
 	/** navigateUp replicates "Back" functionality for the Home/Up key. */
@@ -256,79 +318,59 @@ public class DcmBrowser extends FragmentActivity
 	    //menu.getItem(R.id.about).setIcon(R.drawable.ic_action_about);
 	    return true;
 	}
-
-	/** onMenuItemSelected handles if something from the options menu is selected */
-	@Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		
-		switch (item.getItemId()) {
-			
-		case R.id.app_about:
-			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.layout.dialog_about);
-       		dialog.setTitle(getResources().getString(R.string.app_name));
-       		dialog.show();
-			return true;
-
-        case R.id.list_ffirst:
-            item.setChecked(!item.isChecked());
-            mListFragment.listFilesFirst(item.isChecked());
-            return true;
-			
-		case R.id.show_hidden:
-			item.setChecked(!item.isChecked());
-			mListFragment.setHidden(item.isChecked());
-			return true;
-			
-		case R.id.show_info:
-			item.setChecked(!item.isChecked());
-			mInfoFragment.refreshTagList(item.isChecked());
-			return true;
-			
-		case R.id.debug_mode:
-			item.setChecked(!item.isChecked());
-			mInfoFragment.changeMode(item.isChecked());
-			return true;
-			
-		default:
-			return super.onMenuItemSelected(featureId, item);
-			
-		}
-		
-	}
 	
 	public String getFolderTitle(File currDir) {
-		if (currDir == null) {
-			return getResources().getString(R.string.app_name);
-		} else {
-			return currDir.getName();
+		if (currDir == null)
+			return "";
+		else {
+            String currDirPath = currDir.getAbsolutePath();
+            currDirPath = currDirPath.replaceFirst(mListFragment.getRoot().getAbsolutePath(), "");
+			return currDirPath;
 		}
 	}
+
+    // Call onRootSelected to display the app name as the title.
+    public void onRootSelected(File currDir) {
+        onRootSelected(currDir, mAppName);
+    }
+
+    public void onRootSelected(File currDir, String displayName) {
+        mDrawerTitle = displayName;
+        mToolbar.setTitle(mDrawerTitle);
+        // If this is the storage list, disable the drawer indicator
+        mDrawerToggle.setDrawerIndicatorEnabled(currDir != null);
+
+        onDirectorySelected(currDir);
+    }
 	
 	public void onDirectorySelected(File currDir) {
-		mDrawerTitle = getFolderTitle(currDir);
-		getActionBar().setTitle(mDrawerTitle);
+        mDrawerSubtitle = getFolderTitle(currDir);
+		mToolbar.setSubtitle(mDrawerSubtitle);
 		
 		if (!mListFragment.isVisible()) {
 			// set up the drawer's list view with items and click listener
 			mDrawerList.setAdapter(mListFragment.getListAdapter());
-		}
+		} else {
+            mDrawerList.setAdapter(new StorageArrayAdapter(this, R.layout.item_file));
+        }
     }
 	
-    public void onFileSelected(ArrayList<String> fileList, File currDir, String currFile) {
+    public void onFileSelected(ArrayList<String> fileList, File currDir, File currFile) {
+        String dirPath  = currDir.getPath();
+        String fileName = currFile.getName();
         if (mFragmented && mListFragment.isVisible()) {
             // If we're in the one-pane layout and need to swap fragments
         	
-        	// Enable the Home/Up button to allow the user to go back to 
-        	ActionBar actionBar = getActionBar();
-            actionBar.setHomeButtonEnabled(true);
-            actionBar.setDisplayHomeAsUpEnabled(true);
+        	// Enable the Home/Up button to allow the user to go back to
+//            if (mToolbar != null)
+//                actionBar.setDisplayHomeAsUpEnabled(true);
 
             // Create fragment and give it an argument for the selected article
             Bundle args = new Bundle();
             args.putStringArrayList(DcmVar.FILELIST, fileList);
-            args.putString(DcmVar.CURRDIR, currDir.getPath());
-            args.putString(DcmVar.CURRFILE, currFile);
+            args.putString(DcmVar.CURRDIR, dirPath);
+            args.putString(DcmVar.CURRFILE, fileName);
+
             mInfoFragment.setArguments(args);
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
@@ -344,9 +386,9 @@ public class DcmBrowser extends FragmentActivity
             // If we're in the two-pane layout or already displaying the DcmInfoFragment
 
             // Call a method in the DcmInfoFragment to update its content
-    		mInfoFragment.updateDicomInfo(fileList, currDir.getPath(), currFile);
+    		mInfoFragment.updateDicomInfo(fileList, dirPath, fileName);
         }
-        setTitle(currFile);
+        setTitle(fileName);
     }
 
     /** Load the current DICOM series */
@@ -358,18 +400,21 @@ public class DcmBrowser extends FragmentActivity
 		startActivity(intent);
 	}
 	
-	// Drawer stuff
     /* Called whenever we call invalidateOptionsMenu() */
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        // If the nav drawer is open, hide action items related to the content view
-        if (mFragmented)
-        	mDrawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
-        //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+        //TODO: If the nav drawer is open, hide action items related to the content view
+//        if (mFragmented)
+//        	mDrawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+//        menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
         return super.onPrepareOptionsMenu(menu);
     }
     
-    private void generateDrawer() {
+    private void generateDrawer(Toolbar toolbar) {
+        // If the toolbar is null, try to find it.
+        if (toolbar == null)
+            toolbar = (Toolbar) findViewById(R.id.dcmBrowser_toolbar);
+
         // Drawer stuff
     	mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -386,17 +431,26 @@ public class DcmBrowser extends FragmentActivity
         mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
                 mDrawerLayout,         /* DrawerLayout object */
-                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                toolbar,
                 R.string.drawer_open,  /* "open drawer" description for accessibility */
                 R.string.drawer_close  /* "close drawer" description for accessibility */
                 ) {
             public void onDrawerClosed(View view) {
-                getActionBar().setTitle(mTitle);
+                mToolbar.setTitle(mTitle);
+                mToolbar.setSubtitle(mSubtitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
             public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle(mDrawerTitle);
+                mTitle = mToolbar.getTitle();
+                mSubtitle = mToolbar.getSubtitle();
+                if (mListFragment.isVisible()) {
+                    mToolbar.setTitle(mAppName);
+                    mToolbar.setSubtitle("");
+                } else {
+                    mToolbar.setTitle(mDrawerTitle);
+                    mToolbar.setSubtitle(mDrawerSubtitle);
+                }
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
         };
@@ -407,14 +461,22 @@ public class DcmBrowser extends FragmentActivity
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            mListFragment.setSelection(position);
+            if (mListFragment.isVisible()) {
+                StorageUtils.StorageInfo temp = (StorageUtils.StorageInfo)parent.getItemAtPosition(position);
+                mListFragment.setDir(temp.getFile());
+                mDrawerTitle = mTitle = temp.getDisplayName();
+                mDrawerSubtitle = mSubtitle = "";
+            } else
+                mListFragment.setSelection(position);
         }
     }
 
     @Override
     public void setTitle(CharSequence title) {
         mTitle = title;
-        getActionBar().setTitle(mTitle);
+        // If the drawer isn't open, set the title.
+        if (!mDrawerLayout.isDrawerOpen(GravityCompat.START))
+            mToolbar.setTitle(mTitle);
     }
 
     /**
@@ -428,7 +490,7 @@ public class DcmBrowser extends FragmentActivity
         // Sync the toggle state after onRestoreInstanceState has occurred.
         if (mFragmented) {
         	if (mDrawerToggle == null) {
-        		generateDrawer();
+        		generateDrawer(mToolbar);
         	}
         	mDrawerToggle.syncState();
         }
