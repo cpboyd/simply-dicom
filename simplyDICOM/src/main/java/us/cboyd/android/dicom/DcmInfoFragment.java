@@ -22,116 +22,99 @@
 
 package us.cboyd.android.dicom;
 
-import android.app.Fragment;
+import android.app.ListFragment;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
-import android.text.format.DateFormat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.io.DicomInputStream;
 import org.opencv.android.Utils;
+import org.opencv.contrib.Contrib;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
+import us.cboyd.android.dicom.tag.TagArrayAdapter;
 
 /**
  * DICOM InfoFragment
  * 
  * @author Christopher Boyd
- * @version 0.6
+ * @version 0.7
  *
  */
-public class DcmInfoFragment extends Fragment {
-    private static String 		mCurrDir 	 = null;
-    private static String 		mCurrFile 	 = null;
-    private static Attributes   mAttributes = null;
-    private static ArrayList<String> mFileList 	 = null;
-    private static Button 	mLoadButton;
-    private static ListView mTagList;
-    private static TextView mErrText;
-    private static LinearLayout mImLayout;
-    private static ImageView mImageView;
-    private static Resources mRes;
-    private static boolean 	mTagInfo 		= false;
-    private static boolean 	mDebugMode		= false;
-	
-	/**  Array adapter for the tag listing. */
-	//private ArrayList<String> mTags = new ArrayList<String>();
-    private static String[] mTags;
-	private ArrayAdapter<String> mAdapter 	= null;
-	
+public class DcmInfoFragment extends ListFragment {
+    private static String 		mCurrFile 	    = null;
+    private static Attributes   mAttributes     = null;
+    private static Button 	    mLoadButton;
+    private static TextView     mErrText;
+    private static FrameLayout  mImageFrame;
+    private static ImageView    mImageView;
+    private static boolean 	    mDebugMode		= false;
+    private static LayoutInflater mInflater;
 
 	/** onCreate is called to do initial creation of the fragment. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	  	super.onCreate(savedInstanceState);
-
     	// Retain this fragment across configuration changes.
     	setRetainInstance(true);
   	}
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, 
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
         Bundle savedInstanceState) {
-    	Log.i("cpb","DcmInfoFrag: creation");
-
         // If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
-        	Log.i("cpb","DcmInfoFrag: savedInstance");
-        	mFileList 	= savedInstanceState.getStringArrayList(DcmVar.FILELIST);
-            mCurrDir 	= savedInstanceState.getString(DcmVar.CURRDIR);
-            mCurrFile   = savedInstanceState.getString(DcmVar.CURRFILE);
+            mCurrFile   = savedInstanceState.getString(DcmVar.DCMFILE);
         }
-        
+
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.dcm_info, container, false);
-        
-        mErrText 	= (TextView) view.findViewById(R.id.text_fileError);
-        
-        // ImLayout Elements
-        mImLayout 	= (LinearLayout)	view.findViewById(R.id.linL_fileSelection);
-        mImageView 	= (ImageView) 		view.findViewById(R.id.demoImage);
-        mLoadButton = (Button) 			view.findViewById(R.id.bttn_load);
-        mLoadButton.setEnabled(false);
-        
-        mTagList 	= (ListView) view.findViewById(R.id.list_tags);
-        
-        // Store a copy of the resources.
-		mRes  		= getResources();
+        mInflater = inflater;
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+
+        //TODO: Add FAB to load image series
+//        mLoadButton = (Button) 			view.findViewById(R.id.bttn_load);
+//        mLoadButton.setEnabled(false);
         return view;
     }
 
+    /** onStart makes the fragment visible to the user
+     * (based on its containing activity being started). */
     @Override
     public void onStart() {
         super.onStart();
+        // Create the ListView header views
+        ListView view = getListView();
+        View header = mInflater.inflate(R.layout.dcm_info_header, view, false);
+        mImageFrame = (FrameLayout) header.findViewById(R.id.imageFrame);
+        mImageView 	= (ImageView) header.findViewById(R.id.demoImage);
+        mErrText 	= (TextView) header.findViewById(R.id.text_fileError);
+        view.addHeaderView(header);
+
         // During startup, check if there are arguments passed to the fragment.
         // onStart is a good place to do this because the layout has already been
         // applied to the fragment at this point so we can safely call the method
@@ -139,32 +122,23 @@ public class DcmInfoFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             // Set article based on argument passed in
-            updateDicomInfo(args.getStringArrayList(DcmVar.FILELIST),
-                    args.getString(DcmVar.CURRDIR), args.getString(DcmVar.CURRFILE));
-        } else if ((mCurrDir != null) && (mFileList != null) && (mCurrFile != null)) {
+            updateDicomInfo(args.getString(DcmVar.DCMFILE));
+        } else if (mCurrFile != null) {
             // Set article based on saved instance state defined during onCreateView
-            updateDicomInfo(mFileList, mCurrDir, mCurrFile);
+            updateDicomInfo(mCurrFile);
         }
     }
-    
-    public List<String> getFileList() {
-    	return mFileList;
-    }
 
-    public void updateDicomInfo(ArrayList<String> dirList, String currDir, String currFile) {
-    	mFileList 	= dirList;
-    	mCurrDir 	= currDir;
+    public void updateDicomInfo(String currFile) {
         mCurrFile   = currFile;
-    	updateDicomInfo();
-    }
+        Resources resources = getResources();
 
-    public void updateDicomInfo() {
-    	if ((mCurrDir != null) && (mFileList != null) && (mCurrFile != null)) {
-            String SOPClass = "null";
-            String TransferSyntax = "null";
+    	if (mCurrFile != null) {
+            String SOPClass;
+            String TransferSyntax;
 	    	try {
 				// Read in the DicomObject
-				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrDir, mCurrFile)));
+				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrFile)));
                 mAttributes = dis.getFileMetaInformation();
                 dis.readAttributes(mAttributes, -1, -1);
                 mAttributes.trimToSize();
@@ -183,7 +157,7 @@ public class DcmInfoFragment extends Fragment {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-                mErrText.setText(mRes.getString(R.string.err_file_read) + mCurrFile
+                mErrText.setText(resources.getString(R.string.err_file_read) + mCurrFile
                         + "\n\nIO Exception: " + ex.getMessage() + "\n\n" + sw.toString());
                 pw.close();
                 return;
@@ -193,20 +167,24 @@ public class DcmInfoFragment extends Fragment {
                 showImage(false);
 				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
                     // TODO: DICOMDIR support
-		            mErrText.setText(mRes.getString(R.string.err_dicomdir));
+		            mErrText.setText(resources.getString(R.string.err_dicomdir));
 				} else if (TransferSyntax.startsWith("1.2.840.10008.1.2.4.")) {
                     // TODO: JPEG support
-                    mErrText.setText(mRes.getString(R.string.err_jpeg));
+                    mErrText.setText(resources.getString(R.string.err_jpeg));
                 } else if (TransferSyntax.startsWith("1.2.840.10008.1.2")) {
                     int[] pixels = mAttributes.getInts(Tag.PixelData);
                     if (pixels == null) {
-                        mErrText.setText(mRes.getString(R.string.err_null_image));
+                        mErrText.setText(resources.getString(R.string.err_null_image));
                     } else {
+                        // Set the PixelData to null to free memory.
+                        mAttributes.setNull(Tag.PixelData, VR.OB);
                         showImage(true);
                         int rows = mAttributes.getInt(Tag.Rows, 1);
                         int cols = mAttributes.getInt(Tag.Columns, 1);
                         Mat temp = new Mat(rows, cols, CvType.CV_32S);
                         temp.put(0, 0, pixels);
+                        // Set the PixelData to null to free memory.
+                        pixels = null;
                         // [Y, X] or [row, column]
                         double[] spacing = mAttributes.getDoubles(Tag.PixelSpacing);
                         double scaleY2X = 1.0d;
@@ -218,189 +196,45 @@ public class DcmInfoFragment extends Fragment {
                         Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
                         double diff = minmax.maxVal - minmax.minVal;
                         temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
+                        // Make the demo image bluish, rather than black and white.
+                        Contrib.applyColorMap(temp, temp, Contrib.COLORMAP_BONE);
+                        Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR);
 
                         // Set the image
                         Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
                         Utils.matToBitmap(temp, imageBitmap, true);
                         mImageView.setImageBitmap(imageBitmap);
                         mImageView.setScaleX((float) scaleY2X);
+                        // Limit the height of the image view to display at least two ListView entries (and toolbar).
+                        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                        mImageView.setMaxHeight(displayMetrics.heightPixels - (int)(3*72*displayMetrics.density));
                     }
 				} else {
-                    mErrText.setText(mRes.getString(R.string.err_unknown_dicom));
+                    mErrText.setText(resources.getString(R.string.err_unknown_dicom));
                 }
 
 				// TODO: Add selector for info tag listing
-				mTags = mRes.getStringArray(R.array.dcmtag_default);
-				refreshTagList();
+                // Create an array adapter for the ListView
+                setListAdapter(new TagArrayAdapter(getActivity(), R.layout.item_tag, mAttributes, R.array.dcmint_default, mDebugMode));
 				
 			} catch (Exception ex) {
 				showImage(false);
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-	            mErrText.setText(mRes.getString(R.string.err_file_display) + mCurrFile
-						+ "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
+	            mErrText.setText(resources.getString(R.string.err_file_display) + mCurrFile
+                        + "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
                 pw.close();
 			}
     	} else {
     		showImage(false);
-            mErrText.setText(mRes.getString(R.string.err_unknown_state));
+            mErrText.setText(resources.getString(R.string.err_unknown_state));
         }
     }
     
     public void changeMode(boolean extraInfo) {
     	mDebugMode = extraInfo;
-    	
-    	if (mAdapter != null && this.isVisible()) {
-    		refreshTagList();
-    	}
-    }
-
-    public void refreshTagList(boolean extraInfo) {
-    	mTagInfo = extraInfo;
-    	
-    	if (mAdapter != null && this.isVisible()) {
-    		refreshTagList();
-    	}
-    }
-    
-    public void refreshTagList() {
-		// Create an array adapter for the list view, using the files array
-        mAdapter = new ArrayAdapter<String>(getActivity(), R.layout.item_tag, R.id.tagName, mTags) {
-    	  	@Override
-    	  	public View getView(int position, View convertView, ViewGroup parent) {
-				View view = super.getView(position, convertView, parent);
-				TextView tag1 = (TextView) view.findViewById(R.id.tag1);
-				TextView tagOpt = (TextView) view.findViewById(R.id.tagOpt);
-				TextView text1 = (TextView) view.findViewById(R.id.tagName);
-				TextView text2 = (TextView) view.findViewById(R.id.tagField);
-
-				int tag = Integer.parseInt(mTags[position], 16);
-				tag1.setText("(" + mTags[position].substring(0, 4) + ",\n " + mTags[position].substring(4, 8) + ")");
-
-				String temp = DcmRes.getTag(tag, mRes);
-				String[] temp2 = temp.split(";");
-				text1.setText(temp2[0]);
-                Object de = mAttributes.getValue(tag);
-                if (de == null) {
-                    text2.setText("");
-                    // Only display VR/VM if the option is selected
-                    if (mTagInfo) {
-                        tagOpt.setText("");
-                    }
-                } else {
-                    VR dvr = mAttributes.getVR(tag);
-
-                    //SpecificCharacterSet for US_ASCII
-                    SpecificCharacterSet cs = SpecificCharacterSet.DEFAULT;
-
-                    // Only display VR/VM if the option is selected
-                    if (mTagInfo) {
-                        tagOpt.setText("VR: " + dvr.toString());// + "\nVM: " + dvr.vmOf(de));
-                    }
-
-                    String dStr = de.toString();
-
-                    // If in Debug mode, just display the string as-is without any special processing.
-                    if (mDebugMode) {
-                        text2.setText(de.toString());
-                        // Otherwise, make the fields easier to read.
-                        // Start by formatting the Person Names.
-                    } else if (dvr == VR.PN) {
-                        // Family Name^Given Name^Middle Name^Prefix^Suffix
-                        temp2 = dStr.split("\\^");
-                        // May omit '^' for trailing null component groups.
-                        // Use a switch-case statement to deal with this.
-                        switch (temp2.length) {
-                            // Last, First
-                            case 2:
-                                temp = temp2[0] + ", " + temp2[1];
-                                break;
-                            // Last, First Middle
-                            case 3:
-                                temp = temp2[0] + ", " + temp2[1] + " " + temp2[2];
-                                break;
-                            // Last, Prefix First Middle
-                            case 4:
-                                temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2];
-                                break;
-                            // Last, Prefix First Middle, Suffix
-                            case 5:
-                                temp = temp2[0] + ", " + temp2[3] + " " + temp2[1] + " " + temp2[2]
-                                        + ", " + temp2[4];
-                                break;
-                            // All other cases, just display the unmodified string.
-                            default:
-                                temp = dStr;
-                        }
-                        text2.setText(temp);
-                        // Translate the known UIDs into plain-text.
-                    } else if (dvr == VR.UI) {
-                        temp = DcmRes.getUID(dStr, mRes);
-                        // Only want the first field containing the plain-text name.
-                        temp2 = temp.split(";");
-                        text2.setText(temp2[0]);
-                        // Format the date according to the current locale.
-                    } else if (Build.VERSION.SDK_INT >= 18) {
-                        if (dvr == VR.DA) {
-                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                            try {
-                                Date vDate = sdf.parse(dStr);
-                                String dPat = DateFormat.getBestDateTimePattern(
-                                        mRes.getConfiguration().locale, "MMMMdyyyy");
-                                sdf.applyPattern(dPat);
-                                text2.setText(sdf.format(vDate));
-                            } catch (Exception e) {
-                                // If the date string couldn't be parsed, display the unmodified string.
-                                text2.setText(dStr);
-                            }
-                        // Format the date & time according to the current locale.
-                        } else if (dvr == VR.DT) {
-                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ");
-                            try {
-                                // Note: The DICOM standard allows for 6 fractional seconds,
-                                // but Java can only handle 3.
-                                //
-                                // Therefore, we must limit the string length.
-                                // Use concat to re-append the time-zone.
-                                Date vDate = sdf.parse(
-                                        dStr.substring(0, 18).concat(dStr.substring(21, dStr.length())));
-                                String dPat = DateFormat.getBestDateTimePattern(
-                                        mRes.getConfiguration().locale, "MMMMdyyyyHHmmssSSSZZZZ");
-                                sdf.applyPattern(dPat);
-                                text2.setText(sdf.format(vDate));
-                            } catch (Exception e) {
-                                // If the date string couldn't be parsed, display the unmodified string.
-                                text2.setText(dStr);
-                            }
-                        // Format the time according to the current locale.
-                        } else if (dvr == VR.TM) {
-                            SimpleDateFormat sdf = new SimpleDateFormat("HHmmss.SSS");
-                            try {
-                                // Note: The DICOM standard allows for 6 fractional seconds,
-                                // but Java can only handle 3.
-                                // Therefore, we must limit the string length.
-                                Date vDate = sdf.parse(dStr.substring(0, 10));
-                                String dPat = DateFormat.getBestDateTimePattern(
-                                        mRes.getConfiguration().locale, "HHmmssSSS");
-                                sdf.applyPattern(dPat);
-                                text2.setText(sdf.format(vDate));
-                            } catch (Exception e) {
-                                // If the time string couldn't be parsed, display the unmodified string.
-                                text2.setText(dStr);
-                            }
-                        } else {
-                            text2.setText(dStr);
-                        }
-                    } else {
-                        text2.setText(dStr);
-                    }
-                }
-				return view;
-    	  	}
-    	};
-		//Set the TagList's ArrayAdapter
-		mTagList.setAdapter(mAdapter);
+        ((TagArrayAdapter) getListAdapter()).setDebugMode(mDebugMode);
     }
     
     @Override
@@ -408,24 +242,22 @@ public class DcmInfoFragment extends Fragment {
         super.onSaveInstanceState(outState);
 
         // Save the current article selection in case we need to recreate the fragment
-        outState.putStringArrayList(DcmVar.FILELIST, mFileList);
-        outState.putString(DcmVar.CURRDIR, mCurrDir);
-        outState.putString(DcmVar.CURRFILE, mCurrFile);
+        outState.putString(DcmVar.DCMFILE, mCurrFile);
     }
-    
+
     public void showImage(boolean isImage) {
-    	mLoadButton.setEnabled(isImage);
+//    	mLoadButton.setEnabled(isImage);
     	if (isImage) {
-    		mImLayout.setVisibility(View.VISIBLE);
-    		mErrText.setVisibility(View.GONE);
-    	} else {
-    		mImLayout.setVisibility(View.GONE);
-    		mErrText.setVisibility(View.VISIBLE);
+    		mImageFrame.setVisibility(View.VISIBLE);
+            mErrText.setVisibility(View.GONE);
+        } else {
+            mImageFrame.setVisibility(View.GONE);
+            mErrText.setVisibility(View.VISIBLE);
     	}
     }
 
     // TODO: Remove function (needed for DcmViewer)
     public String getDicomFile() {
-        return mCurrDir + '/' + mCurrFile;
+        return mCurrFile;
     }
 }

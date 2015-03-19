@@ -20,35 +20,16 @@
  * THE SOFTWARE.
  */
 
-apply plugin: 'com.android.application'
+package us.cboyd.android.shared.files;
 
-android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.0"
-    defaultConfig {
-        applicationId 'us.cboyd.android.dicom'
-        minSdkVersion 14
-        targetSdkVersion 22
-        versionCode 16
-        versionName "0.7"
-    }
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-    productFlavors {
-    }
-}
+import android.widget.ImageView;
+import android.widget.TextView;
 
-dependencies {
-    repositories {
-        mavenCentral()
-    }
-    compile project(':openCVLibrary2410')
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'com.android.support:recyclerview-v7:22.0.0'
-    compile 'com.android.support:support-v13:22.0.0'
+/**
+ * Created by Christopher on 3/11/2015.
+ */
+public class FileViewHolder {
+    public ImageView icon;
+    public TextView fileName;
+    public TextView secondLine;
 }

@@ -86,6 +86,9 @@
 -keep class org.dcm4che3.** {
   public protected private *;
 }
+-keep class com.google.** {
+  public protected private *;
+}
 -keep class org.opencv.** {
   public protected private *;
 }

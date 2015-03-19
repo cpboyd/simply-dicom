@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2013 - 2015. Christopher Boyd
   ~
@@ -21,47 +20,25 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
- android:orientation="vertical"
- android:layout_width="match_parent"
- android:layout_height="match_parent">
-	    	
-   	<TextView android:id="@+id/text_fileError"
-	    android:visibility="gone"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#111">
+
+    <TextView android:id="@+id/text_fileError"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-	    android:textAppearance="?android:attr/textAppearanceMedium" />
-	
-	<LinearLayout android:id="@+id/linL_fileSelection"
-		android:orientation="horizontal"
-		android:layout_width="match_parent"
-		android:layout_height="0dip"
-	    android:layout_weight="1"
-		android:gravity="center"
-		android:longClickable="true">
-			
-		<Button android:id="@+id/bttn_load"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:drawableLeft="@drawable/button_accept"
-			android:text="@string/menu_load"
-			android:onClick="load" />
-		
-		<FrameLayout
-		   	android:layout_width="0dip" 
-	        android:layout_height="match_parent"
-	    	android:layout_weight="1">
-			<ImageView android:id="@+id/demoImage"
-			    android:layout_width="match_parent"
-			    android:layout_height="match_parent"
-			    android:scaleType="fitCenter" />
-		</FrameLayout>
-			
-	</LinearLayout>
-	
-    <ListView
-        android:id="@+id/list_tags"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    <FrameLayout android:id="@+id/imageFrame"
         android:layout_width="match_parent"
-        android:layout_height="0dip"
-	    android:layout_weight="4"/>
+        android:layout_height="wrap_content">
+        <ImageView android:id="@+id/demoImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"/>
+    </FrameLayout>
+
 </LinearLayout>

@@ -28,14 +28,13 @@ import android.view.View;
 import android.widget.ListView;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import us.cboyd.android.shared.ExternalIO;
-import us.cboyd.android.shared.StorageUtils;
 import us.cboyd.android.shared.SwipeRefreshListFragment;
-import us.cboyd.android.shared.adapters.FileArrayAdapter;
-import us.cboyd.android.shared.adapters.StorageArrayAdapter;
+import us.cboyd.android.shared.files.FileAdapterOptions;
+import us.cboyd.android.shared.files.FileArrayAdapter;
+import us.cboyd.android.shared.files.StorageArrayAdapter;
+import us.cboyd.android.shared.files.StorageUtils;
 
 /**
  * DICOM ListFragment
@@ -50,22 +49,16 @@ public class DcmListFragment extends SwipeRefreshListFragment {
     // The container Activity must implement this interface so the frag can deliver messages
     public interface OnFileSelectedListener {
         /** Called by DcmListFragment when a list item is selected */
-        public void onFileSelected(ArrayList<String> dirList, File currDir, File currFile);
-        public void onRootSelected(File currDir, String displayName);
-        public void onRootSelected(File currDir);
-        public void onDirectorySelected(File currDir);
+        public void onFileSelected(File currFile);
+        public void resetTitleAndSubtitle();
+        public void setTitleAndSubtitle(String displayName, File currDir);
     }
 	
 	/** Current directory. */
 	private File 	mCurrDir, mRootDir;
 	private boolean mShowHidden = false;
     private boolean mFilesFirst = false;
-    private boolean mIsStorage, mIsRoot;
-    private List<StorageUtils.StorageInfo> mStorage;
-	
-	/**  Array adapter for the directory listing. */
-    private StorageArrayAdapter mStorageAdapter;
-	private FileArrayAdapter    mAdapter;
+    private boolean mIsStorage, mIsRoot, mShowStorage;
 	
 	/** onCreate is called to do initial creation of the fragment. */
 	@Override
@@ -102,62 +95,26 @@ public class DcmListFragment extends SwipeRefreshListFragment {
 	
 	/** onListItemClick is called when an item in the list is selected. */
 	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
-		setSelection(position);
+	public void onListItemClick(ListView listView, View view, int position, long id) {
+        Object temp = listView.getAdapter().getItem(position);
+        // If temp is null, display the storage list.
+        if (temp == null) {
+            mCallback.resetTitleAndSubtitle();
+            return;
+        }
+        // Set the new root directory to the selected storage option.
+        if (mIsStorage) {
+            StorageUtils.StorageInfo storage = (StorageUtils.StorageInfo) temp;
+            mRootDir = storage.getFile();
+            mCallback.setTitleAndSubtitle(storage.getDisplayName(), mRootDir);
+        // Otherwise, navigate through the folders as usual
+        } else {
+            // Notify the parent activity of selected item
+            mCallback.onFileSelected((File) temp);
+        }
         
         // Set the item as checked to be highlighted when in two-pane layout
         //getListView().setItemChecked(position, true);
-	}
-
-    // Set the new root directory to the selected storage option.
-    public void setStorage(int position){
-//        // Refresh list of storage options
-//        if (position == 0)
-//            setDir();
-        mRootDir = mStorageAdapter.getItem(position).getFile();
-        setDir(mRootDir);
-        mCallback.onRootSelected(mCurrDir, mStorageAdapter.getItem(position).getDisplayName());
-    }
-	
-	// Allows onListItemClick as well as the DcmBrowser's nav-drawer to set the current selection.
-	public void setSelection(int position) {
-        // If on the storage list
-        if (mIsStorage) {
-            setStorage(position);
-        // Otherwise, navigate through the folders as usual
-        } else {
-            // Handle special cases
-            if (position == 0) {
-                // Go back to the storage list
-                if (mCurrDir.equals(mRootDir)) {
-                    mIsStorage = true;
-                    setDir();
-                    mCallback.onRootSelected(null);
-                    return;
-                // Go up to the parent directory, if '..'
-                } else {
-                    setDir(mCurrDir.getParentFile());
-                    mCallback.onDirectorySelected(mCurrDir);
-                    return;
-                }
-            }
-
-            File currFile = mAdapter.getItem(position);
-            // If it's a directory:
-            if (currFile.isDirectory()){
-                setDir(currFile);
-                mCallback.onDirectorySelected(mCurrDir);
-                // Otherwise, display info about the DICOM file selected.
-            } else {
-                // Notify the parent activity of selected item
-                ArrayList<String> listCopy = new ArrayList<>();
-                for (File item : mAdapter.getFileList()) {
-                    listCopy.add(item.getName());
-                }
-                mCallback.onFileSelected(listCopy, mCurrDir, currFile);
-            }
-        }
-		
 	}
 	
 	/** Save the directory for reuse later. */
@@ -186,6 +143,14 @@ public class DcmListFragment extends SwipeRefreshListFragment {
     public File getRoot() {
         return mRootDir;
     }
+
+    /** Go up a directory (if not at root or on storage list). */
+    public boolean navigateUp() {
+        if (mIsRoot || mIsStorage)
+            return false;
+        mCallback.onFileSelected(mCurrDir.getParentFile());
+        return true;
+    }
 	
 	/** Set the current directory and update the list. */
 	public void setDir(File directory) {
@@ -195,35 +160,46 @@ public class DcmListFragment extends SwipeRefreshListFragment {
         } else {
             mIsStorage = false;
         }
-		setDir();
+		refresh();
 	}
 	
-	public void setDir() {
+	public void refresh() {
 		// If there isn't external storage, do nothing.
 		if (!ExternalIO.checkStorage())
 			return;
 
         // If on the storage list, list the storage names.
         if (mIsStorage) {
-            mStorageAdapter = new StorageArrayAdapter(getActivity(), R.layout.item_file);
-            setListAdapter(mStorageAdapter);
+            setListAdapter(new StorageArrayAdapter(getActivity(), R.layout.item_file));
         // Otherwise, list the files & folders within the current directory.
         } else {
             mIsRoot = mCurrDir.equals(mRootDir);
 
             // Create an array adapter for the list view, using the files array
-            mAdapter = new FileArrayAdapter(getActivity(), R.layout.item_file, mCurrDir, mIsRoot, mFilesFirst, mShowHidden);
-            setListAdapter(mAdapter);
+            setListAdapter(new FileArrayAdapter(getActivity(), R.layout.item_file, mCurrDir, getFileAdapterOptions()));
         }
 	}
+
+    public int getFileAdapterOptions() {
+        int options = 0;
+        if (mIsRoot)
+            options |= FileAdapterOptions.DIRECTORY_IS_ROOT;
+        if (mShowStorage)
+            options |= FileAdapterOptions.SHOW_STORAGE_LIST;
+        if (mFilesFirst)
+            options |= FileAdapterOptions.LIST_FILES_FIRST;
+        if (mShowHidden)
+            options |= FileAdapterOptions.SHOW_HIDDEN_FILES;
+        return options;
+    }
 	
 	public void setHidden(boolean show) {
 		mShowHidden = show;
-		setDir();
+		refresh();
 	}
 
     public void listFilesFirst(boolean checked) {
         mFilesFirst = checked;
-        setDir();
+        refresh();
     }
 }

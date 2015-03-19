@@ -41,7 +41,8 @@
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:minHeight="?attr/actionBarSize"
-            android:background="?attr/colorPrimary" />
+            android:background="?attr/colorPrimary"
+            android:elevation="5dp"/>
 
         <!-- Container for fragments -->
         <FrameLayout
@@ -61,7 +62,8 @@
         android:layout_gravity="start"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/colorBackground">
+        android:background="?android:attr/colorBackground"
+        android:elevation="10dp">
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
@@ -72,7 +74,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:minHeight="?attr/actionBarSize"
-                android:background="?attr/colorPrimary" />
+                android:background="?attr/colorPrimary"
+                android:elevation="15dp"/>
             <ListView
                 android:id="@+id/left_drawer"
                 android:layout_width="match_parent"

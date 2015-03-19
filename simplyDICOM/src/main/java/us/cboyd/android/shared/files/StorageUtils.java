@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.android.shared;
+package us.cboyd.android.shared.files;
 
 import android.os.Environment;
 import android.util.Log;
@@ -86,10 +86,10 @@ public class StorageUtils {
         }
 
         public int getIcon() {
-            if (!removable)
-                return R.drawable.ic_smartphone_white_36dp;
-            else
+            if (removable)
                 return R.drawable.ic_sd_storage_white_36dp;
+            else
+                return R.drawable.ic_smartphone_white_36dp;
         }
     }
 

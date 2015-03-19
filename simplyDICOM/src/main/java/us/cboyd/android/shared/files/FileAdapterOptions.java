@@ -20,35 +20,26 @@
  * THE SOFTWARE.
  */
 
-apply plugin: 'com.android.application'
+package us.cboyd.android.shared.files;
 
-android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.0"
-    defaultConfig {
-        applicationId 'us.cboyd.android.dicom'
-        minSdkVersion 14
-        targetSdkVersion 22
-        versionCode 16
-        versionName "0.7"
-    }
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-    productFlavors {
-    }
-}
-
-dependencies {
-    repositories {
-        mavenCentral()
-    }
-    compile project(':openCVLibrary2410')
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'com.android.support:recyclerview-v7:22.0.0'
-    compile 'com.android.support:support-v13:22.0.0'
+/**
+ * Created by Christopher on 3/12/2015.
+ */
+public class FileAdapterOptions {
+    /**
+     * Inform the FileArrayAdapter this is the root directory for the selected storage.
+     */
+    public static final int DIRECTORY_IS_ROOT = 0x1;
+    /**
+     * Have the FileArrayAdapter give the option to go to a list of storage options (if root).
+     */
+    public static final int SHOW_STORAGE_LIST  = 0x2;
+    /**
+     * Have the FileArrayAdapter list files before directories.
+     */
+    public static final int LIST_FILES_FIRST  = 0x4;
+    /**
+     * Have the FileArrayAdapter show hidden files and directories.
+     */
+    public static final int SHOW_HIDDEN_FILES = 0x8;
 }

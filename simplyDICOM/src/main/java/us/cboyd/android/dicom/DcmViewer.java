@@ -101,11 +101,11 @@ public class DcmViewer extends Activity implements OnTouchListener,
 
     private Attributes          mAttributes     = null;
     private File 				mFilePath;
-    private ArrayList<String> 	mFileList 		= null;
+    private ArrayList<File> 	mFileList 		= null;
     private List<Mat> 			mMatList 		= null;
     private ImageView 			mImageView;
     private ImageContrastView 	mCmapView;
-    private String              mCurrFilename;
+    private File                mCurrFile;
     /// OLD:
     private Button 			mPreviousButton, mNextButton;
     private TextView 		mIndexTextView, mCountTextView;
@@ -141,16 +141,14 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		// If the saved instance state is not null get the file name
 		if (savedInstanceState != null) {
 			mFilePath = new File(savedInstanceState.getString(DcmVar.CURRDIR));
-			mFileList = savedInstanceState.getStringArrayList(DcmVar.FILELIST);
+			mFileList = getFileList(mFilePath);
 		// Get the intent
 		} else {
 			Intent intent = getIntent();
 			
 			if (intent != null) {
 				Bundle extras = intent.getExtras();
-				
 				fileName  = (extras == null) ? null : extras.getString(DcmVar.DCMFILE);
-				mFileList = (extras == null) ? null : extras.getStringArrayList(DcmVar.FILELIST);
 			}
 		}
 		
@@ -160,13 +158,14 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		// Load the file
 		} else {
 			// Get the File object for the current file
-			File currentFile = new File(fileName);
+			mCurrFile = new File(fileName);
+            mFileList = getFileList(mCurrFile);
 			Log.i("cpb","Loading file...");
             System.gc();
 			// Read in the DicomObject
 			try {
 				DicomInputStream dis;
-				dis = new DicomInputStream(currentFile);
+				dis = new DicomInputStream(mCurrFile);
                 mAttributes = dis.getFileMetaInformation();
                 dis.readAttributes(mAttributes, -1, -1);
                 mAttributes.trimToSize();
@@ -182,8 +181,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			
 			// Get the files array = get the files contained
 			// in the parent of the current file
-			mFilePath = currentFile.getParentFile();
-            mCurrFilename = currentFile.getName();
+			mFilePath = mCurrFile.getParentFile();
 			
 			// If the files array is null or its length is less than 1,
 			// there is an error because it must at least contain 1 file:
@@ -193,7 +191,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						"This directory contains no DICOM files.");
 			} else {
 				// Get the file index in the array
-				int currFileIndex = getIndex(currentFile);
+				int currFileIndex = mFileList.indexOf(mCurrFile);
 				
 				// If the current file index is negative
 				// or greater or equal to the files array
@@ -228,6 +226,37 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	    
 		mMultiDetector = new MultiGestureDetector(getApplicationContext(), new MultiListener());
 	}
+
+    public ArrayList<File> getFileList(File currDir) {
+        // If not a directory, get the file's parent directory.
+        if (!currDir.isDirectory())
+            currDir = currDir.getParentFile();
+        ArrayList<File> fileList = new ArrayList<>();
+        // Check if we have permission to read the current directory...
+        if (currDir.canRead()) {
+            // Loop on all files within the directory
+            for (File path : currDir.listFiles()) {
+                String filename = path.getName();
+
+                // Find where the extension starts (i.e. the last '.')
+                int ext = filename.lastIndexOf(".");
+
+                // No extension found.  May or may not be a DICOM file.
+                if (ext == -1) {
+                    fileList.add(path);
+                    continue;
+                }
+
+                // Get the file's extension.
+                String extension = filename.substring(ext + 1);
+                // Check if the file has a DICOM (or DCM) extension.
+                if (extension.equalsIgnoreCase("dicom") || extension.equalsIgnoreCase("dcm")) {
+                    fileList.add(path);
+                }
+            }
+        }
+        return fileList;
+    }
 
 	@Override
 	protected void onStart() {
@@ -284,16 +313,16 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			Attributes currDcm = null;
             mAttributes = null;
             DicomInputStream dis = null;
-			for(String currFile : mFileList) {
+			for(File currFile : mFileList) {
                 Log.i("cpb", "Loop: " + currFile);
-				if (!currFile.equals(mCurrFilename)) {
+				if (!currFile.equals(mCurrFile)) {
                     currDcm = null;
                     dis = null;
                     Log.i("cpb", "Attempting GC");
                     System.gc();
 					// Read in the DicomObject
 					try {
-						dis = new DicomInputStream(new File(mFilePath, currFile));
+						dis = new DicomInputStream(currFile);
                         currDcm = dis.getFileMetaInformation();
                         dis.readAttributes(currDcm, -1, -1);
                         currDcm.trimToSize();
@@ -454,13 +483,12 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
         // If anything is null, don't save the state.
-        if ((mFilePath == null) || (mFileList == null)) {
+        if (mFilePath == null) {
             outState = null;
             return;
         }
 		// Otherwise, save the current file name
 		outState.putString(DcmVar.CURRDIR, mFilePath.getAbsolutePath());
-		outState.putStringArrayList(DcmVar.FILELIST, mFileList);
 
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
@@ -473,7 +501,6 @@ public class DcmViewer extends Activity implements OnTouchListener,
 
 	@Override
 	public void onLowMemory() {
-		
 		// Hint the garbage collector
 		System.gc();
 		
@@ -490,9 +517,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	/* (non-Javadoc)
 	 * @see android.widget.SeekBar.OnSeekBarChangeListener#onProgressChanged(android.widget.SeekBar, int, boolean)
 	 */
-	public synchronized void onProgressChanged(SeekBar seekBar, int progress,
-			boolean fromUser) {
-		
+	public synchronized void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 		try {
 			// Set the current instance if specified by user
 			// This prevents resetting the view if setMax changes the progress
@@ -550,12 +575,10 @@ public class DcmViewer extends Activity implements OnTouchListener,
 			}
 			
 		} catch (OutOfMemoryError ex) {
-			
 			System.gc();
 			
 			showExitAlertDialog("ERROR: Out of memory",
 					"This DICOM series required more memory than your device could provide.");
-			
 		}
 		
 	}
@@ -590,32 +613,6 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		mInstance[mAxis]++;
 		// Changing the progress bar will set the image
 		mIndexSeekBar.setProgress(mInstance[mAxis]);
-	}
-	
-	// ---------------------------------------------------------------
-	// - FUNCTIONS
-	// ---------------------------------------------------------------
-	
-	/**
-	 * Get the index of the file in the files array.
-	 * @param file
-	 * @return Index of the file in the files array
-	 * or -1 if the files is not in the list.
-	 */
-	private int getIndex(File file) {
-		
-		if (mFileList == null)
-			throw new NullPointerException("The files array is null.");
-		
-		for (int i = 0; i < mFileList.size(); i++) {
-			
-			if (mFileList.get(i).equals(file.getName()))
-				return i;
-			
-		}
-		
-		return -1;
-		
 	}
 	
 	/**

@@ -5069,14 +5069,14 @@
     <!-- DICOM Info Tags -->
     <string-array name="dcmtag_default">
         <item>00020002</item>
+        <item>00100010</item>
+        <item>00100020</item>
+        <item>00100030</item>
+        <item>00100040</item>
         <item>00020010</item>
         <item>00280004</item>
         <item>00080016</item>
 	    <item>00080018</item>
-	    <item>00100010</item>
-	    <item>00100020</item>
-	    <item>00100030</item>
-	    <item>00100040</item>
 	    <item>0020000D</item>
 	    <item>00080020</item>
 	    <item>00080030</item>
@@ -5092,14 +5092,14 @@
     </string-array>
     <integer-array name="dcmint_default">
         <item>0x00020002</item>
-        <item>0x00020010</item>
-        <item>0x00280004</item>
-        <item>0x00080016</item>
-        <item>0x00080018</item>
         <item>0x00100010</item>
         <item>0x00100020</item>
         <item>0x00100030</item>
         <item>0x00100040</item>
+        <item>0x00020010</item>
+        <item>0x00280004</item>
+        <item>0x00080016</item>
+        <item>0x00080018</item>
         <item>0x0020000D</item>
         <item>0x00080020</item>
         <item>0x00080030</item>
