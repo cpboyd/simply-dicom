@@ -15,6 +15,7 @@ gen/
 
 # IntelliJ
 .idea/
+*.iml
 
 # Gradle files
 .gradle/

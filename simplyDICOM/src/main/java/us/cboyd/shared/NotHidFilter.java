@@ -34,7 +34,6 @@ import java.io.FileFilter;
  */
 
 public class NotHidFilter implements FileFilter {
-	
 	/* 
 	 * Indicates whether a specific file should be included in a pathname list.
 	 */

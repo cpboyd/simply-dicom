@@ -23,89 +23,110 @@
 package us.cboyd.android.shared.files;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import us.cboyd.android.dicom.R;
+import us.cboyd.android.shared.list.RefreshArrayAdapter;
 
 /**
  * Created by Christopher on 3/11/2015.
  */
-public class FileArrayAdapter extends ArrayAdapter<File> {
+public class FileArrayAdapter extends RefreshArrayAdapter<File> {
 
     private ArrayList<File> mDirList = new ArrayList<>();
-    private ArrayList<File> mFileList = new ArrayList<>();
+    private ArrayList<FilterFile> mFileList = new ArrayList<>();
     private File            mCurrDir;
-    private int             mResource;
+    private int             mResource, mOptions, mOffset;
+    private Resources       mRes;
     private LayoutInflater  mInflater;
-    private boolean         mIsRoot, mFilesFirst, mShowHidden;
+    private boolean         mFilesFirst;
 
     public FileArrayAdapter(Context context, int resource, File currDir, int options)
     {
         super(context, resource);
-        mIsRoot = (options & FileAdapterOptions.DIRECTORY_IS_ROOT) == FileAdapterOptions.DIRECTORY_IS_ROOT;
-        mFilesFirst = (options & FileAdapterOptions.LIST_FILES_FIRST) == FileAdapterOptions.LIST_FILES_FIRST;
-        mShowHidden = (options & FileAdapterOptions.SHOW_HIDDEN_FILES) == FileAdapterOptions.SHOW_HIDDEN_FILES;
-
         mCurrDir = currDir;
         mResource = resource;
+        mRes = context.getResources();
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        refreshList();
+        setOptions(options);
     }
 
-    public ArrayList<File> getFileList() {
-        return mFileList;
+    @Override
+    public void setOptions(int options) {
+        mOptions = options;
+        // Determine if there's an offset:
+        mOffset = !(getOption(FileAdapterOptions.DIRECTORY_IS_ROOT)
+                && getOption(FileAdapterOptions.HIDE_STORAGE_LIST)) ? 1 : 0;
+        mFilesFirst = getOption(FileAdapterOptions.LIST_FILES_FIRST);
+
+        onRefresh();
     }
 
-    public void refreshList() {
+    public boolean getOption(int option) {
+        return (mOptions & option) == option;
+    }
+
+    @Override
+    public void onRefresh() {
         // Clear the directory and file lists
         mDirList.clear();
         mFileList.clear();
 
         // Check if we have permission to read the current directory...
         if (mCurrDir.canRead()) {
+            boolean showFolders = getOption(FileAdapterOptions.SHOW_HIDDEN_FOLDERS);
+            boolean showFiles = getOption(FileAdapterOptions.SHOW_HIDDEN_FILES);
+            boolean noFilter = getOption(FileAdapterOptions.NO_FILE_EXT_FILTER);
             // Loop on all files within the directory
             for (File path : mCurrDir.listFiles()) {
-                if (!path.isHidden() || mShowHidden) {
-                    // If it's a directory, add it to mDirList.
-                    if (path.isDirectory()) {
-                        mDirList.add(path);
-                        // Otherwise, see if it's a DICOM file.
-                    } else {
-                        String filename = path.getName();
+                // If it's a directory, add it to mDirList. (Depending on visibility settings.)
+                if (path.isDirectory() && (showFolders || !path.isHidden())) {
+                    mDirList.add(path);
+                // Otherwise, see if it's a DICOM file. (Depending on visibility settings.)
+                } else if (showFiles || !path.isHidden()) {
+                    // Find where the extension starts (i.e. the last '.')
+                    String filename = path.getName();
+                    int ext = filename.lastIndexOf(".");
 
-                        // Find where the extension starts (i.e. the last '.')
-                        int ext = filename.lastIndexOf(".");
+                    // No extension found.  May or may not be a DICOM file.
+                    if (ext == -1) {
+                        mFileList.add(new FilterFile(path, true));
+                        continue;
+                    }
 
-                        // No extension found.  May or may not be a DICOM file.
-                        if (ext == -1) {
-                            mFileList.add(path);
-                            continue;
-                        }
+                    // Get the file's extension.
+                    String extension = filename.substring(ext + 1).toLowerCase(Locale.US);
+                    // Check if the file has a DICOM (or DCM) extension.
+                    if (extension.equals("dic") || extension.equals("dicom") || extension.equals("dcm")) {
+                        mFileList.add(new FilterFile(path, true));
+                        continue;
+                    }
 
-                        // Get the file's extension.
-                        String extension = filename.substring(ext + 1);
-                        // Check if the file has a DICOM (or DCM) extension.
-                        if (extension.equalsIgnoreCase("dicom") || extension.equalsIgnoreCase("dcm")) {
-                            mFileList.add(path);
-                        }
+                    // If the extension filter is disabled, add this file.
+                    if (noFilter) {
+                        mFileList.add(new FilterFile(path, false));
                     }
                 }
             }
         }
+        notifyDataSetChanged();
     }
 
     @Override
     public int getCount() {
-        return mDirList.size() + mFileList.size() + 1;
+        return mDirList.size() + mFileList.size() + mOffset;
     }
 
     @Override
@@ -122,8 +143,9 @@ public class FileArrayAdapter extends ArrayAdapter<File> {
     @Override
     public File getItem(int position) {
         // Handle special cases at position 0.
-        if (position == 0) {
-            if (mIsRoot)
+        if ((position == 0) && (mOffset != 0)) {
+            // If at root directory, return null
+            if (getOption(FileAdapterOptions.DIRECTORY_IS_ROOT))
                 return null;
             // If not root, return the parent directory.
             return mCurrDir.getParentFile();
@@ -132,21 +154,16 @@ public class FileArrayAdapter extends ArrayAdapter<File> {
         if ((mFilesFirst && (position > mFileList.size())) ||
                 (!mFilesFirst && (position <= mDirList.size()))){
             if (mFilesFirst)
-                return mDirList.get(position - mFileList.size() - 1);
+                return mDirList.get(position - mFileList.size() - mOffset);
             else
-                return mDirList.get(position - 1);
+                return mDirList.get(position - mOffset);
             // Otherwise, display info about the file.
         } else {
             if (mFilesFirst)
-                return mFileList.get(position - 1);
+                return mFileList.get(position - mOffset).file;
             else
-                return mFileList.get(position - mDirList.size() - 1);
+                return mFileList.get(position - mDirList.size() - mOffset).file;
         }
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
     }
 
     @Override
@@ -168,39 +185,55 @@ public class FileArrayAdapter extends ArrayAdapter<File> {
             holder = (FileViewHolder) view.getTag();
         }
 
-        File temp;
         // Display the files & folders
-        // Display text for the ".."
-        if (position == 0) {
-            // If root directory, display different text.
-            if (mIsRoot) {
-                holder.icon.setImageResource(R.drawable.ic_action_storage);
+        if ((position == 0) && (mOffset == 1)) {
+            // Display storage list if at root directory and option is enabled.
+            if (getOption(FileAdapterOptions.DIRECTORY_IS_ROOT)) {
+                holder.icon.setImageResource(R.drawable.ic_storage_white_36dp);
                 holder.fileName.setText("Storage List");
                 holder.secondLine.setText("Display the list of storage options.");
+            // Display ".." to go up a directory
             } else {
-                holder.icon.setImageResource(R.drawable.ic_action_back);
+                holder.icon.setImageResource(R.drawable.ic_arrow_back_white_36dp);
                 holder.fileName.setText("..");
                 holder.secondLine.setText("Up to parent directory");
             }
         // Directory
         } else if ((mFilesFirst && (position > mFileList.size())) ||
                 (!mFilesFirst && (position <= mDirList.size()))){
-            holder.icon.setImageResource(R.drawable.ic_action_collection);
+            File directory;
             if (mFilesFirst)
-                temp = mDirList.get(position - mFileList.size() - 1);
+                directory = mDirList.get(position - mFileList.size() - mOffset);
             else
-                temp = mDirList.get(position - 1);
-            holder.fileName.setText(temp.getName());
-            holder.secondLine.setText("Directory");
-            // Otherwise, display info about the file.
+                directory = mDirList.get(position - mOffset);
+            // Choose which icon to use.
+            if (directory.isHidden())
+                holder.icon.setImageResource(R.drawable.ic_folder_visible_off_white_36dp);
+            else
+                holder.icon.setImageResource(R.drawable.ic_folder_open_white_36dp);
+            holder.fileName.setText(directory.getName());
+            holder.secondLine.setText(mRes.getText(R.string.directory));
+        // Otherwise, display info about the file.
         } else {
-            holder.icon.setImageResource(R.drawable.ic_action_picture);
+            FilterFile temp;
             if (mFilesFirst)
-                temp = mFileList.get(position - 1);
+                temp = mFileList.get(position - mOffset);
             else
-                temp = mFileList.get(position - mDirList.size() - 1);
-            holder.fileName.setText(temp.getName());
-            holder.secondLine.setText("File, " + temp.length() / 1024 + " KiB");
+                temp = mFileList.get(position - mDirList.size() - mOffset);
+            // Choose which icon to use.
+            if (!temp.match)
+                holder.icon.setImageResource(R.drawable.ic_file_filter_off_white_36dp);
+            else if (temp.file.isHidden())
+                holder.icon.setImageResource(R.drawable.ic_file_visible_off_white_36dp);
+            else
+                holder.icon.setImageResource(R.drawable.ic_file_image_white_36dp);
+            holder.fileName.setText(temp.file.getName());
+            String separator = " | ";
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+            String text = mRes.getText(R.string.file)
+                    + separator + temp.file.length() / 1024 + " KiB"
+                    + separator + sdf.format(new Date(temp.file.lastModified()));
+            holder.secondLine.setText(text);
         }
         return view;
     }

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ Copyright (C) 2013 - 2015. Christopher Boyd
   ~
@@ -21,7 +22,6 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string name="app_name">simplyDICOM</string>
     <string-array name="planes_array">
         <item>横断面</item>
         <item>冠状面</item>
@@ -42,5 +42,14 @@
         <item>Pink</item>
         <item>Hot</item>
     </string-array>
-    <string name="invert">Invert</string>
+    <string name="invert">反色</string>
+    <string name="loading">正在加载…</string>
+    <string name="file">文件</string>
+    <string name="directory">目录</string>
+    <string name="sort_extension">文件扩展名</string>
+    <string-array name="sort_array">
+        <item>文數字</item>
+        <item>修改日期</item>
+        <item>文件大小</item>
+    </string-array>
 </resources>

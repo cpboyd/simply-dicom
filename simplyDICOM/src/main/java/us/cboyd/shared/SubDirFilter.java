@@ -34,7 +34,6 @@ import java.io.FilenameFilter;
  */
 
 public class SubDirFilter implements FilenameFilter {
-	
 	/* 
 	 * Indicates whether a specific file should be included in a pathname list.
 	 */

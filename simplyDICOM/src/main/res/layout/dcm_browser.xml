@@ -56,28 +56,25 @@
          The drawer is given a fixed width in dp and extends the full height of
          the container. A solid background is used for contrast
          with the content view. -->
-    <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/drawer_refresh"
+    <LinearLayout
+        android:id="@+id/drawer"
         android:layout_gravity="start"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="?android:attr/colorBackground">
-        <LinearLayout
-            android:orientation="vertical"
+    <!-- New Toolbar to replace ActionBar -->
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/dcmDrawer_toolbar"
+            android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        <!-- New Toolbar to replace ActionBar -->
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/dcmDrawer_toolbar"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:minHeight="?attr/actionBarSize"
-                android:background="?attr/colorPrimary" />
-            <ListView
-                android:id="@+id/left_drawer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:choiceMode="singleChoice"/>
-        </LinearLayout>
-    </android.support.v4.widget.SwipeRefreshLayout>
+            android:minHeight="?attr/actionBarSize"
+            android:background="?attr/colorPrimary" />
+        <ListView
+            android:id="@+id/left_drawer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:choiceMode="singleChoice"
+            android:background="?android:attr/listChoiceBackgroundIndicator"/>
+    </LinearLayout>
 </android.support.v4.widget.DrawerLayout>

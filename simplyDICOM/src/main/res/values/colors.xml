@@ -21,10 +21,20 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
+
 <resources>
     <item name="red" type="color">#C62828</item>
     <item name="red_dark" type="color">#B71C1C</item>
     <item name="bg" type="color">#607D8B</item>
     <item name="bg_dark" type="color">#37474F</item>
-    <item name="accent" type="color">#FF4081</item>
+    <item name="lg" type="color">#8BC34A</item>
+    <item name="lg_dark" type="color">#689F38</item>
+    <item name="black_alpha" type="color">#75000000</item>
+    <item name="lg_alpha" type="color">#758BC34A</item>
+    <item name="lg_dark_alpha" type="color">#75689F38</item>
+    <item name="accent" type="color">#D500F9</item>
+    <color name="fab_color_1">#ff5252</color>
+    <color name="fab_color_1_muted">#ff8080</color>
+    <color name="fab_color_2">#9c27b0</color>
+    <color name="fab_color_2_muted">#a56ab0</color>
 </resources>

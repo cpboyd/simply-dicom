@@ -26,18 +26,31 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.List;
 
 import us.cboyd.android.dicom.R;
+import us.cboyd.android.shared.list.RefreshArrayAdapter;
 
 /**
  * Created by Christopher on 3/11/2015.
  */
-public class StorageArrayAdapter extends ArrayAdapter<StorageUtils.StorageInfo> {
+public class StorageArrayAdapter extends RefreshArrayAdapter<File> {
+    private static final int NOT_SELECTED = -1;
+    private int selectedPos = NOT_SELECTED;
+
+    // if called with the same position multiple lines it works as toggle
+    public void setSelection(int position) {
+        if (selectedPos == position) {
+            selectedPos = NOT_SELECTED;
+        } else {
+            selectedPos = position;
+        }
+        notifyDataSetChanged();
+    }
 
     private List<StorageUtils.StorageInfo> mStorage;
     private int             mResource;
@@ -46,10 +59,17 @@ public class StorageArrayAdapter extends ArrayAdapter<StorageUtils.StorageInfo> 
     public StorageArrayAdapter(Context context, int resource)
     {
         super(context, resource);
-        // Load the list of storage options.
-        mStorage = StorageUtils.getStorageList();
         mResource = resource;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        onRefresh();
+    }
+
+    // Refresh the list of storage options.
+    @Override
+    public void onRefresh() {
+        mStorage = StorageUtils.getStorageList();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -58,20 +78,16 @@ public class StorageArrayAdapter extends ArrayAdapter<StorageUtils.StorageInfo> 
     }
 
     @Override
-    public int getPosition(StorageUtils.StorageInfo item) {
+    public int getPosition(File item) {
         if (item == null)
             return -1;
-        return mStorage.indexOf(item);
+        //TODO: Implement?
+        return 0;
     }
 
     @Override
-    public StorageUtils.StorageInfo getItem(int position) {
-        return mStorage.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
+    public File getItem(int position) {
+        return mStorage.get(position).getFile();
     }
 
     @Override

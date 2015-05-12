@@ -42,8 +42,5 @@ public class DcmVar {
     							DCMFILE  = "DCMFile",
     							FRAGLIST = "fragList",
     							FRAGINFO = "fragInfo";
-	
-    /** Menu Items */
-    public static final int 	ABOUT 	= 0;
 
 }

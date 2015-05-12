@@ -31,9 +31,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -43,7 +43,6 @@ import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.io.DicomInputStream;
 import org.opencv.android.Utils;
-import org.opencv.contrib.Contrib;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -67,9 +66,11 @@ import us.cboyd.android.dicom.tag.TagArrayAdapter;
 public class DcmInfoFragment extends ListFragment {
     private static String 		mCurrFile 	    = null;
     private static Attributes   mAttributes     = null;
-    private static Button 	    mLoadButton;
+
+    private static View         mHeader, mLoadButton;
     private static TextView     mErrText;
     private static FrameLayout  mImageFrame;
+
     private static ImageView    mImageView;
     private static boolean 	    mDebugMode		= false;
     private static LayoutInflater mInflater;
@@ -94,11 +95,17 @@ public class DcmInfoFragment extends ListFragment {
 
         // Inflate the layout for this fragment
         mInflater = inflater;
-        View view = super.onCreateView(inflater, container, savedInstanceState);
-
+        View view = inflater.inflate(R.layout.fab_list, container, false);
         //TODO: Add FAB to load image series
-//        mLoadButton = (Button) 			view.findViewById(R.id.bttn_load);
-//        mLoadButton.setEnabled(false);
+        mLoadButton = view.findViewById(R.id.btn_load);
+        // Create the ListView header views
+        ListView list = (ListView) view.findViewById(android.R.id.list);
+        View header = inflater.inflate(R.layout.dcm_info_header, list, false);
+        mImageFrame = (FrameLayout) header.findViewById(R.id.imageFrame);
+        mImageView 	= (ImageView) header.findViewById(R.id.demoImage);
+        mErrText 	= (TextView) header.findViewById(R.id.text_fileError);
+        list.addHeaderView(header);
+        list.addFooterView(inflater.inflate(R.layout.fab_list_footer, list, false));
         return view;
     }
 
@@ -107,13 +114,6 @@ public class DcmInfoFragment extends ListFragment {
     @Override
     public void onStart() {
         super.onStart();
-        // Create the ListView header views
-        ListView view = getListView();
-        View header = mInflater.inflate(R.layout.dcm_info_header, view, false);
-        mImageFrame = (FrameLayout) header.findViewById(R.id.imageFrame);
-        mImageView 	= (ImageView) header.findViewById(R.id.demoImage);
-        mErrText 	= (TextView) header.findViewById(R.id.text_fileError);
-        view.addHeaderView(header);
 
         // During startup, check if there are arguments passed to the fragment.
         // onStart is a good place to do this because the layout has already been
@@ -197,7 +197,7 @@ public class DcmInfoFragment extends ListFragment {
                         double diff = minmax.maxVal - minmax.minVal;
                         temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
                         // Make the demo image bluish, rather than black and white.
-                        Contrib.applyColorMap(temp, temp, Contrib.COLORMAP_BONE);
+                        Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE);
                         Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR);
 
                         // Set the image
@@ -234,7 +234,9 @@ public class DcmInfoFragment extends ListFragment {
     
     public void changeMode(boolean extraInfo) {
     	mDebugMode = extraInfo;
-        ((TagArrayAdapter) getListAdapter()).setDebugMode(mDebugMode);
+        ListAdapter adapter = getListAdapter();
+        if (adapter != null)
+            ((TagArrayAdapter) adapter).setDebugMode(mDebugMode);
     }
     
     @Override
@@ -246,11 +248,12 @@ public class DcmInfoFragment extends ListFragment {
     }
 
     public void showImage(boolean isImage) {
-//    	mLoadButton.setEnabled(isImage);
     	if (isImage) {
+            mLoadButton.setVisibility(View.VISIBLE);
     		mImageFrame.setVisibility(View.VISIBLE);
             mErrText.setVisibility(View.GONE);
         } else {
+            mLoadButton.setVisibility(View.GONE);
             mImageFrame.setVisibility(View.GONE);
             mErrText.setVisibility(View.VISIBLE);
     	}

@@ -24,17 +24,17 @@ package us.cboyd.android.dicom;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.View;
 import android.widget.ListView;
 
 import java.io.File;
 
-import us.cboyd.android.shared.ExternalIO;
-import us.cboyd.android.shared.SwipeRefreshListFragment;
 import us.cboyd.android.shared.files.FileAdapterOptions;
 import us.cboyd.android.shared.files.FileArrayAdapter;
 import us.cboyd.android.shared.files.StorageArrayAdapter;
-import us.cboyd.android.shared.files.StorageUtils;
+import us.cboyd.android.shared.list.RefreshArrayAdapter;
+import us.cboyd.android.shared.list.SwipeRefreshListFragment;
 
 /**
  * DICOM ListFragment
@@ -43,41 +43,21 @@ import us.cboyd.android.shared.files.StorageUtils;
  * @version 0.7
  *
  */
-public class DcmListFragment extends SwipeRefreshListFragment {
+public class DcmListFragment extends SwipeRefreshListFragment implements SwipeRefreshLayout.OnRefreshListener {
     OnFileSelectedListener mCallback;
 
     // The container Activity must implement this interface so the frag can deliver messages
     public interface OnFileSelectedListener {
         /** Called by DcmListFragment when a list item is selected */
-        public void onFileSelected(File currFile);
-        public void resetTitleAndSubtitle();
-        public void setTitleAndSubtitle(String displayName, File currDir);
+        void onFileSelected(File currFile);
+        void resetTitleAndSubtitle();
+        void setTitleAndSubtitle(String displayName, File currDir);
     }
 	
 	/** Current directory. */
 	private File 	mCurrDir, mRootDir;
-	private boolean mShowHidden = false;
-    private boolean mFilesFirst = false;
-    private boolean mIsStorage, mIsRoot, mShowStorage;
-	
-	/** onCreate is called to do initial creation of the fragment. */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-        mIsStorage = true;
-	}
-	
-	/** onStart makes the fragment visible to the user 
-	 * (based on its containing activity being started). */
-	@Override
-    public void onStart() {
-        super.onStart();
-
-        // When in two-pane layout, set the listview to highlight the selected list item
-        // (We do this during onStart because at the point the listview is available.)
-        getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-    }
+	private boolean mIsRoot, mHideStorage, mIsStorage = true;
+    private int     mSortSettings;
 
     @Override
     public void onAttach(Activity activity) {
@@ -93,24 +73,35 @@ public class DcmListFragment extends SwipeRefreshListFragment {
         }
     }
 	
+	/** onStart makes the fragment visible to the user 
+	 * (based on its containing activity being started). */
+	@Override
+    public void onStart() {
+        super.onStart();
+
+        // When in two-pane layout, set the listview to highlight the selected list item
+        // (We do this during onStart because at the point the listview is available.)
+        getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        setOnRefreshListener(this);
+    }
+	
 	/** onListItemClick is called when an item in the list is selected. */
 	@Override
 	public void onListItemClick(ListView listView, View view, int position, long id) {
-        Object temp = listView.getAdapter().getItem(position);
+        File file = (File) listView.getAdapter().getItem(position);
         // If temp is null, display the storage list.
-        if (temp == null) {
+        if (file == null) {
             mCallback.resetTitleAndSubtitle();
             return;
         }
         // Set the new root directory to the selected storage option.
         if (mIsStorage) {
-            StorageUtils.StorageInfo storage = (StorageUtils.StorageInfo) temp;
-            mRootDir = storage.getFile();
-            mCallback.setTitleAndSubtitle(storage.getDisplayName(), mRootDir);
+            if(setRoot(file))
+                mCallback.setTitleAndSubtitle(null, mRootDir);
         // Otherwise, navigate through the folders as usual
         } else {
             // Notify the parent activity of selected item
-            mCallback.onFileSelected((File) temp);
+            mCallback.onFileSelected(file);
         }
         
         // Set the item as checked to be highlighted when in two-pane layout
@@ -144,6 +135,15 @@ public class DcmListFragment extends SwipeRefreshListFragment {
         return mRootDir;
     }
 
+    /** Set the current root (used when loading app.) */
+    public boolean setRoot(File directory) {
+        if (!directory.isDirectory() || !directory.canRead())
+            return false;
+        mIsStorage = false;
+        mRootDir = directory;
+        return true;
+    }
+
     /** Go up a directory (if not at root or on storage list). */
     public boolean navigateUp() {
         if (mIsRoot || mIsStorage)
@@ -154,20 +154,11 @@ public class DcmListFragment extends SwipeRefreshListFragment {
 	
 	/** Set the current directory and update the list. */
 	public void setDir(File directory) {
-		mCurrDir = directory;
-        if (directory == null) {
-            mIsStorage = true;
-        } else {
-            mIsStorage = false;
-        }
-		refresh();
+        mIsStorage = (directory == null);
+        mCurrDir = directory;
 	}
 	
 	public void refresh() {
-		// If there isn't external storage, do nothing.
-		if (!ExternalIO.checkStorage())
-			return;
-
         // If on the storage list, list the storage names.
         if (mIsStorage) {
             setListAdapter(new StorageArrayAdapter(getActivity(), R.layout.item_file));
@@ -181,25 +172,30 @@ public class DcmListFragment extends SwipeRefreshListFragment {
 	}
 
     public int getFileAdapterOptions() {
-        int options = 0;
+        int options = mSortSettings;
         if (mIsRoot)
             options |= FileAdapterOptions.DIRECTORY_IS_ROOT;
-        if (mShowStorage)
-            options |= FileAdapterOptions.SHOW_STORAGE_LIST;
-        if (mFilesFirst)
-            options |= FileAdapterOptions.LIST_FILES_FIRST;
-        if (mShowHidden)
-            options |= FileAdapterOptions.SHOW_HIDDEN_FILES;
+        if (mHideStorage)
+            options |= FileAdapterOptions.HIDE_STORAGE_LIST;
         return options;
     }
 	
-	public void setHidden(boolean show) {
-		mShowHidden = show;
-		refresh();
+	public void setSortOptions(int settings) {
+		mSortSettings = settings;
+        RefreshArrayAdapter<File> adapter = getRefreshAdapter();
+        if (adapter != null)
+            adapter.setOptions(getFileAdapterOptions());
 	}
 
-    public void listFilesFirst(boolean checked) {
-        mFilesFirst = checked;
-        refresh();
+    @Override
+    public void onRefresh() {
+        RefreshArrayAdapter<File> adapter = getRefreshAdapter();
+        if (adapter != null)
+            adapter.onRefresh();
+        setRefreshing(false);
+    }
+
+    public RefreshArrayAdapter<File> getRefreshAdapter() {
+        return (RefreshArrayAdapter<File>) getListAdapter();
     }
 }

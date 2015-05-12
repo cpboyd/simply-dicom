@@ -29,17 +29,54 @@ public class FileAdapterOptions {
     /**
      * Inform the FileArrayAdapter this is the root directory for the selected storage.
      */
-    public static final int DIRECTORY_IS_ROOT = 0x1;
+    public static final int DIRECTORY_IS_ROOT   = 0x1;
     /**
-     * Have the FileArrayAdapter give the option to go to a list of storage options (if root).
+     * Hide the option to go to a list of storage options (if root).
      */
-    public static final int SHOW_STORAGE_LIST  = 0x2;
+    public static final int HIDE_STORAGE_LIST = 0x2;
     /**
      * Have the FileArrayAdapter list files before directories.
      */
-    public static final int LIST_FILES_FIRST  = 0x4;
+    public static final int LIST_FILES_FIRST    = 0x4;
     /**
-     * Have the FileArrayAdapter show hidden files and directories.
+     * Disable the FileArrayAdapter's DICOM file extension filter.
      */
-    public static final int SHOW_HIDDEN_FILES = 0x8;
+    public static final int NO_FILE_EXT_FILTER  = 0x8;
+    /**
+     * Have the FileArrayAdapter show hidden files.
+     */
+    public static final int SHOW_HIDDEN_FILES   = 0x10;
+    /**
+     * Have the FileArrayAdapter show hidden directories.
+     */
+    public static final int SHOW_HIDDEN_FOLDERS = 0x20;
+    /**
+     * Sort descending.
+     */
+    public static final int SORT_DESCENDING = 0x40;
+    /**
+     * Bit offset for sort method integer value.
+     */
+    public static final int OFFSET_SORT_METHOD  = 7;
+
+    public static int getInt(int values, int option) {
+        switch (option) {
+            case DIRECTORY_IS_ROOT:
+                return values & 0x1;
+            case HIDE_STORAGE_LIST:
+                return (values >> 1) & 0x1;
+            case LIST_FILES_FIRST:
+                return (values >> 2) & 0x1;
+            case NO_FILE_EXT_FILTER:
+                return (values >> 3) & 0x1;
+            case SHOW_HIDDEN_FILES:
+                return (values >> 4) & 0x1;
+            case SHOW_HIDDEN_FOLDERS:
+                return (values >> 5) & 0x1;
+            case SORT_DESCENDING:
+                return (values >> 6) & 0x1;
+            default:
+                return 0;
+        }
+    }
 }

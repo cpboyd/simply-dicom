@@ -24,23 +24,29 @@ package us.cboyd.android.dicom;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -48,24 +54,25 @@ import android.widget.TextView;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.io.DicomInputStream;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.contrib.Contrib;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import us.cboyd.android.shared.ExternalIO;
-import us.cboyd.android.shared.ImageContrastView;
 import us.cboyd.android.shared.MultiGestureDetector;
+import us.cboyd.android.shared.image.ColormapArrayAdapter;
+import us.cboyd.android.shared.image.ImageContrastView;
 import us.cboyd.shared.Geometry;
 
 /**
@@ -75,10 +82,11 @@ import us.cboyd.shared.Geometry;
  * @version 0.6
  * 
  */
-public class DcmViewer extends Activity implements OnTouchListener,
-			SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
-	
-	private Matrix 	mMatrix 		= new Matrix();
+public class DcmViewer extends Activity implements OnTouchListener, CompoundButton.OnCheckedChangeListener,
+        TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
+
+    private boolean mNoFilter, mShowFiles;
+	private Matrix 	mMatrix;
     private float 	mScaleY2X 		= 1.0f;
     private float 	mScaleY 		= 1.0f;
     private float 	mRotDeg 		= 0.f;
@@ -90,7 +98,8 @@ public class DcmViewer extends Activity implements OnTouchListener,
     private float 	mBrightness 	= 50.0f;
     private float 	mLastBrightness = mBrightness;
     private boolean mCmapInv 		= false;
-    private Spinner mCmapBox, mAxisBox;
+    private Spinner mCmapSpiner, mAxisBox;
+    private View    mCmapBox;
     private int 	mCmapSelect 	= -1;
     private Mat 	mMat			= null;
     private int		mImageCount 	= 0;
@@ -101,18 +110,30 @@ public class DcmViewer extends Activity implements OnTouchListener,
 
     private Attributes          mAttributes     = null;
     private File 				mFilePath;
-    private ArrayList<File> 	mFileList 		= null;
+    private List<File> 	        mFileList 		= null;
     private List<Mat> 			mMatList 		= null;
     private ImageView 			mImageView;
     private ImageContrastView 	mCmapView;
     private File                mCurrFile;
+    private EditText            mCurrentSlide;
+    private AsyncTask           mTask;
+    private View                mMultiProgress;
+    private ProgressBar         mLoadProgress;
+    private TextView            mLoadText;
+    private Button              mPreviousButton, mNextButton;
     /// OLD:
-    private Button 			mPreviousButton, mNextButton;
-    private TextView 		mIndexTextView, mCountTextView;
-    private SeekBar 		mIndexSeekBar;
-    private LinearLayout 	mNavigationBar;
+    private SeekBar 		    mIndexSeekBar;
+    private View 	            mNavigationBar;
     
     private MultiGestureDetector mMultiDetector;
+
+    // Static initialization of OpenCV
+    static {
+        if (!OpenCVLoader.initDebug()) {
+            // Handle initialization error
+            Log.d("cpb", "No openCV");
+        }
+    }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -121,19 +142,24 @@ public class DcmViewer extends Activity implements OnTouchListener,
 
 		mImageView 	= (ImageView) findViewById(R.id.imageView);
 		mCmapView 	= (ImageContrastView) findViewById(R.id.contrastView);
-		mCmapBox 	= (Spinner) findViewById(R.id.spinner_colormap);
+        mCmapBox    = findViewById(R.id.contrastSelect);
+        ((CompoundButton) findViewById(R.id.btn_invert)).setOnCheckedChangeListener(this);
+		mCmapSpiner = (Spinner) findViewById(R.id.spinner_colormap);
 		mAxisBox 	= (Spinner) findViewById(R.id.spinner_plane);
 		mImageView.setOnTouchListener(this);
-		mCmapBox.setOnItemSelectedListener(this);
-		mAxisBox.setOnItemSelectedListener(this);
+        mCmapSpiner.setAdapter(new ColormapArrayAdapter(this, R.layout.support_simple_spinner_dropdown_item, getResources().getStringArray(R.array.colormaps_array)));
+		mCmapSpiner.setOnItemSelectedListener(this);
+        mCurrentSlide   = (EditText) findViewById(R.id.input_idx);
+        mCurrentSlide.setOnEditorActionListener(this);
+        mPreviousButton = (Button) findViewById(R.id.btn_prev_idx);
+        mNextButton     = (Button) findViewById(R.id.btn_next_idx);
+        mMultiProgress  = findViewById(R.id.progressContainer2);
+        mLoadProgress   = (ProgressBar) findViewById(R.id.loadProgress);
+        mLoadText       = (TextView) findViewById(R.id.progressText);
 		
 		/// OLD:
-		mPreviousButton = (Button) findViewById(R.id.previousImageButton);
-		mNextButton 	= (Button) findViewById(R.id.nextImageButton);
-		mIndexTextView 	= (TextView) findViewById(R.id.imageIndexView);
-		mCountTextView 	= (TextView) findViewById(R.id.imageCountView);
-		mIndexSeekBar 	= (SeekBar) findViewById(R.id.serieSeekBar);
-		mNavigationBar 	= (LinearLayout) findViewById(R.id.navigationToolbar);
+		mIndexSeekBar 	= (SeekBar) findViewById(R.id.seek_idx);
+		mNavigationBar 	= findViewById(R.id.navigationToolbar);
 		
 		// Get the file name from the savedInstanceState or from the intent
 		String fileName = null;
@@ -151,186 +177,212 @@ public class DcmViewer extends Activity implements OnTouchListener,
 				fileName  = (extras == null) ? null : extras.getString(DcmVar.DCMFILE);
 			}
 		}
-		
-		// If the file name is null, alert the user and close the activity
-		if (fileName == null) {
-			showExitAlertDialog("ERROR: Retrieving file", "The file could not be found.");
-		// Load the file
-		} else {
-			// Get the File object for the current file
-			mCurrFile = new File(fileName);
-            mFileList = getFileList(mCurrFile);
-			Log.i("cpb","Loading file...");
-            System.gc();
-			// Read in the DicomObject
-			try {
-				DicomInputStream dis;
-				dis = new DicomInputStream(mCurrFile);
-                mAttributes = dis.getFileMetaInformation();
-                dis.readAttributes(mAttributes, -1, -1);
-                mAttributes.trimToSize();
-				dis.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 
-			mMat 	= new Mat(mAttributes.getInt(Tag.Rows, 1),
-                    mAttributes.getInt(Tag.Columns, 1), CvType.CV_32S);
-			mMat.put(0, 0, mAttributes.getInts(Tag.PixelData));
-			
-			// Get the files array = get the files contained
-			// in the parent of the current file
-			mFilePath = mCurrFile.getParentFile();
-			
-			// If the files array is null or its length is less than 1,
-			// there is an error because it must at least contain 1 file:
-			// the current file
-			if (mFileList == null || mFileList.size() < 1) {
-				showExitAlertDialog("ERROR: Loading file",
-						"This directory contains no DICOM files.");
-			} else {
-				// Get the file index in the array
-				int currFileIndex = mFileList.indexOf(mCurrFile);
-				
-				// If the current file index is negative
-				// or greater or equal to the files array
-				// length there is an error
-				if (currFileIndex < 0 || currFileIndex >= mFileList.size()) {
-					showExitAlertDialog("ERROR: Loading file",
-							"This image file could not be found.");
-				// Else initialize views and navigation bar
-				} else {
-					// Check if the seek bar must be shown or not
-					if (mFileList.size() == 1) {
-						mNavigationBar.setVisibility(View.INVISIBLE);
-					} else {
-						// Set the visibility of the previous button
-						if (currFileIndex == 0) {
-							mPreviousButton.setVisibility(View.INVISIBLE);
-						} else if (currFileIndex == (mFileList.size() - 1)) {
-							mNextButton.setVisibility(View.INVISIBLE);
-						}
-					}
-				}
-			}
-		}
-		
-		// Set the seek bar change index listener
-		mIndexSeekBar.setOnSeekBarChangeListener(this);
-		
-		mMatrix.postScale(mScaleY*mScaleY2X, mScaleY);
-		mImageView.setImageMatrix(mMatrix);
-		
-		mMatrix = null;
-	    
-		mMultiDetector = new MultiGestureDetector(getApplicationContext(), new MultiListener());
+        mAxisBox.setOnItemSelectedListener(this);
+        // Set the seek bar change index listener
+        mIndexSeekBar.setOnSeekBarChangeListener(this);
+
+        // If the file name is null, alert the user and close the activity
+        if (fileName == null) {
+            showExitAlertDialog("ERROR: Retrieving file", "The file could not be found.");
+        } else {
+            // Load the file
+            new InitialLoadTask().execute(fileName);
+        }
 	}
 
-    public ArrayList<File> getFileList(File currDir) {
+    public List<File> getFileList(File currDir) {
         // If not a directory, get the file's parent directory.
         if (!currDir.isDirectory())
             currDir = currDir.getParentFile();
-        ArrayList<File> fileList = new ArrayList<>();
-        // Check if we have permission to read the current directory...
-        if (currDir.canRead()) {
-            // Loop on all files within the directory
-            for (File path : currDir.listFiles()) {
-                String filename = path.getName();
+        // If we don't have permission to read the current directory, return an empty list.
+        if (!currDir.canRead())
+            return new ArrayList<>();
 
-                // Find where the extension starts (i.e. the last '.')
+        // Return a list of the DICOM files
+        return Arrays.asList(currDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File path) {
+                // Reject directories
+                if (path.isDirectory())
+                    return false;
+                // If we're not showing hidden files, don't accept them.
+                if (!mShowFiles && path.isHidden())
+                    return false;
+                // If there's no file extension filter, accept all files.
+                if (mNoFilter)
+                    return true;
+
+                // Otherwise, find where the extension starts (i.e. the last '.')
+                String filename = path.getName();
                 int ext = filename.lastIndexOf(".");
 
                 // No extension found.  May or may not be a DICOM file.
-                if (ext == -1) {
-                    fileList.add(path);
-                    continue;
-                }
+                if (ext == -1)
+                    return true;
 
                 // Get the file's extension.
-                String extension = filename.substring(ext + 1);
+                String extension = filename.substring(ext + 1).toLowerCase(Locale.US);
                 // Check if the file has a DICOM (or DCM) extension.
-                if (extension.equalsIgnoreCase("dicom") || extension.equalsIgnoreCase("dcm")) {
-                    fileList.add(path);
-                }
+                if (extension.equals("dic") || extension.equals("dicom") || extension.equals("dcm"))
+                    return true;
+
+                // Otherwise, reject this file.
+                return false;
             }
-        }
-        return fileList;
+        }));
     }
 
-	@Override
-	protected void onStart() {
-		super.onStart();
-		Log.i("cpb", "Load: setIm1");
-		updateImage();
-		Log.i("cpb", "Load: setIm3");
-		// If this is the first time displaying an image, center it.
-		if (mMatrix == null) {
-			Log.i("cpb", "Load: setIm4");
-			int 	height 	= mMat.rows();
-			int 	width 	= mMat.cols();
-			DisplayMetrics displaymetrics = new DisplayMetrics();
-			getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-			float displayCenterX = displaymetrics.widthPixels/2;
-			float displayCenterY = displaymetrics.heightPixels/2;
-			mScaleY = Math.min( displaymetrics.widthPixels / (float) width,
-					displaymetrics.heightPixels / (float) height);
-	        Log.i("cpb", "mScaleY2X: " + mScaleY2X + " mScaleY: " + mScaleY);
-	        float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2;
-	        float scaledImageCenterY = (height*mScaleY)/2;
-	        mFocusX = displayCenterX;
-	        mFocusY = displayCenterY;
-			mMatrix = new Matrix();
-			mMatrix.postScale(mScaleY*mScaleY2X, mScaleY);
-			mMatrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY);
-			mImageView.setImageMatrix(mMatrix);
-			mImageCount++;
-		}
-		
-		if (mMatList == null) {
-			int 	rows 		= mAttributes.getInt(Tag.Rows, 1);
-			int 	cols 		= mAttributes.getInt(Tag.Columns, 1);
-			String 	studyUID 	= mAttributes.getString(Tag.StudyInstanceUID);
-			String 	seriesUID 	= mAttributes.getString(Tag.SeriesInstanceUID);
-			int 	instanceNum = mAttributes.getInt(Tag.InstanceNumber, -1);
-			double[] spacing 	= mAttributes.getDoubles(Tag.PixelSpacing);
-			double[] startPos 	= mAttributes.getDoubles(Tag.ImagePositionPatient);
-//            if ((instanceNum < 1) || (mFileList.size() == 1)) {
-//                mNavigationBar.setVisibility(View.INVISIBLE);
-//                return;
-//            }
+    private class InitialLoadTask extends AsyncTask<String, Integer, Mat> {
+        protected Mat doInBackground(String... files) {
+            // Get the File object for the current file
+            mCurrFile = new File(files[0]);
+            mFileList = getFileList(mCurrFile);
+            Log.i("cpb", "Loading file...");
+            System.gc();
+            // Read in the DicomObject
+            try {
+                DicomInputStream dis;
+                dis = new DicomInputStream(mCurrFile);
+                mAttributes = dis.getFileMetaInformation();
+                dis.readAttributes(mAttributes, -1, -1);
+                mAttributes.trimToSize();
+                dis.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
-			mInstance 	= new int[] {Math.max(instanceNum - 1, 0), rows/2, cols/2};
-			mMatList 	= new ArrayList<Mat>();
+            Mat temp = new Mat(mAttributes.getInt(Tag.Rows, 1),
+                    mAttributes.getInt(Tag.Columns, 1), CvType.CV_32S);
+            temp.put(0, 0, mAttributes.getInts(Tag.PixelData));
 
-		    for(int i = 1; i < instanceNum; i++) {
-		    	mMatList.add(new Mat(rows, cols, CvType.CV_32S));
-		    }
-            // If invalid instance number, don't add this to the matrix.
-            if (instanceNum > 0)
-		        mMatList.add(mMat);
-		    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum);
-			Attributes currDcm = null;
+            // Get the files array = get the files contained
+            // in the parent of the current file
+            mFilePath = mCurrFile.getParentFile();
+
+            // If the files array is null or its length is less than 1,
+            // there is an error because it must at least contain 1 file:
+            // the current file
+            if (mFileList == null || mFileList.size() < 1) {
+                showExitAlertDialog("ERROR: Loading file",
+                        "This directory contains no DICOM files.");
+            } else {
+                // Get the file index in the array
+                int currFileIndex = mFileList.indexOf(mCurrFile);
+
+                // If the current file index is negative
+                // or greater or equal to the files array
+                // length there is an error
+                if (currFileIndex < 0 || currFileIndex >= mFileList.size()) {
+                    showExitAlertDialog("ERROR: Loading file",
+                            "This image file could not be found.");
+                    // Else initialize views and navigation bar
+                } else {
+                    // Check if the seek bar must be shown or not
+                    if (mFileList.size() == 1) {
+                        mNavigationBar.setVisibility(View.INVISIBLE);
+                    } else {
+                        // Set the visibility of the previous button
+                        if (currFileIndex == 0) {
+                            mPreviousButton.setVisibility(View.INVISIBLE);
+                        } else if (currFileIndex == (mFileList.size() - 1)) {
+                            mNextButton.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                }
+            }
+            return temp;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+        }
+
+        // After loading, adjust display.
+        protected void onPostExecute(Mat result) {
+            // If this is the first time displaying an image, center it.
+            int height 	= result.rows();
+            int width 	= result.cols();
+            DisplayMetrics displaymetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+            float displayCenterX = displaymetrics.widthPixels/2;
+            float displayCenterY = displaymetrics.heightPixels/2;
+            mScaleY = Math.min( displaymetrics.widthPixels / (float) width,
+                    displaymetrics.heightPixels / (float) height);
+            Log.i("cpb", "mScaleY2X: " + mScaleY2X + " mScaleY: " + mScaleY);
+            float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2;
+            float scaledImageCenterY = (height*mScaleY)/2;
+            mFocusX = displayCenterX;
+            mFocusY = displayCenterY;
+            mMatrix = new Matrix();
+            mMatrix.postScale(mScaleY*mScaleY2X, mScaleY);
+            mMatrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY);
+            mImageView.setImageMatrix(mMatrix);
+            mMat = result;
+            updateImage();
+            mImageCount++;
+
+            // Eliminate the loading symbol
+            findViewById(R.id.progressContainer).setVisibility(View.GONE);
+            mMultiDetector = new MultiGestureDetector(getApplicationContext(), new MultiListener());
+
+            if (mMatList == null) {
+                mTask = new LoadFilesTask().execute();
+            }
+        }
+    }
+
+    private class LoadFilesTask extends AsyncTask<Void, Integer, List> {
+        protected List doInBackground(Void... params) {
+            // Make sure the navbar is gone and the progress bar is visible.
+            mNavigationBar.setVisibility(View.INVISIBLE);
+            mMultiProgress.setVisibility(View.VISIBLE);
+
+            int 	rows 		= mAttributes.getInt(Tag.Rows, 1);
+            int 	cols 		= mAttributes.getInt(Tag.Columns, 1);
+            String 	studyUID 	= mAttributes.getString(Tag.StudyInstanceUID);
+            String 	seriesUID 	= mAttributes.getString(Tag.SeriesInstanceUID);
+            int 	instanceNum = mAttributes.getInt(Tag.InstanceNumber, -1);
+            double[] spacing 	= mAttributes.getDoubles(Tag.PixelSpacing);
+            double[] startPos 	= mAttributes.getDoubles(Tag.ImagePositionPatient);
+            int     totalFiles  = mFileList.size();
+            // If this is the only file, or this has an invalid instance number... Just return.
+            if ((instanceNum < 1) || (totalFiles == 1)) {
+                return null;
+            }
+
+            mInstance 	= new int[] {Math.max(instanceNum - 1, 0), rows/2, cols/2};
+            List<Mat> temp = new ArrayList<>();
+
+            for(int i = 1; i < instanceNum; i++) {
+                temp.add(new Mat(rows, cols, CvType.CV_32S));
+            }
+            temp.add(mMat);
+            Attributes currDcm;
             mAttributes = null;
-            DicomInputStream dis = null;
-			for(File currFile : mFileList) {
-                Log.i("cpb", "Loop: " + currFile);
-				if (!currFile.equals(mCurrFile)) {
+            DicomInputStream dis;
+            for(int i = 0; i < totalFiles; i++) {
+                publishProgress(i, totalFiles);
+                File currFile = mFileList.get(i);
+                if (!currFile.equals(mCurrFile)) {
                     currDcm = null;
-                    dis = null;
                     Log.i("cpb", "Attempting GC");
                     System.gc();
-					// Read in the DicomObject
-					try {
-						dis = new DicomInputStream(currFile);
+                    // Read in the DicomObject
+                    try {
+                        dis = new DicomInputStream(currFile);
                         currDcm = dis.getFileMetaInformation();
                         dis.readAttributes(currDcm, -1, -1);
                         currDcm.trimToSize();
-						dis.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+                        dis.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                    // If the DICOM file was empty, continue.
+                    if (currDcm == null)
+                        continue;
 
                     // Check the instance number
                     instanceNum = currDcm.getInt(Tag.InstanceNumber, -1);
@@ -347,69 +399,88 @@ public class DcmViewer extends Activity implements OnTouchListener,
                     }
                     // If it's less than 1, continue to the next image.
                     if (instanceNum < 1) {
-                        Log.i("cpb", "Skipping file because no instance number");
+                        Log.i("cpb", "Skipping file: no valid instance number");
                         continue;
                     }
 
-					int rows2 = currDcm.getInt(Tag.Rows, 1);
-					int cols2 = currDcm.getInt(Tag.Columns, 1);
-					if (studyUID.equals(currDcm.getString(Tag.StudyInstanceUID)) &&
-					 	seriesUID.equals(currDcm.getString(Tag.SeriesInstanceUID))) {
-						if (rows != rows2 || cols != cols2) {
-							Log.i("cpb", "Skipping file... " +
-									"The number of rows and columns varies between instances/images.");
+                    int rows2 = currDcm.getInt(Tag.Rows, 1);
+                    int cols2 = currDcm.getInt(Tag.Columns, 1);
+                    if (studyUID.equals(currDcm.getString(Tag.StudyInstanceUID)) &&
+                            seriesUID.equals(currDcm.getString(Tag.SeriesInstanceUID))) {
+                        if (rows != rows2 || cols != cols2) {
+                            Log.i("cpb", "Skipping file: row/col mismatch");
                             continue;
-						}
+                        }
 
                         // If there isn't enough space in the list, allocate more.
-						while (mMatList.size() < instanceNum) {
-                            mMatList.add(new Mat(rows, cols, CvType.CV_32S));
-						}
+                        while (temp.size() < instanceNum) {
+                            temp.add(new Mat(rows, cols, CvType.CV_32S));
+                        }
 
                         // If invalid instance number, don't add this to the matrix.
                         if (instanceNum > 0) {
-                            mMatList.get(instanceNum - 1).put(0, 0, currDcm.getInts(Tag.PixelData));
+                            temp.get(instanceNum - 1).put(0, 0, currDcm.getInts(Tag.PixelData));
                             mImageCount++;
                         }
-					    Log.i("cpb", "Mat List Size: " + mMatList.size() + " Instance: " + instanceNum + " currFile: " + currFile);
-					}
-				}
-			}
-			mMaxIndex = new int[]{mMatList.size(), rows, cols};
-			// Display the current file index
-			//mIndexTextView.setText(String.valueOf(mInstance + 1));
-			// Display the files count and set the seek bar maximum
-			mCountTextView.setText(String.valueOf(mMatList.size()));
-			
-			if (mImageCount <= 1) {
-				mNavigationBar.setVisibility(View.INVISIBLE);
-			}
+                    }
+                }
+            }
+            // Display 100% (if only briefly)
+            publishProgress(totalFiles, totalFiles);
+            mMaxIndex = new int[]{temp.size(), rows, cols};
+            return temp;
+        }
 
-			mIndexSeekBar.setMax(mMatList.size() - 1);
-			mIndexSeekBar.setProgress(mInstance[mAxis]);
-		}
-	}
-	
+        protected void onProgressUpdate(Integer... progress) {
+            mLoadProgress.setProgress((int) ((progress[0] / (float) progress[1]) * 100));
+            mLoadText.setText(progress[0] + "/" + progress[1]);
+        }
 
-	//// openCV
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                	Resources res = getResources();
-                    Log.i(res.getString(R.string.tag_ocv), res.getString(R.string.ocv_load));
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
+        // After loading, adjust display.
+        protected void onPostExecute(List result) {
+            mMultiProgress.setVisibility(View.INVISIBLE);
+            if ((result != null) && !result.isEmpty()) {
+                mMatList = result;
+                // If there's more than one image, display the navbar
+                if (mImageCount > 1) {
+                    mNavigationBar.setVisibility(View.VISIBLE);
+                    // Display the current file index
+                    //mCurrentSlide.setText(String.valueOf(mInstance + 1));
+                    mIndexSeekBar.setMax(mMatList.size() - 1);
+                    mIndexSeekBar.setProgress(mInstance[mAxis]);
+                }
             }
         }
-    };
+    }
+
+    /** Called just before activity runs (after onStart). */
+    @Override
+    protected void onResume() {
+        // If there isn't any external storage, quit the application.
+        if (!ExternalIO.checkStorage()) {
+            Resources res = getResources();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(res.getString(R.string.err_mesg_disk))
+                    .setTitle(res.getString(R.string.err_title_disk))
+                    .setCancelable(false)
+                    .setPositiveButton(res.getString(R.string.err_close),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    DcmViewer.this.finish();
+                                }
+                            });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
+
+        super.onResume();
+    }
 	
 	public boolean onTouch(View v, MotionEvent event) {
+        // If we haven't loaded the image yet, don't process any touch events
+        if (mMat == null)
+            return false;
         mMultiDetector.onTouchEvent(event);
 
         float scaledImageCenterX = (mMat.cols()*mScaleY*mScaleY2X)/2;
@@ -433,32 +504,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	}
 	
 	/** OLD Functions */
-	
-	
-	/** Called just before activity runs (after onStart). */
-	@Override
-	protected void onResume() {
-		// If there isn't any external storage, quit the application.
-		if (!ExternalIO.checkStorage()) {
-            Resources res = getResources();
-			
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage(res.getString(R.string.err_mesg_disk))
-				   .setTitle(res.getString(R.string.err_title_disk))
-			       .setCancelable(false)
-			       .setPositiveButton(res.getString(R.string.err_close),
-			    	new DialogInterface.OnClickListener() {
-			           public void onClick(DialogInterface dialog, int id) {
-			                DcmViewer.this.finish();
-			           }
-			       	});
-			AlertDialog alertDialog = builder.create();
-			alertDialog.show();
-		}
 
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_10, this, mLoaderCallback);
-		super.onResume();
-	}
 	
 	@Override
 	protected void onDestroy() {
@@ -528,7 +574,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						mMat = mMatList.get(mInstance[mAxis]);
 						break;
 					case DcmVar.CORONAL:
-						List<Mat> ListY = new ArrayList<Mat>();
+						List<Mat> ListY = new ArrayList<>();
 						for (int i = 0; i < mMatList.size(); i++) {
 							ListY.add(mMatList.get(i).row(mInstance[mAxis]));
 							mMat = new Mat();
@@ -536,7 +582,7 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						Core.vconcat(ListY, mMat);
 						break;
 					case DcmVar.SAGGITAL:
-						List<Mat> ListX = new ArrayList<Mat>();
+						List<Mat> ListX = new ArrayList<>();
 						for (int i = 0; i < mMatList.size(); i++) {
 							ListX.add(mMatList.get(i).col(mInstance[mAxis]));
 							mMat = new Mat();
@@ -545,16 +591,15 @@ public class DcmViewer extends Activity implements OnTouchListener,
 						break;
 					default:
 						mAxis = DcmVar.TRANSVERSE;
-				    	mIndexSeekBar.setMax(mMaxIndex[mAxis]-1);
+				    	mIndexSeekBar.setMax(mMaxIndex[mAxis] - 1);
 				    	mIndexSeekBar.setProgress(mInstance[mAxis]);
-				    	mCountTextView.setText(String.valueOf(mMaxIndex[mAxis]));
 						break;
 				}
-				updateImage();
+                updateImage();
 			}
 			
 			// Update the UI
-			mIndexTextView.setText(String.valueOf(mInstance[mAxis] + 1));
+			mCurrentSlide.setText(String.valueOf(mInstance[mAxis] + 1));
 			
 			// Set the visibility of the previous button
 			if (mInstance[mAxis] <= 0) {
@@ -566,12 +611,12 @@ public class DcmViewer extends Activity implements OnTouchListener,
 				mInstance[mAxis] = mMaxIndex[mAxis] - 1;
 				mNextButton.setVisibility(View.INVISIBLE);
 				mPreviousButton.setVisibility(View.VISIBLE);
-				
+
 			} else {
-				
+
 				mPreviousButton.setVisibility(View.VISIBLE);
 				mNextButton.setVisibility(View.VISIBLE);
-				
+
 			}
 			
 		} catch (OutOfMemoryError ex) {
@@ -620,6 +665,8 @@ public class DcmViewer extends Activity implements OnTouchListener,
 	 *
 	 */
 	private void updateImage() {
+        if (mMat == null)
+            return;
 		Core.MinMaxLocResult minmax = Core.minMaxLoc(mMat);
 		double  diff 	= minmax.maxVal - minmax.minVal;
 		double  ImWidth = (1 - (mContrast / 100.0d)) * diff;
@@ -639,7 +686,9 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		//Core.normalize(mMat, temp, ImMin, ImMax, Core.NORM_MINMAX);
 		mMat.convertTo(temp, CvType.CV_8UC1, alpha, beta);
 		if (mCmapSelect >= 0) {
-			Contrib.applyColorMap(temp, temp, mCmapSelect);
+			Imgproc.applyColorMap(temp, temp, mCmapSelect);
+            //applyColorMap returns a BGR image, but createBitmap expects RGB
+            //do a conversion to swap blue and red channels:
 			Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR);
 		}
 		
@@ -669,52 +718,35 @@ public class DcmViewer extends Activity implements OnTouchListener,
 		
 		AlertDialog alertDialog = builder.create();
 		alertDialog.show();
-		
 	}
-	
-	/** Checkbox's onCheckboxClicked
-	 * 
-	 * @param view
-	 */
-	public void onCheckboxClicked(View view) {
-	    // Is the view now checked?
-	    boolean checked = ((CheckBox) view).isChecked();
-	    
-	    // Check which checkbox was clicked
-	    switch(view.getId()) {
-	        case R.id.checkbox_inv:
-	            mCmapInv = checked;
-	            mCmapView.setImageContrast(mBrightness, mContrast, mCmapSelect, mCmapInv);
-	            updateImage();
-	            break;
-	    }
-	}
-	
 	
 	/**
 	 * Spinner's onItemSelected
 	 * @param parent
 	 * @param view
-	 * @param pos
+	 * @param position
 	 * @param id
 	 */
     public void onItemSelected(AdapterView<?> parent, View view, 
-            int pos, long id) {
+            int position, long id) {
         // An item was selected. You can retrieve the selected item using
-        // parent.getItemAtPosition(pos)
+        // parent.getItemAtPosition(position)
     	switch(parent.getId()) {
     		case R.id.spinner_colormap:
-		    	mCmapSelect = pos - 1;
+		    	mCmapSelect = position - 1;
 		    	Log.i("cpb", "Colormap: " + mCmapSelect + " id: " + id);
 		        mCmapView.setImageContrast(mBrightness, mContrast, mCmapSelect, mCmapInv);
+                //TODO: Remove testing comparison
+//                mCmapBox.setBackground(Colormaps.getColormapDrawable(position, mCmapInv));
 		        updateImage();
 		        break;
     		case R.id.spinner_plane:
-    			mAxis = pos;
+                if (mMatList == null || mMaxIndex == null || mMatrix == null)
+                    return;
+    			mAxis = position;
 		    	mScaleY2X = (float) mScaleSpacing[mAxis];
-		    	mIndexSeekBar.setMax(mMaxIndex[mAxis]-1);
+		    	mIndexSeekBar.setMax(mMaxIndex[mAxis] - 1);
 		    	mIndexSeekBar.setProgress(mInstance[mAxis]);
-		    	mCountTextView.setText(String.valueOf(mMaxIndex[mAxis]));
 		    	Log.i("cpb", "Axis: " + mAxis + " id: " + id + " Scale: " + mScaleY2X);
 		    	float 	height 	= mMat.rows();
 				float 	width 	= mMat.cols();
@@ -744,8 +776,49 @@ public class DcmViewer extends Activity implements OnTouchListener,
     public void onNothingSelected(AdapterView<?> parent) {
         // Another interface callback
     }
-	
-	/** 
+
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if(actionId== EditorInfo.IME_ACTION_DONE){
+            mInstance[mAxis] = Math.max(0,
+                    Math.min(mMaxIndex[mAxis], Integer.parseInt(v.getText().toString())) - 1);
+            v.setText(String.valueOf(mInstance[mAxis] + 1));
+            // Changing the progress bar will set the image
+            mIndexSeekBar.setProgress(mInstance[mAxis]);
+            // Hide the keyboard (clearing focus keeps it open)
+            hideKeyboard(v);
+            // Clear focus from EditText
+            mCurrentSlide.clearFocus();
+        }
+        return false;
+    }
+
+    static public void hideKeyboard(View focusView) {
+        InputMethodManager imm = (InputMethodManager) focusView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(focusView.getWindowToken(), 0);
+    }
+
+    /**
+     * Called when a CompoundButton is checked
+     * @param buttonView
+     * @param isChecked
+     */
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        // Check which toggle button was changed
+        switch(buttonView.getId()) {
+            case R.id.btn_invert:
+                mCmapInv = isChecked;
+                ((ColormapArrayAdapter)mCmapSpiner.getAdapter()).invertColormap(mCmapInv);
+                mCmapView.setImageContrast(mBrightness, mContrast, mCmapSelect, mCmapInv);
+                //TODO: Remove testing comparison
+//                mCmapBox.setBackground(Colormaps.getColormapDrawable(mCmapSelect + 1, mCmapInv));
+                updateImage();
+                break;
+        }
+    }
+
+    /**
 	 * MultiListener Class
 	 * 
 	 * @author Christopher Boyd

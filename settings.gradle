@@ -20,5 +20,6 @@
  * THE SOFTWARE.
  */
 
-include ':openCVLibrary2410'
 include ':simplyDICOM'
+
+include ':openCVLibrary300rc1'

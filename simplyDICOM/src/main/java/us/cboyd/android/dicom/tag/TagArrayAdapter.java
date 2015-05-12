@@ -63,11 +63,11 @@ public class TagArrayAdapter extends ArrayAdapter<Integer> {
         mRes = context.getResources();
         mTags = mRes.getIntArray(arrayId);
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mAttributes = attributes;
     }
 
     public void setDebugMode(boolean debugMode) {
         mDebugMode = debugMode;
+        notifyDataSetChanged();
     }
 
     @Override
@@ -85,11 +85,6 @@ public class TagArrayAdapter extends ArrayAdapter<Integer> {
     @Override
     public Integer getItem(int position) {
         return mTags[position];
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
     }
 
     @Override
@@ -118,26 +113,25 @@ public class TagArrayAdapter extends ArrayAdapter<Integer> {
         temp = DcmRes.getTag(mTags[position], mRes);
         String[] temp2 = temp.split(";");
         holder.text2.setText(temp2[0]);
-        Object de = mAttributes.getValue(mTags[position]);
-        if (de == null) {
-            holder.text1.setText("");
-            holder.tagRight.setText("");
-        } else {
-            VR dvr = mAttributes.getVR(mTags[position]);
+        Object de   = mAttributes.getValue(mTags[position]);
+        VR dvr      = mAttributes.getVR(mTags[position]);
+        // Clear existing data from recycled view
+        holder.text1.setText("");
+        holder.tagRight.setText("");
 
+        // Only display VR/VM in Debug mode
+        if (mDebugMode && dvr != null) {
+            holder.tagRight.setText("VR: " + dvr.toString());// + "\nVM: " + dvr.vmOf(de));
+        }
+        if (de != null) {
             //SpecificCharacterSet for US_ASCII
             SpecificCharacterSet cs = SpecificCharacterSet.DEFAULT;
-
-            // Only display VR/VM in Debug mode
-            if (mDebugMode) {
-                holder.tagRight.setText("VR: " + dvr.toString());// + "\nVM: " + dvr.vmOf(de));
-            }
 
             String dStr = de.toString();
 
             // If in Debug mode, just display the string as-is without any special processing.
             if (mDebugMode) {
-                holder.text1.setText(de.toString());
+                holder.text1.setText(dStr);
                 // Otherwise, make the fields easier to read.
                 // Start by formatting the Person Names.
             } else if (dvr == VR.PN) {

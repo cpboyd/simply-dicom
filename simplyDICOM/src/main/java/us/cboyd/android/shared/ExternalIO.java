@@ -28,7 +28,7 @@ import java.io.File;
 
 public class ExternalIO {
 	public static boolean mExternalStorageAvailable = false;
-	public static boolean mExternalStorageWriteable = false;
+	public static boolean mExternalStorageWritable = false;
 	
 	public static boolean checkStorage() {
 		/* Code for checkStorage taken directly from:
@@ -38,15 +38,15 @@ public class ExternalIO {
 	
 		if (Environment.MEDIA_MOUNTED.equals(state)) {
 		    // We can read and write the media
-		    mExternalStorageAvailable = mExternalStorageWriteable = true;
+		    mExternalStorageAvailable = mExternalStorageWritable = true;
 		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 		    // We can only read the media
 		    mExternalStorageAvailable = true;
-		    mExternalStorageWriteable = false;
+		    mExternalStorageWritable = false;
 		} else {
 		    // Something else is wrong. It may be one of many other states,
 		    //  but all we need to know is we can neither read nor write
-		    mExternalStorageAvailable = mExternalStorageWriteable = false;
+		    mExternalStorageAvailable = mExternalStorageWritable = false;
 		}
 		
 		return mExternalStorageAvailable;
@@ -59,7 +59,7 @@ public class ExternalIO {
 	
 	public static boolean isWriteable() {
 		if (checkStorage()) {
-			return mExternalStorageWriteable;
+			return mExternalStorageWritable;
 		}
 		// If storage isn't available, return false:
 		return false;

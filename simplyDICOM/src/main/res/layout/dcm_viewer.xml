@@ -21,115 +21,158 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
- android:orientation="horizontal"
- android:layout_width="match_parent"
- android:layout_height="match_parent">
 
-	<RelativeLayout
-		android:layout_width="0dip" 
-        android:layout_height="match_parent"
-        android:layout_weight="1">
-	
-		<FrameLayout
-	   	android:layout_width="match_parent" 
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout android:id="@+id/dcmViewer"
+        android:focusableInTouchMode="true"
+        android:layout_width="match_parent"
         android:layout_height="match_parent">
-			<ImageView android:id="@+id/imageView"
-			    android:layout_width="match_parent"
-			    android:layout_height="match_parent"
-			    android:scaleType="matrix" />
-		</FrameLayout>
-        
-	    <LinearLayout android:id="@+id/contrastTitle"
-			android:orientation="vertical"
-			android:layout_width="match_parent"
-		    android:layout_height="wrap_content"
-			android:background="#99333333"
-		    android:gravity="center_vertical"
-		    android:layout_gravity="center_horizontal" >
-	
-	        <us.cboyd.android.shared.ImageContrastView
-	            android:id="@+id/contrastView"
-			    android:layout_width="match_parent"
-			    android:layout_height="48dp"
-			    android:scaleType="fitXY" />
-	
-	        <LinearLayout android:id="@+id/contrastSelect"
-				android:orientation="horizontal"
-				android:layout_width="match_parent"
-			    android:layout_height="wrap_content"
-			    android:gravity="center_vertical"
-			    android:layout_gravity="center_horizontal" >
-			    
-	            <Spinner
-				    android:id="@+id/spinner_colormap"
-				    android:layout_width="wrap_content"
-				    android:layout_height="48dp"
-        			android:entries="@array/colormaps_array" />
-			    
-	            <CheckBox android:id="@+id/checkbox_inv"
-			        android:layout_width="wrap_content"
-			        android:layout_height="36dp"
-			        android:text="@string/invert"
-					android:textSize="18sp"
-			        android:onClick="onCheckboxClicked"/>
-			    
-	        </LinearLayout>
 
-    	</LinearLayout>
-			
-		<LinearLayout android:id="@+id/navigationToolbar"
-			android:orientation="horizontal"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_alignParentLeft="true"
-			android:layout_alignParentBottom="true"
-			android:gravity="center_vertical"
-			android:background="#99333333"
-			android:longClickable="true">
-	        
-		    
+        <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+            <ImageView android:id="@+id/imageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="matrix" />
+        </FrameLayout>
+
+        <RelativeLayout android:id="@+id/contrastSelect"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/black_alpha"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_horizontal" >
+
+            <us.cboyd.android.shared.image.ImageContrastView
+                android:id="@+id/contrastView"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/icon_size"
+                android:scaleType="fitXY" />
+
             <Spinner
-			    android:id="@+id/spinner_plane"
-			    android:layout_width="wrap_content"
-			    android:layout_height="48dp"
-				android:textSize="18sp"
-       			android:entries="@array/planes_array" />
-		
-			<Button android:id="@+id/previousImageButton"
-				android:layout_width="36dp"
-				android:layout_height="36dp"
-				android:background="@drawable/ic_action_previous_item"
-				android:onClick="previousImage" />
-				
-			<TextView android:id="@+id/imageIndexView"
-				android:layout_width="30dp"
-				android:layout_height="wrap_content"
-				android:gravity="center"
-				android:textSize="14sp"
-				android:text="0" />
-				
-			<SeekBar android:id="@+id/serieSeekBar"
-				android:layout_width="0dip"
-				android:layout_height="wrap_content"
-				android:minWidth="220dp"
-				android:layout_weight="1" />
-				
-			<TextView android:id="@+id/imageCountView"
-				android:layout_width="30dp"
-				android:layout_height="wrap_content"
-				android:gravity="center"
-				android:textSize="14sp"
-				android:text="0" />
-				
-			<Button android:id="@+id/nextImageButton"
-				android:layout_width="36dp"
-				android:layout_height="36dp"
-				android:background="@drawable/ic_action_next_item"
-				android:onClick="nextImage" />
-			
-		</LinearLayout>
-		
-	</RelativeLayout>
+                android:id="@+id/spinner_colormap"
+                android:layout_below="@id/contrastView"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/button_size" />
+            <CheckBox android:id="@+id/btn_invert"
+                android:layout_width="@dimen/icon_size"
+                android:layout_height="@dimen/icon_size"
+                android:layout_margin="@dimen/button_pad"
+                android:layout_below="@id/contrastView"
+                android:layout_toRightOf="@id/spinner_colormap"
+                android:layout_toEndOf="@id/spinner_colormap"
+                android:button="@drawable/button_invert" />
+        </RelativeLayout>
 
-</LinearLayout>
+        <FrameLayout
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_size"
+            android:background="@color/black_alpha">
+            <RelativeLayout android:id="@+id/navigationToolbar"
+                android:visibility="invisible"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:longClickable="true">
+                <Spinner
+                    android:id="@+id/spinner_plane"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/touch_target"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="18sp"
+                    android:entries="@array/planes_array" />
+
+                <CheckBox android:id="@+id/btn_prev_idx"
+                    android:layout_width="@dimen/icon_size"
+                    android:layout_height="@dimen/icon_size"
+                    android:layout_margin="@dimen/button_pad"
+                    android:layout_toRightOf="@id/spinner_plane"
+                    android:button="@drawable/ic_navigate_before_white_24dp"
+                    android:onClick="previousImage" />
+
+                <CheckBox android:id="@+id/btn_next_idx"
+                    android:layout_width="@dimen/icon_size"
+                    android:layout_height="@dimen/icon_size"
+                    android:layout_margin="@dimen/button_pad"
+                    android:layout_alignParentRight="true"
+                    android:button="@drawable/ic_navigate_next_white_24dp"
+                    android:onClick="nextImage" />
+
+                <EditText android:id="@+id/input_idx"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/button_size"
+                    android:layout_toLeftOf="@id/btn_next_idx"
+                    android:inputType="number"
+                    android:gravity="center"
+                    android:textSize="14sp"
+                    android:imeOptions="actionDone"
+                    android:text="0" />
+
+                <SeekBar android:id="@+id/seek_idx"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_toRightOf="@id/btn_prev_idx"
+                    android:layout_toLeftOf="@id/input_idx"/>
+            </RelativeLayout>
+            <RelativeLayout android:id="@+id/progressContainer2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <ProgressBar android:id="@+id/loadProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="-8dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/default_margin"
+                    android:layout_marginStart="@dimen/default_margin"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:gravity="center_vertical"
+
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/loading"
+                    android:singleLine="true"/>
+
+                <TextView android:id="@+id/progressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginRight="@dimen/default_margin"
+                    android:layout_marginEnd="@dimen/default_margin"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:gravity="center_vertical"
+
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="\?"
+                    android:singleLine="true"/>
+            </RelativeLayout>
+        </FrameLayout>
+    </RelativeLayout>
+
+    <LinearLayout android:id="@+id/progressContainer"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
+
+        <ProgressBar style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/loading"
+            android:paddingTop="4dip"
+            android:singleLine="true" />
+    </LinearLayout>
+</FrameLayout>
