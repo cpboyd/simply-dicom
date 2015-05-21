@@ -56,7 +56,6 @@ import java.io.File;
 
 import us.cboyd.android.shared.ExternalIO;
 import us.cboyd.android.shared.files.FileAdapterOptions;
-import us.cboyd.android.shared.files.StorageArrayAdapter;
 import us.cboyd.android.shared.list.RefreshArrayAdapter;
 
 /**
@@ -84,7 +83,8 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
     private DrawerLayout 	mDrawerLayout;
     private ListView 		mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle = null;
-    private Toolbar         mToolbar, mDrawerToolbar;
+    private Toolbar         mToolbar;
+    private CharSequence    mTitle, mSubtitle, mDrawerSubtitle;
 
     // Static initialization of OpenCV
     static {
@@ -125,15 +125,14 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
         // Specify that the Home/Up button should not be enabled,
         // since there is no hierarchical parent yet.
         mToolbar = (Toolbar) findViewById(R.id.dcmBrowser_toolbar);
-        mDrawerToolbar = (Toolbar) findViewById(R.id.dcmDrawer_toolbar);
         mToolbar.setTitle(mAppName);
-        if (mDrawerToolbar != null)
-            mDrawerToolbar.setTitle(mAppName);
 
         mToolbar.setOnMenuItemClickListener(this);
         // Load the last used root directory
         mPreferences = getPreferences(MODE_PRIVATE);
         mSortSettings = mPreferences.getInt(SORT_SETTINGS, 0);
+        // Ensure the list fragment has the stored settings
+        mListFragment.setSortOptions(mSortSettings);
         String rootDir = mPreferences.getString(LAST_ROOT_DIRECTORY, null);
         if (rootDir != null) {
             if(mListFragment.setRoot(new File(rootDir))) {
@@ -208,11 +207,10 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
 	/** Called when orientation changes. */
 	@Override
     public void onSaveInstanceState(Bundle outState) {
+        File currDir = mListFragment.getDir();
         // If directory is null, don't save state.
-        if (mListFragment.getDir() == null) {
-            outState = null;
+        if (currDir == null)
             return;
-        }
 
 		FragmentManager fragManager = getFragmentManager();
     	// If the fragment hasn't already been added to the FragmentManager, add it.
@@ -222,7 +220,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
     	}
 
         // Otherwise, save the current directory.
-		outState.putString(DcmVar.CURRDIR, mListFragment.getDir().getAbsolutePath());
+		outState.putString(DcmVar.CURRDIR, currDir.getAbsolutePath());
     	fragManager.putFragment(outState, DcmVar.FRAGLIST, mListFragment);
 
         // Always call the superclass so it can save the view hierarchy state
@@ -236,15 +234,13 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
             if (mToolbar != null) {
                 // Assume we're jumping back to the ListFragment
                 displayFileListMenu();
-                if (mListFragment.isStorage())
-                    mDrawerToggle.setDrawerIndicatorEnabled(false);
+                mDrawerToggle.setDrawerIndicatorEnabled(false);
 
                 // Reset the Toolbar's title
-                mToolbar.setTitle(mDrawerToolbar.getTitle());
-                mToolbar.setSubtitle(mDrawerToolbar.getSubtitle());
+                mToolbar.setTitle(mAppName);
             }
-			FragmentManager fm = getFragmentManager();
-			if (fm.getBackStackEntryCount() > 0) {
+            FragmentManager fm = getFragmentManager();
+            if (fm.getBackStackEntryCount() > 0) {
 			    fm.popBackStack();
                 // If storage list, display the app name in title bar.
                 if (mListFragment.isStorage())
@@ -325,7 +321,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
     public AlertDialog generateSortDialog(int initialValues) {
         // 1. Instantiate an AlertDialog.Builder with its constructor
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Message").setTitle("Title");
+        builder.setTitle(R.string.sort_extension);
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
@@ -389,8 +385,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
 
         ((Spinner) view.findViewById(R.id.spinner_sort_method)).setSelection(
                 values >> FileAdapterOptions.OFFSET_SORT_METHOD, false);
-        if (getOption(values, FileAdapterOptions.SORT_DESCENDING))
-            ((Checkable) view.findViewById(R.id.btn_sort_descend)).setChecked(true);
+        ((Checkable) view.findViewById(R.id.btn_sort_descend)).setChecked(getOption(values, FileAdapterOptions.SORT_DESCENDING));
         setCheckedAlpha(view, values, FileAdapterOptions.NO_FILE_EXT_FILTER, R.id.btn_file_filter);
         setCheckedAlpha(view, values, FileAdapterOptions.SHOW_HIDDEN_FILES, R.id.btn_file_visible);
         setCheckedAlpha(view, values, FileAdapterOptions.SHOW_HIDDEN_FOLDERS, R.id.btn_folder_visible);
@@ -470,12 +465,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
         // Store the new root directory
         mPreferences.edit().putString(LAST_ROOT_DIRECTORY,
                 (currDir == null) ? null : currDir.getAbsolutePath()).apply();
-        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(GravityCompat.START))
-            mDrawerToolbar.setTitle(displayName);
-        else
-            mToolbar.setTitle(displayName);
-        // If this is the storage list, disable the drawer indicator
-        mDrawerToggle.setDrawerIndicatorEnabled(currDir != null);
+        mToolbar.setTitle(displayName);
         onFileSelected(currDir);
     }
 
@@ -487,16 +477,10 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
                     (currFile == null) ? null : currFile.getAbsolutePath()).apply();
             mListFragment.setDir(currFile);
             mListFragment.refresh();
-            if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(GravityCompat.START))
-                mDrawerToolbar.setSubtitle(getFolderTitle(currFile));
-            else
-                mToolbar.setSubtitle(getFolderTitle(currFile));
+            mToolbar.setSubtitle(getFolderTitle(currFile));
 
             // Setup the drawer's list view with items and click listener
-            if (mListFragment.isVisible()) {
-                mDrawerList.setAdapter(new StorageArrayAdapter(this, R.layout.item_file));
-                mDrawerList.setOnItemClickListener(new StorageItemClickListener());
-            } else {
+            if (!mListFragment.isVisible()) {
                 mDrawerList.setAdapter(mListFragment.getListAdapter());
                 mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
             }
@@ -529,15 +513,16 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
             // Setup the drawer's ListView with items and click listener
             mDrawerList.setAdapter(mListFragment.getListAdapter());
             mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-            mDrawerToolbar.setTitle(mToolbar.getTitle());
-            mDrawerToolbar.setSubtitle(mToolbar.getSubtitle());
+            mDrawerToggle.setDrawerIndicatorEnabled(true);
         } else {
             // If we're in the two-pane layout or already displaying the DcmInfoFragment
             // Call a method in the DcmInfoFragment to update its content
     		mInfoFragment.updateDicomInfo(filePath);
         }
-        mToolbar.setTitle(currFile.getName());
-        mToolbar.setSubtitle(getFolderTitle(currFile.getParentFile()));
+        mTitle = currFile.getName();
+        mSubtitle = getFolderTitle(currFile.getParentFile());
+        mToolbar.setTitle(mTitle);
+        mToolbar.setSubtitle(mSubtitle);
     }
 
     // Clear the Toolbar's existing menu and inflate the file list menu
@@ -609,10 +594,16 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
                 R.string.drawer_close  /* "close drawer" description for accessibility */
                 ) {
             public void onDrawerClosed(View view) {
+                mDrawerSubtitle = mToolbar.getSubtitle();
+                mToolbar.setTitle(mTitle);
+                mToolbar.setSubtitle(mSubtitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
             public void onDrawerOpened(View drawerView) {
+                mToolbar.setTitle(mAppName);
+                if (mDrawerSubtitle != null)
+                    mToolbar.setSubtitle(mDrawerSubtitle);
                 // Refresh the drawer list.
                 ((RefreshArrayAdapter<File>) mDrawerList.getAdapter()).onRefresh();
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
@@ -626,18 +617,6 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             mListFragment.onListItemClick((ListView) parent, view, position, id);
-        }
-    }
-
-    /* Nav Drawer's click listener in storage mode */
-    private class StorageItemClickListener implements ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            File file = (File) parent.getItemAtPosition(position);
-            mListFragment.setDir(file);
-            mListFragment.refresh();
-            mToolbar.setTitle(mAppName);
-            mToolbar.setSubtitle("");
         }
     }
 

@@ -39,6 +39,7 @@
     <string name="loading">Loading…</string>
     <string name="file">File</string>
     <string name="directory">Directory</string>
+	<string name="sort">File Options</string>
     <string name="sort_extension">File Extension</string>
     <string-array name="sort_first">
         <item>@string/directory</item>

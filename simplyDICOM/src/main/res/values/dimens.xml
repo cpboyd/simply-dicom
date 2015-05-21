@@ -21,8 +21,9 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <dimen name="fab_elevation">8dp</dimen>
-    <dimen name="fab_press_translation_z">9dp</dimen>
+    <dimen name="bar_elevation">4dp</dimen>
+    <dimen name="fab_elevation">6dp</dimen>
+    <dimen name="fab_raised">12dp</dimen>
     <dimen name="fab_size">56dp</dimen>
     <dimen name="avatar_size">40dp</dimen>
     <dimen name="avatar_pad">4dp</dimen>

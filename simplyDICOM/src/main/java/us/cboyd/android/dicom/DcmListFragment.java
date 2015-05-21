@@ -181,7 +181,7 @@ public class DcmListFragment extends SwipeRefreshListFragment implements SwipeRe
     }
 	
 	public void setSortOptions(int settings) {
-		mSortSettings = settings;
+		mSortSettings = settings & FileAdapterOptions.USER_OPTIONS_MASK;
         RefreshArrayAdapter<File> adapter = getRefreshAdapter();
         if (adapter != null)
             adapter.setOptions(getFileAdapterOptions());

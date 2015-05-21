@@ -27,6 +27,18 @@ package us.cboyd.android.shared.files;
  */
 public class FileAdapterOptions {
     /**
+     * Mask for just the user options
+     */
+    public static final int USER_OPTIONS_MASK   = 0xFC;
+    /**
+     * Mask for just the filter options
+     */
+    public static final int FILTER_MASK   = 0x1C;
+    /**
+     * Mask for just the sort options
+     */
+    public static final int SORT_MASK   = 0xE0;
+    /**
      * Inform the FileArrayAdapter this is the root directory for the selected storage.
      */
     public static final int DIRECTORY_IS_ROOT   = 0x1;
@@ -35,21 +47,21 @@ public class FileAdapterOptions {
      */
     public static final int HIDE_STORAGE_LIST = 0x2;
     /**
-     * Have the FileArrayAdapter list files before directories.
-     */
-    public static final int LIST_FILES_FIRST    = 0x4;
-    /**
      * Disable the FileArrayAdapter's DICOM file extension filter.
      */
-    public static final int NO_FILE_EXT_FILTER  = 0x8;
+    public static final int NO_FILE_EXT_FILTER  = 0x4;
     /**
-     * Have the FileArrayAdapter show hidden files.
+     * Show hidden files.
      */
-    public static final int SHOW_HIDDEN_FILES   = 0x10;
+    public static final int SHOW_HIDDEN_FILES   = 0x8;
     /**
-     * Have the FileArrayAdapter show hidden directories.
+     * Show hidden directories.
      */
-    public static final int SHOW_HIDDEN_FOLDERS = 0x20;
+    public static final int SHOW_HIDDEN_FOLDERS = 0x10;
+    /**
+     * List files before directories.
+     */
+    public static final int LIST_FILES_FIRST    = 0x20;
     /**
      * Sort descending.
      */

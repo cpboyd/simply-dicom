@@ -29,10 +29,13 @@ import java.io.File;
  */
 public class FilterFile {
     public final File file;
+    public final long lastModified, size;
     public final boolean match;
 
     public FilterFile (File filteredFile, boolean matchesFilter) {
         file = filteredFile;
+        lastModified = file.lastModified();
+        size = file.length();
         match = matchesFilter;
     }
 }

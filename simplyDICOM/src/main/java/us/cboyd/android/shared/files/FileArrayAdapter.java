@@ -30,9 +30,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.apache.commons.io.comparator.NameFileComparator;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
@@ -65,13 +68,18 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
 
     @Override
     public void setOptions(int options) {
+        // If no filter options changed, then we can just sort the existing lists.
+        boolean sortOnly = ((mOptions & FileAdapterOptions.FILTER_MASK) == (options & FileAdapterOptions.FILTER_MASK));
         mOptions = options;
         // Determine if there's an offset:
         mOffset = !(getOption(FileAdapterOptions.DIRECTORY_IS_ROOT)
                 && getOption(FileAdapterOptions.HIDE_STORAGE_LIST)) ? 1 : 0;
         mFilesFirst = getOption(FileAdapterOptions.LIST_FILES_FIRST);
 
-        onRefresh();
+        if (sortOnly)
+            sortLists();
+        else
+            onRefresh();
     }
 
     public boolean getOption(int option) {
@@ -120,6 +128,24 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
                     }
                 }
             }
+        }
+        sortLists();
+    }
+
+    // Sort the lists
+    public void sortLists() {
+        boolean reverse = getOption(FileAdapterOptions.SORT_DESCENDING);
+        Collections.sort(mDirList, NameFileComparator.NAME_INSENSITIVE_COMPARATOR);
+        switch (mOptions >> FileAdapterOptions.OFFSET_SORT_METHOD) {
+            case 0:
+                Collections.sort(mFileList, FileComparators.FilterFileName(reverse));
+                break;
+            case 1:
+                Collections.sort(mFileList, FileComparators.FilterFileModified(reverse));
+                break;
+            case 2:
+                Collections.sort(mFileList, FileComparators.FilterFileSize(reverse));
+                break;
         }
         notifyDataSetChanged();
     }
