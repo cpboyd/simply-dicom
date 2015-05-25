@@ -22,34 +22,21 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string-array name="planes_array">
-        <item>Transvers</item>
-        <item>Frontal</item>
-        <item>Sagital</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>Grisos</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">Inverteix els colors</string>
+    <!-- File Browser -->
     <string name="loading">S\'està carregant…</string>
     <string name="file">Fitxers</string>
     <string name="directory">Directori</string>
+    <string name="sort_alpha">Alfanumèric</string>
+    <string name="sort_modified">Data de modificació</string>
+    <string name="sort_size">Mida d\'un fitxer</string>
     <string name="sort_extension">Extensió d\'un fitxer</string>
-    <string-array name="sort_array">
-        <item>Alfanumèric</item>
-        <item>Data de modificació</item>
-        <item>Mida d\'un fitxer</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">Transvers</string>
+    <string name="plane_coronal">Frontal</string>
+    <string name="plane_saggital">Sagital</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">Inverteix els colors</string>
+    <string name="cmap_gray">Grisos</string>
 </resources>

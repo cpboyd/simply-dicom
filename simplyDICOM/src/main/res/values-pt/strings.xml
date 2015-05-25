@@ -22,34 +22,21 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string-array name="planes_array">
-        <item>Transversal</item>
-        <item>Coronal</item>
-        <item>Sagital</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>Cinza</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">Inverter cores</string>
+    <!-- File Browser -->
     <string name="loading">Carregando…</string>
     <string name="file">Arquivo</string>
     <string name="directory">Diretório</string>
+    <string name="sort_alpha">Alfanumérico</string>
+    <string name="sort_modified">Data Modificada</string>
+    <string name="sort_size">Tamanho do arquivo</string>
     <string name="sort_extension">Extensão do arquivo</string>
-    <string-array name="sort_array">
-        <item>Alfanumérico</item>
-        <item>Data Modificada</item>
-        <item>Tamanho do arquivo</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">Transversal</string>
+    <string name="plane_coronal">Coronal</string>
+    <string name="plane_saggital">Sagital</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">Inverter cores</string>
+    <string name="cmap_gray">Cinza</string>
 </resources>

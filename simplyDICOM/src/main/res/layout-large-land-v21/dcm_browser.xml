@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2013 - 2015. Christopher Boyd
   ~
@@ -21,33 +20,36 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- As the main content view, the view below consumes the entire
+     space available using match_parent in both dimensions. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ListView android:id="@android:id/list"
+    <!-- New Toolbar to replace ActionBar -->
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/dcmBrowser_toolbar"
+        android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:drawSelectorOnTop="false" />
-    <TextView android:id="@android:id/empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text=""
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:gravity="center" />
-
-    <ImageButton
-        android:id="@+id/btn_load"
-        android:visibility="gone"
-        android:layout_width="@dimen/fab_size"
-        android:layout_height="@dimen/fab_size"
-        android:layout_gravity="end|bottom"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="16dp"
-        android:onClick="load"
-        android:tint="@android:color/white"
-        android:background="@drawable/fab_background"
-        android:stateListAnimator="@animator/fab_anim"
-        android:src="@drawable/ic_open_in_new_white_24dp"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
         android:elevation="@dimen/bar_elevation"/>
-</FrameLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/fragment_left"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/fragment_right"
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+</LinearLayout>

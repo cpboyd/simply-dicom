@@ -22,34 +22,21 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string-array name="planes_array">
-        <item>مستعرض</item>
-        <item>إكليلي</item>
-        <item>سهمي</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>تدرج رمادي</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">قلب الألوان</string>
+    <!-- File Browser -->
     <string name="loading">جارٍ التحميل…</string>
     <string name="file">ملف</string>
     <string name="directory">مجلد</string>
+    <string name="sort_alpha">أبجدية رقمية</string>
+    <string name="sort_modified">تاريخ التعديل</string>
+    <string name="sort_size">حجم ملف</string>
     <string name="sort_extension">امتداد ملف</string>
-    <string-array name="sort_array">
-        <item>أبجدية رقمية</item>
-        <item>تاريخ التعديل</item>
-        <item>حجم ملف</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">مستعرض</string>
+    <string name="plane_coronal">إكليلي</string>
+    <string name="plane_saggital">السهمي</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">قلب الألوان</string>
+    <string name="cmap_gray">تدرج رمادي</string>
 </resources>

@@ -194,7 +194,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
 
         // If the info fragment isn't visible, remove it from the fragment manager.
         // Required because we add it in onSaveInstanceState()
-        if (!mInfoFragment.isVisible() && mInfoFragment.isAdded()) {
+        if (mFragmented && !mInfoFragment.isVisible() && mInfoFragment.isAdded()) {
             FragmentManager fragManager = getFragmentManager();
             // Remove existing fragments from associated views.
             fragManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -321,7 +321,7 @@ public class DcmBrowser extends Activity implements DcmListFragment.OnFileSelect
     public AlertDialog generateSortDialog(int initialValues) {
         // 1. Instantiate an AlertDialog.Builder with its constructor
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.sort_extension);
+        builder.setTitle(R.string.sort);
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout

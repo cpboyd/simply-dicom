@@ -30,8 +30,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.apache.commons.io.comparator.NameFileComparator;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,7 +45,7 @@ import us.cboyd.android.shared.list.RefreshArrayAdapter;
  */
 public class FileArrayAdapter extends RefreshArrayAdapter<File> {
 
-    private ArrayList<File> mDirList = new ArrayList<>();
+    private ArrayList<FilterFile> mDirList = new ArrayList<>();
     private ArrayList<FilterFile> mFileList = new ArrayList<>();
     private File            mCurrDir;
     private int             mResource, mOptions, mOffset;
@@ -63,11 +61,17 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
         mRes = context.getResources();
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        setOptions(options);
+        // Set the options and force a refresh
+        setOptions(options, true);
     }
 
     @Override
+    // Try to avoid having to reload the lists.
     public void setOptions(int options) {
+        setOptions(options, false);
+    }
+
+    public void setOptions(int options, boolean forceRefresh) {
         // If no filter options changed, then we can just sort the existing lists.
         boolean sortOnly = ((mOptions & FileAdapterOptions.FILTER_MASK) == (options & FileAdapterOptions.FILTER_MASK));
         mOptions = options;
@@ -76,7 +80,7 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
                 && getOption(FileAdapterOptions.HIDE_STORAGE_LIST)) ? 1 : 0;
         mFilesFirst = getOption(FileAdapterOptions.LIST_FILES_FIRST);
 
-        if (sortOnly)
+        if (sortOnly & !forceRefresh)
             sortLists();
         else
             onRefresh();
@@ -101,7 +105,7 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
             for (File path : mCurrDir.listFiles()) {
                 // If it's a directory, add it to mDirList. (Depending on visibility settings.)
                 if (path.isDirectory() && (showFolders || !path.isHidden())) {
-                    mDirList.add(path);
+                    mDirList.add(new FilterFile(path));
                 // Otherwise, see if it's a DICOM file. (Depending on visibility settings.)
                 } else if (showFiles || !path.isHidden()) {
                     // Find where the extension starts (i.e. the last '.')
@@ -110,7 +114,7 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
 
                     // No extension found.  May or may not be a DICOM file.
                     if (ext == -1) {
-                        mFileList.add(new FilterFile(path, true));
+                        mFileList.add(new FilterFile(path));
                         continue;
                     }
 
@@ -118,7 +122,7 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
                     String extension = filename.substring(ext + 1).toLowerCase(Locale.US);
                     // Check if the file has a DICOM (or DCM) extension.
                     if (extension.equals("dic") || extension.equals("dicom") || extension.equals("dcm")) {
-                        mFileList.add(new FilterFile(path, true));
+                        mFileList.add(new FilterFile(path));
                         continue;
                     }
 
@@ -135,7 +139,7 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
     // Sort the lists
     public void sortLists() {
         boolean reverse = getOption(FileAdapterOptions.SORT_DESCENDING);
-        Collections.sort(mDirList, NameFileComparator.NAME_INSENSITIVE_COMPARATOR);
+        Collections.sort(mDirList, FileComparators.FilterFileName(reverse));
         switch (mOptions >> FileAdapterOptions.OFFSET_SORT_METHOD) {
             case 0:
                 Collections.sort(mFileList, FileComparators.FilterFileName(reverse));
@@ -156,17 +160,6 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
     }
 
     @Override
-    public int getPosition(File item) {
-        if (item == null)
-            return -1;
-        //TODO: Fix
-        if (item.isDirectory())
-            return mDirList.indexOf(item);
-        else
-            return mFileList.indexOf(item);
-    }
-
-    @Override
     public File getItem(int position) {
         // Handle special cases at position 0.
         if ((position == 0) && (mOffset != 0)) {
@@ -180,9 +173,9 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
         if ((mFilesFirst && (position > mFileList.size())) ||
                 (!mFilesFirst && (position <= mDirList.size()))){
             if (mFilesFirst)
-                return mDirList.get(position - mFileList.size() - mOffset);
+                return mDirList.get(position - mFileList.size() - mOffset).file;
             else
-                return mDirList.get(position - mOffset);
+                return mDirList.get(position - mOffset).file;
             // Otherwise, display info about the file.
         } else {
             if (mFilesFirst)
@@ -227,17 +220,17 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
         // Directory
         } else if ((mFilesFirst && (position > mFileList.size())) ||
                 (!mFilesFirst && (position <= mDirList.size()))){
-            File directory;
+            FilterFile directory;
             if (mFilesFirst)
                 directory = mDirList.get(position - mFileList.size() - mOffset);
             else
                 directory = mDirList.get(position - mOffset);
             // Choose which icon to use.
-            if (directory.isHidden())
+            if (directory.isHidden)
                 holder.icon.setImageResource(R.drawable.ic_folder_visible_off_white_36dp);
             else
                 holder.icon.setImageResource(R.drawable.ic_folder_open_white_36dp);
-            holder.fileName.setText(directory.getName());
+            holder.fileName.setText(directory.file.getName());
             holder.secondLine.setText(mRes.getText(R.string.directory));
         // Otherwise, display info about the file.
         } else {
@@ -249,16 +242,16 @@ public class FileArrayAdapter extends RefreshArrayAdapter<File> {
             // Choose which icon to use.
             if (!temp.match)
                 holder.icon.setImageResource(R.drawable.ic_file_filter_off_white_36dp);
-            else if (temp.file.isHidden())
+            else if (temp.isHidden)
                 holder.icon.setImageResource(R.drawable.ic_file_visible_off_white_36dp);
             else
-                holder.icon.setImageResource(R.drawable.ic_file_image_white_36dp);
+                holder.icon.setImageResource(R.drawable.ic_image_white_36dp);
             holder.fileName.setText(temp.file.getName());
             String separator = " | ";
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
-            String text = mRes.getText(R.string.file)
-                    + separator + temp.file.length() / 1024 + " KiB"
-                    + separator + sdf.format(new Date(temp.file.lastModified()));
+            String text = mRes.getText(R.string.file) + separator + "\u200e" // ensure next part is LTR
+                    + temp.size / 1024 + " KiB"
+                    + separator + sdf.format(new Date(temp.lastModified));
             holder.secondLine.setText(text);
         }
         return view;

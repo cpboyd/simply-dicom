@@ -32,7 +32,7 @@
     <TextView android:id="@android:id/empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/err_file_read"
+        android:text=""
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:gravity="center" />
 

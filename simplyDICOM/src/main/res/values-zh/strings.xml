@@ -22,34 +22,21 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string-array name="planes_array">
-        <item>横断面</item>
-        <item>冠状面</item>
-        <item>矢状面</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>灰度</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">反色</string>
+    <!-- File Browser -->
     <string name="loading">正在加载…</string>
     <string name="file">文件</string>
     <string name="directory">目录</string>
+    <string name="sort_alpha">文數字</string>
+    <string name="sort_modified">修改日期</string>
+    <string name="sort_size">文件大小</string>
     <string name="sort_extension">文件扩展名</string>
-    <string-array name="sort_array">
-        <item>文數字</item>
-        <item>修改日期</item>
-        <item>文件大小</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">横断面</string>
+    <string name="plane_coronal">冠状面</string>
+    <string name="plane_saggital">矢状面</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">反色</string>
+    <string name="cmap_gray">灰度</string>
 </resources>

@@ -23,34 +23,21 @@
   -->
 
 <resources>
-    <string-array name="planes_array">
-        <item>Transversaal</item>
-        <item>Coronaal</item>
-        <item>Sagittaal</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>Grijstinten</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">Kleuren omkeren</string>
+    <!-- File Browser -->
     <string name="loading">Laden…</string>
     <string name="file">Bestand</string>
     <string name="directory">Directory</string>
+    <string name="sort_alpha">Alfanumeriek</string>
+    <string name="sort_modified">Gewijzigde Datum</string>
+    <string name="sort_size">Bestandsgrootte</string>
     <string name="sort_extension">Bestandsextensie</string>
-    <string-array name="sort_array">
-        <item>Alfanumeriek</item>
-        <item>Gewijzigde Datum</item>
-        <item>Bestandsgrootte</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">Transversaal</string>
+    <string name="plane_coronal">Coronaal</string>
+    <string name="plane_saggital">Sagittaal</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">Kleuren omkeren</string>
+    <string name="cmap_gray">Grijstinten</string>
 </resources>

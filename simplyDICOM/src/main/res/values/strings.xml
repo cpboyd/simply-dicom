@@ -30,53 +30,132 @@
     <!-- Menus -->
     <string name="menu_about">About</string>
     <string name="menu_sort">Sort</string>
-    <string name="menu_ffirst">Files before folders</string>
-    <string name="menu_hidden">Show hidden files</string>
-    <string name="menu_taginfo">Show VR/VM for tags</string>
     <string name="menu_debug">Debug Mode</string>
-    <string name="menu_data">Data Representation</string>
-    <string name="menu_load">Load Series</string>
     <string name="loading">Loading…</string>
+
+    <!-- File Browser -->
     <string name="file">File</string>
     <string name="directory">Directory</string>
 	<string name="sort">File Options</string>
+    <string name="sort_alpha">Alphanumeric</string>
+    <string name="sort_modified">Date Modified</string>
+    <string name="sort_size">File Size</string>
     <string name="sort_extension">File Extension</string>
     <string-array name="sort_first">
         <item>@string/directory</item>
         <item>@string/file</item>
     </string-array>
     <string-array name="sort_array">
-        <item>Alphanumeric</item>
-        <item>Date Modified</item>
-        <item>File Size</item>
+        <item>@string/sort_alpha</item>
+        <item>@string/sort_modified</item>
+        <item>@string/sort_size</item>
     </string-array>
 
+    <!-- Plane Selection -->
+    <string name="plane_transverse">Transverse</string>
+    <string name="plane_coronal">Coronal</string>
+    <string name="plane_saggital">Saggital</string>
     <string-array name="planes_array">
-        <item>Transverse</item>
-        <item>Coronal</item>
-        <item>Saggital</item>
+        <item>@string/plane_transverse</item>
+        <item>@string/plane_coronal</item>
+        <item>@string/plane_saggital</item>
     </string-array>
     
     <!-- Colormap Selection -->
+    <string name="cmap_invert">Invert colors</string>
+    <string name="cmap_gray">Grayscale</string>
+    <string name="cmap_autumn">Autumn</string>
+    <string name="cmap_bone">Bone</string>
+    <string name="cmap_jet">Jet</string>
+    <string name="cmap_winter">Winter</string>
+    <string name="cmap_rainbow">Rainbow</string>
+    <string name="cmap_ocean">Ocean</string>
+    <string name="cmap_summer">Summer</string>
+    <string name="cmap_spring">Spring</string>
+    <string name="cmap_cool">Cool</string>
+    <string name="cmap_hsv">HSV</string>
+    <string name="cmap_pink">Pink</string>
+    <string name="cmap_hot">Hot</string>
     <string-array name="colormaps_array">
-        <item>Grayscale</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
+        <item>@string/cmap_gray</item>
+        <item>@string/cmap_autumn</item>
+        <item>@string/cmap_bone</item>
+        <item>@string/cmap_jet</item>
+        <item>@string/cmap_winter</item>
+        <item>@string/cmap_rainbow</item>
+        <item>@string/cmap_ocean</item>
+        <item>@string/cmap_summer</item>
+        <item>@string/cmap_spring</item>
+        <item>@string/cmap_cool</item>
+        <item>@string/cmap_hsv</item>
+        <item>@string/cmap_pink</item>
+        <item>@string/cmap_hot</item>
     </string-array>
-    <string name="invert">Invert colors</string>
-    
+
+    <!-- Drawer descriptions for accessibility -->
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
+
+    <!-- Error Messages (Displayed to User) -->
+    <string name="err_title_disk">ERROR: No storage found.</string>
+    <string name="err_mesg_disk">Please connect or insert external storage.</string>
+    <string name="err_close">Exit</string>
+    <string name="err_file_read">"ERROR: Failed to read file "</string>
+    <string name="err_file_display">"ERROR: Failed to display image for "</string>
+    <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
+    <string name="err_jpeg">Compressed/JPEG images are not currently supported.</string>
+    <string name="err_null_image">Pixel data is null.</string>
+    <string name="err_unknown_dicom">Unknown DICOM transfer syntax.</string>
+    <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
+    <string name="err_ok">OK</string>
+
+    <!-- DICOM Info Tags -->
+    <string-array name="dcmtag_default">
+        <item>00020002</item>
+        <item>00100010</item>
+        <item>00100020</item>
+        <item>00100030</item>
+        <item>00100040</item>
+        <item>00020010</item>
+        <item>00280004</item>
+        <item>00080016</item>
+        <item>00080018</item>
+        <item>0020000D</item>
+        <item>00080020</item>
+        <item>00080030</item>
+        <item>00200010</item>
+        <item>00080090</item>
+        <item>00080050</item>
+        <item>0020000E</item>
+        <item>00080021</item>
+        <item>00080031</item>
+        <item>00200011</item>
+        <item>00080070</item>
+        <item>00080080</item>
+    </string-array>
+    <integer-array name="dcmint_default">
+        <item>0x00020002</item>
+        <item>0x00100010</item>
+        <item>0x00100020</item>
+        <item>0x00100030</item>
+        <item>0x00100040</item>
+        <item>0x00020010</item>
+        <item>0x00280004</item>
+        <item>0x00080016</item>
+        <item>0x00080018</item>
+        <item>0x0020000D</item>
+        <item>0x00080020</item>
+        <item>0x00080030</item>
+        <item>0x00200010</item>
+        <item>0x00080090</item>
+        <item>0x00080050</item>
+        <item>0x0020000E</item>
+        <item>0x00080021</item>
+        <item>0x00080031</item>
+        <item>0x00200011</item>
+        <item>0x00080070</item>
+        <item>0x00080080</item>
+    </integer-array>
     
     <!-- Abbreviations -->
     <string translatable="false" name="abbr_ae">Application Entity</string>
@@ -5065,69 +5144,4 @@
 	<string translatable="false" name="uid_1_2_840_10008_6_1_932">Radiotherapy Acquisition Workitem Definition;Context</string>
 	<string translatable="false" name="uid_1_2_840_10008_6_1_933">Radiotherapy Registration Workitem Definition;Context</string>
 	<string translatable="false" name="uid_1_2_840_10008_6_1_934">Intravascular OCT Flush Agent;Context</string>
-
-    <!-- Error Messages (Displayed to User) -->
-    <string name="err_title_disk">ERROR: No storage found.</string>
-    <string name="err_mesg_disk">Please connect or insert external storage.</string>
-    <string name="err_close">Exit</string>
-    <string name="err_file_read">"ERROR: Failed to read file "</string>
-    <string name="err_file_display">"ERROR: Failed to display image for "</string>
-    <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
-    <string name="err_jpeg">Compressed/JPEG images are not currently supported.</string>
-    <string name="err_null_image">Pixel data is null.</string>
-    <string name="err_unknown_dicom">Unknown DICOM transfer syntax.</string>
-    <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
-    <string name="err_ok">OK</string>
-
-    <!-- Internal Log Messages -->
-    <string translatable="false" name="tag_ocv">OCVSample::DICOM::Activity</string>
-    <string name="ocv_load">OpenCV loaded successfully.</string>
-
-    <!-- DICOM Info Tags -->
-    <string-array name="dcmtag_default">
-        <item>00020002</item>
-        <item>00100010</item>
-        <item>00100020</item>
-        <item>00100030</item>
-        <item>00100040</item>
-        <item>00020010</item>
-        <item>00280004</item>
-        <item>00080016</item>
-	    <item>00080018</item>
-	    <item>0020000D</item>
-	    <item>00080020</item>
-	    <item>00080030</item>
-	    <item>00200010</item>
-	    <item>00080090</item>
-	    <item>00080050</item>
-	    <item>0020000E</item>
-	    <item>00080021</item>
-	    <item>00080031</item>
-	    <item>00200011</item>
-	    <item>00080070</item>
-	    <item>00080080</item>
-    </string-array>
-    <integer-array name="dcmint_default">
-        <item>0x00020002</item>
-        <item>0x00100010</item>
-        <item>0x00100020</item>
-        <item>0x00100030</item>
-        <item>0x00100040</item>
-        <item>0x00020010</item>
-        <item>0x00280004</item>
-        <item>0x00080016</item>
-        <item>0x00080018</item>
-        <item>0x0020000D</item>
-        <item>0x00080020</item>
-        <item>0x00080030</item>
-        <item>0x00200010</item>
-        <item>0x00080090</item>
-        <item>0x00080050</item>
-        <item>0x0020000E</item>
-        <item>0x00080021</item>
-        <item>0x00080031</item>
-        <item>0x00200011</item>
-        <item>0x00080070</item>
-        <item>0x00080080</item>
-    </integer-array>
 </resources>

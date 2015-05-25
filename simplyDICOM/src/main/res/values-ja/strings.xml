@@ -22,34 +22,21 @@
   ~ THE SOFTWARE.
   -->
 <resources>
-    <string-array name="planes_array">
-        <item>横断面</item>
-        <item>冠状面</item>
-        <item>矢状面</item>
-    </string-array>
-    <string-array name="colormaps_array">
-        <item>グレースケール</item>
-        <item>Autumn</item>
-        <item>Bone</item>
-        <item>Jet</item>
-        <item>Winter</item>
-        <item>Rainbow</item>
-        <item>Ocean</item>
-        <item>Summer</item>
-        <item>Spring</item>
-        <item>Cool</item>
-        <item>HSV</item>
-        <item>Pink</item>
-        <item>Hot</item>
-    </string-array>
-    <string name="invert">色を反転</string>
+    <!-- File Browser -->
     <string name="loading">読み込んでいます…</string>
     <string name="file">ファイル</string>
     <string name="directory">ディレクトリ</string>
+    <string name="sort_alpha">英数字</string>
+    <string name="sort_modified">日付が変更された</string>
+    <string name="sort_size">ファイルサイズ</string>
     <string name="sort_extension">拡張子</string>
-    <string-array name="sort_array">
-        <item>英数字</item>
-        <item>日付が変更された</item>
-        <item>ファイルサイズ</item>
-    </string-array>
+
+    <!-- Plane Selection -->
+    <string name="plane_transverse">横断面</string>
+    <string name="plane_coronal">冠状面</string>
+    <string name="plane_saggital">矢状面</string>
+
+    <!-- Colormap Selection -->
+    <string name="cmap_invert">色を反転</string>
+    <string name="cmap_gray">グレースケール</string>
 </resources>
