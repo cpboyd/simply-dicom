@@ -27,7 +27,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -134,23 +133,17 @@ public class DcmInfoFragment extends ListFragment {
         Resources resources = getResources();
 
     	if (mCurrFile != null) {
-            String SOPClass;
-            String TransferSyntax;
 	    	try {
 				// Read in the DicomObject
 				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrFile)));
                 mAttributes = dis.getFileMetaInformation();
+                // Raw data set (DICOM data without a file format meta-header)
+                if (mAttributes == null)
+                    mAttributes = new Attributes();
                 dis.readAttributes(mAttributes, -1, -1);
                 mAttributes.trimToSize();
                 mAttributes.internalizeStringValues(true);
 				dis.close();
-				SOPClass = mAttributes.getString(Tag.MediaStorageSOPClassUID);
-                TransferSyntax = mAttributes.getString(Tag.TransferSyntaxUID);
-				// Get the SOP Class element
-				Log.i("cpb", "SOP Class: " + SOPClass);
-
-                // Get the Transfer Syntax element
-                Log.i("cpb", "Transfer Syntax: " + TransferSyntax);
 
             } catch (IOException ex) {
                 showImage(false);
@@ -164,54 +157,7 @@ public class DcmInfoFragment extends ListFragment {
             }
 
             try {
-                showImage(false);
-				if (SOPClass.equals(UID.MediaStorageDirectoryStorage)) {
-                    // TODO: DICOMDIR support
-		            mErrText.setText(resources.getString(R.string.err_dicomdir));
-				} else if (TransferSyntax.startsWith("1.2.840.10008.1.2.4.")) {
-                    // TODO: JPEG support
-                    mErrText.setText(resources.getString(R.string.err_jpeg));
-                } else if (TransferSyntax.startsWith("1.2.840.10008.1.2")) {
-                    int[] pixels = mAttributes.getInts(Tag.PixelData);
-                    if (pixels == null) {
-                        mErrText.setText(resources.getString(R.string.err_null_image));
-                    } else {
-                        // Set the PixelData to null to free memory.
-                        mAttributes.setNull(Tag.PixelData, VR.OB);
-                        showImage(true);
-                        int rows = mAttributes.getInt(Tag.Rows, 1);
-                        int cols = mAttributes.getInt(Tag.Columns, 1);
-                        Mat temp = new Mat(rows, cols, CvType.CV_32S);
-                        temp.put(0, 0, pixels);
-                        // Set the PixelData to null to free memory.
-                        pixels = null;
-                        // [Y, X] or [row, column]
-                        double[] spacing = mAttributes.getDoubles(Tag.PixelSpacing);
-                        double scaleY2X = 1.0d;
-                        if (spacing != null) {
-                            scaleY2X = spacing[1] / spacing[0];
-                        }
-
-                        // Determine the minmax
-                        Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
-                        double diff = minmax.maxVal - minmax.minVal;
-                        temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
-                        // Make the demo image bluish, rather than black and white.
-                        Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE);
-                        Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR);
-
-                        // Set the image
-                        Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
-                        Utils.matToBitmap(temp, imageBitmap, true);
-                        mImageView.setImageBitmap(imageBitmap);
-                        mImageView.setScaleX((float) scaleY2X);
-                        // Limit the height of the image view to display at least two ListView entries (and toolbar).
-                        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-                        mImageView.setMaxHeight(displayMetrics.heightPixels - (int)(3*72*displayMetrics.density));
-                    }
-				} else {
-                    mErrText.setText(resources.getString(R.string.err_unknown_dicom));
-                }
+                checkDcmImage();
 
 				// TODO: Add selector for info tag listing
                 // Create an array adapter for the ListView
@@ -229,6 +175,66 @@ public class DcmInfoFragment extends ListFragment {
     	} else {
     		showImage(false);
             mErrText.setText(resources.getString(R.string.err_unknown_state));
+        }
+    }
+
+    public void checkDcmImage() {
+        showImage(false);
+        String sopClass = mAttributes.getString(Tag.MediaStorageSOPClassUID);
+        String transferSyntax = mAttributes.getString(Tag.TransferSyntaxUID);
+        if ((sopClass != null) && sopClass.equals(UID.MediaStorageDirectoryStorage)) {
+            // TODO: DICOMDIR support
+            mErrText.setText(getResources().getString(R.string.err_dicomdir));
+        // Null transfer syntax (e.g. "raw" DICOM)
+        } else if (transferSyntax == null) {
+            mErrText.setText(getResources().getString(R.string.err_null_transfersyntax));
+        } else if (transferSyntax.startsWith("1.2.840.10008.1.2.4.")) {
+            // TODO: JPEG support
+            mErrText.setText(getResources().getString(R.string.err_jpeg));
+        } else if (transferSyntax.startsWith("1.2.840.10008.1.2")) {
+                loadDcmImage();
+        } else {
+            mErrText.setText(getResources().getString(R.string.err_unknown_transfersyntax));
+        }
+    }
+
+    public void loadDcmImage() {
+        int[] pixels = mAttributes.getInts(Tag.PixelData);
+        if (pixels == null) {
+            mErrText.setText(getResources().getString(R.string.err_null_pixeldata));
+        } else {
+            // Set the PixelData to null to free memory.
+            mAttributes.setNull(Tag.PixelData, VR.OB);
+            showImage(true);
+            int rows = mAttributes.getInt(Tag.Rows, 1);
+            int cols = mAttributes.getInt(Tag.Columns, 1);
+            Mat temp = new Mat(rows, cols, CvType.CV_32S);
+            temp.put(0, 0, pixels);
+            // Set the PixelData to null to free memory.
+            pixels = null;
+            // [Y, X] or [row, column]
+            double[] spacing = mAttributes.getDoubles(Tag.PixelSpacing);
+            double scaleY2X = 1.0d;
+            if (spacing != null) {
+                scaleY2X = spacing[1] / spacing[0];
+            }
+
+            // Determine the minmax
+            Core.MinMaxLocResult minmax = Core.minMaxLoc(temp);
+            double diff = minmax.maxVal - minmax.minVal;
+            temp.convertTo(temp, CvType.CV_8UC1, 255.0d / diff, 0);
+            // Make the demo image bluish, rather than black and white.
+            Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE);
+            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR);
+
+            // Set the image
+            Bitmap imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(temp, imageBitmap, true);
+            mImageView.setImageBitmap(imageBitmap);
+            mImageView.setScaleX((float) scaleY2X);
+            // Limit the height of the image view to display at least two ListView entries (and toolbar).
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            mImageView.setMaxHeight(displayMetrics.heightPixels - (int)(3*72*displayMetrics.density));
         }
     }
     

@@ -104,8 +104,9 @@
     <string name="err_file_display">"ERROR: Failed to display image for "</string>
     <string name="err_dicomdir">DICOMDIR (Media Storage Directory Storage) is not currently supported.</string>
     <string name="err_jpeg">Compressed/JPEG images are not currently supported.</string>
-    <string name="err_null_image">Pixel data is null.</string>
-    <string name="err_unknown_dicom">Unknown DICOM transfer syntax.</string>
+    <string name="err_null_pixeldata">No pixel data. (7FE0,0010)</string>
+    <string name="err_null_transfersyntax">Undefined transfer syntax. (0002,0010)</string>
+    <string name="err_unknown_transfersyntax">Unknown transfer syntax. (0002,0010)</string>
     <string name="err_unknown_state">ERROR: Unknown state.  Could not find file.</string>
     <string name="err_ok">OK</string>
 
