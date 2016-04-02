@@ -22,15 +22,23 @@
 
 package us.cboyd.android.dicom;
 
-import android.app.ListFragment;
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -53,7 +61,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import us.cboyd.android.dicom.tag.TagArrayAdapter;
+import us.cboyd.android.dicom.tag.TagRecyclerAdapter;
 
 /**
  * DICOM InfoFragment
@@ -62,17 +70,41 @@ import us.cboyd.android.dicom.tag.TagArrayAdapter;
  * @version 0.7
  *
  */
-public class DcmInfoFragment extends ListFragment {
+public class DcmInfoFragment extends Fragment {
     private static String 		mCurrFile 	    = null;
     private static Attributes   mAttributes     = null;
 
     private static View         mHeader, mLoadButton;
     private static TextView     mErrText;
-    private static FrameLayout  mImageFrame;
+    private static Toolbar mToolbar;
+    private static CollapsingToolbarLayout mToolbarLayout;
+    private DrawerLayout 	mDrawerLayout;
+    private ListView 		mDrawerList;
+    private ListAdapter     mDrawerAdapter;
+    private ListView.OnItemClickListener mDrawerListener;
+    private ActionBarDrawerToggle mDrawerToggle = null;
 
     private static ImageView    mImageView;
     private static boolean 	    mDebugMode		= false;
     private static LayoutInflater mInflater;
+    private Toolbar.OnMenuItemClickListener mMenuListener;
+    private RecyclerView mRecyclerView;
+    private AppBarLayout mAppBar;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception.
+        try {
+            mMenuListener = (Toolbar.OnMenuItemClickListener) activity;
+            mDrawerListener = (ListView.OnItemClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement Toolbar.OnMenuItemClickListener and ListView.OnItemClickListener");
+        }
+    }
 
 	/** onCreate is called to do initial creation of the fragment. */
 	@Override
@@ -94,17 +126,55 @@ public class DcmInfoFragment extends ListFragment {
 
         // Inflate the layout for this fragment
         mInflater = inflater;
-        View view = inflater.inflate(R.layout.fab_list, container, false);
+        View view = inflater.inflate(R.layout.dcm_info, container, false);
+        // Toolbar
+        mToolbarLayout 	= (CollapsingToolbarLayout) view.findViewById(R.id.collapsingToolbar);
+        mToolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        mToolbar.inflateMenu(R.menu.dcm_preview);
+        mToolbar.setOnMenuItemClickListener(mMenuListener);
+        // Have the recycler view use a linear layout manager
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
+
+        mAppBar = (AppBarLayout) view.findViewById(R.id.appBar);
+        mImageView 	= (ImageView) view.findViewById(R.id.backdrop);
+        updateModeIcon();
+        // Drawer stuff
+        mDrawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) view.findViewById(R.id.left_drawer);
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the sliding drawer and the action bar app icon
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                mToolbar,
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            public void onDrawerOpened(View drawerView) {
+//                ListAdapter adapter = mDrawerList.getAdapter();
+                // Refresh the drawer list.
+//                if (adapter != null)
+//                        ((RefreshArrayAdapter<File>) adapter).onRefresh();
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        if ((mDrawerAdapter != null) && (mDrawerListener != null)) {
+            mDrawerList.setAdapter(mDrawerAdapter);
+            mDrawerList.setOnItemClickListener(mDrawerListener);
+            mDrawerToggle.setDrawerIndicatorEnabled(true);
+        }
+        mDrawerToggle.syncState();
+
         //TODO: Add FAB to load image series
         mLoadButton = view.findViewById(R.id.btn_load);
         // Create the ListView header views
-        ListView list = (ListView) view.findViewById(android.R.id.list);
-        View header = inflater.inflate(R.layout.dcm_info_header, list, false);
-        mImageFrame = (FrameLayout) header.findViewById(R.id.imageFrame);
-        mImageView 	= (ImageView) header.findViewById(R.id.demoImage);
-        mErrText 	= (TextView) header.findViewById(R.id.text_fileError);
-        list.addHeaderView(header);
-        list.addFooterView(inflater.inflate(R.layout.fab_list_footer, list, false));
+//        ListView list = (ListView) view.findViewById(android.R.id.list);
+//        View header = inflater.inflate(R.layout.dcm_info_header, list, false);
+//        mImageFrame = (FrameLayout) header.findViewById(R.id.imageFrame);
+//        mImageView 	= (ImageView) header.findViewById(R.id.demoImage);
+//        mErrText 	= (TextView) header.findViewById(R.id.text_fileError);
+//        list.addHeaderView(header);
+//        list.addFooterView(inflater.inflate(R.layout.fab_list_footer, list, false));
         return view;
     }
 
@@ -128,14 +198,25 @@ public class DcmInfoFragment extends ListFragment {
         }
     }
 
+    public void setDrawerList(ListAdapter adapter) {
+        mDrawerAdapter = adapter;
+        if (mDrawerList != null) {
+            mDrawerList.setAdapter(adapter);
+            mDrawerToggle.setDrawerIndicatorEnabled(true);
+        }
+    }
+
     public void updateDicomInfo(String currFile) {
         mCurrFile   = currFile;
+        File file = new File(mCurrFile);
+        mToolbarLayout.setTitle(file.getName());
+        mToolbar.setSubtitle(file.getParent());
         Resources resources = getResources();
 
     	if (mCurrFile != null) {
 	    	try {
 				// Read in the DicomObject
-				DicomInputStream dis = new DicomInputStream(new FileInputStream(new File(mCurrFile)));
+				DicomInputStream dis = new DicomInputStream(new FileInputStream(file));
                 mAttributes = dis.getFileMetaInformation();
                 // Raw data set (DICOM data without a file format meta-header)
                 if (mAttributes == null)
@@ -160,16 +241,17 @@ public class DcmInfoFragment extends ListFragment {
                 checkDcmImage();
 
 				// TODO: Add selector for info tag listing
-                // Create an array adapter for the ListView
-                setListAdapter(new TagArrayAdapter(getActivity(), R.layout.item_tag, mAttributes, R.array.dcmint_default, mDebugMode));
+                mRecyclerView.setAdapter(new TagRecyclerAdapter(getActivity(), R.layout.item_tag, mAttributes, R.array.dcmint_default, mDebugMode));
+
 				
 			} catch (Exception ex) {
 				showImage(false);
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-	            mErrText.setText(resources.getString(R.string.err_file_display) + mCurrFile
-                        + "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
+                // TODO: Re-add error text
+//	            mErrText.setText(resources.getString(R.string.err_file_display) + mCurrFile
+//                        + "\n\nException: " + ex.getMessage() + "\n\n" + sw.toString());
                 pw.close();
 			}
     	} else {
@@ -180,22 +262,12 @@ public class DcmInfoFragment extends ListFragment {
 
     public void checkDcmImage() {
         showImage(false);
-        String sopClass = mAttributes.getString(Tag.MediaStorageSOPClassUID);
-        String transferSyntax = mAttributes.getString(Tag.TransferSyntaxUID);
-        if ((sopClass != null) && sopClass.equals(UID.MediaStorageDirectoryStorage)) {
-            // TODO: DICOMDIR support
-            mErrText.setText(getResources().getString(R.string.err_dicomdir));
-        // Null transfer syntax (e.g. "raw" DICOM)
-        } else if (transferSyntax == null) {
-            mErrText.setText(getResources().getString(R.string.err_null_transfersyntax));
-        } else if (transferSyntax.startsWith("1.2.840.10008.1.2.4.")) {
-            // TODO: JPEG support
-            mErrText.setText(getResources().getString(R.string.err_jpeg));
-        } else if (transferSyntax.startsWith("1.2.840.10008.1.2")) {
-                loadDcmImage();
-        } else {
-            mErrText.setText(getResources().getString(R.string.err_unknown_transfersyntax));
+        int error = DcmUtils.checkDcmImage(mAttributes);
+        if (error == 0) {
+            loadDcmImage();
+            return;
         }
+        mErrText.setText(error);
     }
 
     public void loadDcmImage() {
@@ -234,15 +306,40 @@ public class DcmInfoFragment extends ListFragment {
             mImageView.setScaleX((float) scaleY2X);
             // Limit the height of the image view to display at least two ListView entries (and toolbar).
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-            mImageView.setMaxHeight(displayMetrics.heightPixels - (int)(3*72*displayMetrics.density));
+            double width = displayMetrics.widthPixels;
+            if (width > displayMetrics.heightPixels)
+                width *= 0.5d;
+            double maxHeight = displayMetrics.heightPixels - (3.0d*72.0d*displayMetrics.density);
+            double height = Math.min(maxHeight, width / scaleY2X);
+            mImageView.setMaxHeight((int)height); //displayMetrics.heightPixels - (int)(3*72*displayMetrics.density));
         }
     }
+
+    public boolean getMode() { return mDebugMode; }
     
-    public void changeMode(boolean extraInfo) {
+    public void setMode(boolean extraInfo) {
     	mDebugMode = extraInfo;
-        ListAdapter adapter = getListAdapter();
-        if (adapter != null)
-            ((TagArrayAdapter) adapter).setDebugMode(mDebugMode);
+        updateModeIcon();
+        if (mRecyclerView != null) {
+            RecyclerView.Adapter adapter = mRecyclerView.getAdapter();
+            if (adapter != null)
+                ((TagRecyclerAdapter) adapter).setDebugMode(mDebugMode);
+        }
+    }
+
+    private void updateModeIcon() {
+        if (mToolbar != null) {
+            Menu menu = mToolbar.getMenu();
+            if (menu != null) {
+                MenuItem item = mToolbar.getMenu().findItem(R.id.debug_mode);
+                if (mDebugMode) {
+                    item.setIcon(R.drawable.ic_visibility_white_24dp);
+                } else {
+                    item.setIcon(R.drawable.ic_visibility_off_white_24dp);
+                    item.getIcon().setAlpha(128);
+                }
+            }
+        }
     }
     
     @Override
@@ -256,12 +353,10 @@ public class DcmInfoFragment extends ListFragment {
     public void showImage(boolean isImage) {
     	if (isImage) {
             mLoadButton.setVisibility(View.VISIBLE);
-    		mImageFrame.setVisibility(View.VISIBLE);
-            mErrText.setVisibility(View.GONE);
+//            mErrText.setVisibility(View.GONE);
         } else {
             mLoadButton.setVisibility(View.GONE);
-            mImageFrame.setVisibility(View.GONE);
-            mErrText.setVisibility(View.VISIBLE);
+//            mErrText.setVisibility(View.VISIBLE);
     	}
     }
 

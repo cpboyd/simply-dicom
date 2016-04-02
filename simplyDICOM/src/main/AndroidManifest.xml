@@ -31,14 +31,28 @@
         <activity android:name="DcmViewer"
             	  android:configChanges="orientation|screenSize"
                   android:theme="@style/DcmViewerTheme">
-            
-        </activity>
-        <activity android:name="DcmBrowser"
-            android:theme="@style/AppTheme">
+            <intent-filter >
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*"/>
+                <data android:mimeType="application/*" />
+                <data android:pathPattern=".*\\.dcm" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.GET_CONTENT" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.OPENABLE" />
+
+                <data android:mimeType="application/dicom" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name="DcmBrowser"
+            android:theme="@style/AppTheme">
         </activity>
     </application>
 </manifest> 

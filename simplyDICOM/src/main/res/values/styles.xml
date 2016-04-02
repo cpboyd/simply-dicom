@@ -45,6 +45,8 @@
     <!-- DCM Viewer theme. -->
     <style name="DcmViewerTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
     </style>
 
     <!-- Application theme. -->

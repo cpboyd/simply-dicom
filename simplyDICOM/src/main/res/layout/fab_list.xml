@@ -23,12 +23,15 @@
   -->
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingTop="?attr/actionBarSize">
     <ListView android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:drawSelectorOnTop="false" />
+        android:drawSelectorOnTop="false"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
     <TextView android:id="@android:id/empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -36,17 +39,16 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:gravity="center" />
 
-    <ImageButton
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/btn_load"
         android:visibility="gone"
         android:layout_width="@dimen/fab_size"
         android:layout_height="@dimen/fab_size"
+        app:fabSize="normal"
+        app:borderWidth="0dp"
         android:layout_gravity="end|bottom"
-        android:layout_marginBottom="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginEnd="16dp"
+        android:padding="0dp"
+        android:layout_margin="16dp"
         android:onClick="load"
-        android:tint="@android:color/white"
-        android:background="@drawable/fab_background"
         android:src="@drawable/ic_open_in_new_white_24dp"/>
 </FrameLayout>

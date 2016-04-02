@@ -54,17 +54,33 @@ public class MultiGestureDetector extends GestureDetector {
 
 	/** Internal Variables **/
 	private static short mScrollMode = NO_SCROLL;
-	private static double mPrevAngle = 0;
-	private static double mCurrAngle = 0;
+	private static double mPrevAngle, mCurrAngle;
 
 	/** X & Y difference between pointers **/
 	private static float mInitialX, mInitialY, mCurrentX, mCurrentY;
 	//private static float mPrevSpanX = 0;
 	//private static float mPrevSpanY = 0;
-	private static float mCurrSpanX = 0;
-	private static float mCurrSpanY = 0;
-	private static double mPrevSpan = 0;
-	private static double mCurrSpan = 0;
+	private static float mCurrSpanX, mCurrSpanY;
+	private static double mPrevSpan, mCurrSpan;
+
+    private static float mMarginTop, mMarginBottom;
+
+    public void setTopMargin(float margin) {
+        mMarginTop = margin;
+    }
+
+    public void setBottomMargin(float margin) {
+        mMarginBottom = margin;
+    }
+
+    public void setHorizontalMargin(float margin) {
+        setHorizontalMargin(margin, margin);
+    }
+
+    public void setHorizontalMargin(float marginTop, float marginBottom) {
+        mMarginTop = marginTop;
+        mMarginBottom = marginBottom;
+    }
 
 	/** Determine if angle is small enough **/
 	private static boolean smallAngle(double angle) {
@@ -121,12 +137,13 @@ public class MultiGestureDetector extends GestureDetector {
 	 */
 	public static class SimpleMultiGestureListener implements
 			OnGestureListener, OnDoubleTapListener {
-		public boolean onSingleTapUp(MotionEvent e) {
-			return false;
-		}
 
-		public void onLongPress(MotionEvent e) {
-		}
+        public boolean onSingleTapUp(MotionEvent e) {
+            return false;
+        }
+
+        public void onLongPress(MotionEvent e) {
+        }
 
 		public boolean onScroll(MotionEvent e1, MotionEvent e2,
     			float distanceX, float distanceY) {
@@ -155,17 +172,24 @@ public class MultiGestureDetector extends GestureDetector {
     				return false;
     			}
     		}
+
+            // If only one pointer, ignore any specified margins:
+            if (numPointers == 1) {
+                if (mInitialY < mMarginTop)
+                    return false;
+            }
+
     		switch (mScrollMode) {
-    		case MOVE:
-    			return onMove(e1, e2, distanceX, distanceY, numPointers);
-    		case SCALE:
-    			double scaleFactor;
-    			if (mPrevSpan > 0) {
-    				scaleFactor = mCurrSpan / mPrevSpan;
-    			} else {
-    				scaleFactor = 1.0d;
-    			}
-    			return onScale(e1, e2, scaleFactor, mCurrAngle-mPrevAngle);
+                case MOVE:
+                    return onMove(e1, e2, distanceX, distanceY, numPointers);
+                case SCALE:
+                    double scaleFactor;
+                    if (mPrevSpan > 0) {
+                        scaleFactor = mCurrSpan / mPrevSpan;
+                    } else {
+                        scaleFactor = 1.0d;
+                    }
+                    return onScale(e1, e2, scaleFactor, mCurrAngle-mPrevAngle);
     		}
     		return false;
     	}

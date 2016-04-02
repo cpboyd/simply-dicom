@@ -22,14 +22,30 @@
 
 package us.cboyd.android.dicom.tag;
 
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.TextView;
+
+import us.cboyd.android.dicom.R;
 
 /**
  * Created by Christopher on 3/11/2015.
  */
-public class TagViewHolder {
+public class TagViewHolder extends RecyclerView.ViewHolder {
     public TextView tagLeft;
     public TextView tagRight;
     public TextView text1;
     public TextView text2;
+
+    // Provide a reference to the views for each data item
+    // Complex data items may need more than one view per item, and
+    // you provide access to all the views for a data item in a view holder
+    public TagViewHolder(View itemView) {
+        super(itemView);
+        // Initialize the holder
+        tagLeft    = (TextView) itemView.findViewById(R.id.tagLeft);
+        tagRight   = (TextView) itemView.findViewById(R.id.tagRight);
+        text1      = (TextView) itemView.findViewById(R.id.text1);
+        text2      = (TextView) itemView.findViewById(R.id.text2);
+    }
 }

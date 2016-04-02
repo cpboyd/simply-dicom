@@ -38,9 +38,7 @@ android {
     splits {
         abi {
             enable true
-            reset()
-            include 'armeabi', 'armeabi-v7a', 'mips', 'x86'
-            universalApk true
+//            universalApk true
         }
     }
     applicationVariants.all { variant ->
@@ -67,10 +65,12 @@ dependencies {
     repositories {
         mavenCentral()
     }
-    compile project(':openCVLibrary300rc1')
+    compile project(':openCVLibrary300')
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.1.1'
-    compile 'com.android.support:cardview-v7:22.0.0'
-    compile 'com.android.support:recyclerview-v7:22.0.0'
-    compile 'com.android.support:support-v13:22.0.0'
+    compile 'com.android.support:appcompat-v7:23.2.1'
+    compile 'com.android.support:cardview-v7:23.2.1'
+    compile 'com.android.support:recyclerview-v7:23.2.1'
+    compile 'com.android.support:support-v13:23.2.1'
+    compile 'com.android.support:design:23.2.1'
+    compile 'com.google.guava:guava:19.0'
 }

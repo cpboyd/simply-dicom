@@ -95,11 +95,7 @@ public class TagArrayAdapter extends ArrayAdapter<Integer> {
             // This a new view, so we inflate the layout
             view = mInflater.inflate(mResource, parent, false);
             // Initialize the holder
-            holder = new TagViewHolder();
-            holder.tagLeft    = (TextView) view.findViewById(R.id.tagLeft);
-            holder.tagRight   = (TextView) view.findViewById(R.id.tagRight);
-            holder.text1      = (TextView) view.findViewById(R.id.text1);
-            holder.text2      = (TextView) view.findViewById(R.id.text2);
+            holder = new TagViewHolder(view);
             // Store the ViewHolder for later
             view.setTag(holder);
         } else {

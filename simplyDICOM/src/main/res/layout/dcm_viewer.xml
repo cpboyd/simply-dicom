@@ -23,6 +23,7 @@
   -->
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -54,118 +55,142 @@
                 android:layout_height="@dimen/icon_size"
                 android:scaleType="fitXY" />
 
+            <FrameLayout android:id="@+id/navigationFrame"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_size"
+                android:layout_below="@id/contrastView">
+                <RelativeLayout android:id="@+id/navigationToolbar"
+                    android:visibility="invisible"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:longClickable="true">
+                    <Spinner
+                        android:id="@+id/spinner_plane"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentLeft="true"
+                        android:textSize="18sp"
+                        android:entries="@array/planes_array" />
+
+                    <ImageButton android:id="@+id/btn_prev_idx"
+                        android:layout_width="@dimen/button_size"
+                        android:layout_height="@dimen/button_size"
+                        android:layout_marginLeft="@dimen/button_pad"
+                        android:layout_marginRight="@dimen/button_pad"
+                        android:layout_toRightOf="@id/spinner_plane"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_navigate_before_white_24dp"
+                        android:focusable="true"
+                        android:onClick="previousImage" />
+
+                    <ImageButton android:id="@+id/btn_next_idx"
+                        android:layout_width="@dimen/button_size"
+                        android:layout_height="@dimen/button_size"
+                        android:layout_marginLeft="@dimen/button_pad"
+                        android:layout_marginRight="@dimen/button_pad"
+                        android:layout_alignParentRight="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_navigate_next_white_24dp"
+                        android:focusable="true"
+                        android:onClick="nextImage" />
+
+                    <EditText android:id="@+id/input_idx"
+                        android:layout_width="@dimen/touch_target"
+                        android:layout_height="match_parent"
+                        android:layout_toLeftOf="@id/btn_next_idx"
+                        android:inputType="number"
+                        android:gravity="center"
+                        android:textSize="14sp"
+                        android:imeOptions="actionDone"
+                        android:text="0" />
+
+                    <SeekBar android:id="@+id/seek_idx"
+                        android:layout_width="0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_toRightOf="@id/btn_prev_idx"
+                        android:layout_toLeftOf="@id/input_idx"/>
+                </RelativeLayout>
+                <RelativeLayout android:id="@+id/progressContainer2"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <ProgressBar android:id="@+id/loadProgress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_marginTop="-8dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginLeft="@dimen/default_margin"
+                        android:layout_marginStart="@dimen/default_margin"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentStart="true"
+                        android:gravity="center_vertical"
+
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="@string/loading"
+                        android:singleLine="true"/>
+
+                    <TextView android:id="@+id/progressText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginRight="@dimen/default_margin"
+                        android:layout_marginEnd="@dimen/default_margin"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentEnd="true"
+                        android:gravity="center_vertical"
+
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="\?"
+                        android:singleLine="true"/>
+                </RelativeLayout>
+            </FrameLayout>
+
             <Spinner
                 android:id="@+id/spinner_colormap"
-                android:layout_below="@id/contrastView"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/button_size" />
+                android:layout_height="@dimen/button_size"
+                android:layout_below="@id/navigationFrame" />
             <CheckBox android:id="@+id/btn_invert"
                 android:layout_width="@dimen/icon_size"
                 android:layout_height="@dimen/icon_size"
                 android:layout_margin="@dimen/button_pad"
-                android:layout_below="@id/contrastView"
+                android:padding="@dimen/button_pad"
+                android:layout_below="@id/navigationFrame"
                 android:layout_toRightOf="@id/spinner_colormap"
                 android:layout_toEndOf="@id/spinner_colormap"
                 android:button="@drawable/button_invert" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/btn_load"
+                android:layout_width="@dimen/fab_mini"
+                android:layout_height="@dimen/fab_mini"
+                app:fabSize="mini"
+                app:borderWidth="0dp"
+                android:padding="0dp"
+                android:layout_below="@id/navigationFrame"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="16dp"
+                android:layout_marginRight="16dp"
+                android:onClick="openFile"
+                android:src="@drawable/ic_folder_open_white_24dp"/>
         </RelativeLayout>
-
-        <FrameLayout
-            android:layout_alignParentBottom="true"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_size"
-            android:background="@color/black_alpha">
-            <RelativeLayout android:id="@+id/navigationToolbar"
-                android:visibility="invisible"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:longClickable="true">
-                <Spinner
-                    android:id="@+id/spinner_plane"
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/touch_target"
-                    android:layout_alignParentLeft="true"
-                    android:textSize="18sp"
-                    android:entries="@array/planes_array" />
-
-                <CheckBox android:id="@+id/btn_prev_idx"
-                    android:layout_width="@dimen/icon_size"
-                    android:layout_height="@dimen/icon_size"
-                    android:layout_margin="@dimen/button_pad"
-                    android:layout_toRightOf="@id/spinner_plane"
-                    android:button="@drawable/ic_navigate_before_white_24dp"
-                    android:onClick="previousImage" />
-
-                <CheckBox android:id="@+id/btn_next_idx"
-                    android:layout_width="@dimen/icon_size"
-                    android:layout_height="@dimen/icon_size"
-                    android:layout_margin="@dimen/button_pad"
-                    android:layout_alignParentRight="true"
-                    android:button="@drawable/ic_navigate_next_white_24dp"
-                    android:onClick="nextImage" />
-
-                <EditText android:id="@+id/input_idx"
-                    android:layout_width="@dimen/touch_target"
-                    android:layout_height="@dimen/button_size"
-                    android:layout_toLeftOf="@id/btn_next_idx"
-                    android:inputType="number"
-                    android:gravity="center"
-                    android:textSize="14sp"
-                    android:imeOptions="actionDone"
-                    android:text="0" />
-
-                <SeekBar android:id="@+id/seek_idx"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:layout_toRightOf="@id/btn_prev_idx"
-                    android:layout_toLeftOf="@id/input_idx"/>
-            </RelativeLayout>
-            <RelativeLayout android:id="@+id/progressContainer2"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <ProgressBar android:id="@+id/loadProgress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_marginBottom="-8dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/default_margin"
-                    android:layout_marginStart="@dimen/default_margin"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:gravity="center_vertical"
-
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/loading"
-                    android:singleLine="true"/>
-
-                <TextView android:id="@+id/progressText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginRight="@dimen/default_margin"
-                    android:layout_marginEnd="@dimen/default_margin"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentEnd="true"
-                    android:gravity="center_vertical"
-
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="\?"
-                    android:singleLine="true"/>
-            </RelativeLayout>
-        </FrameLayout>
     </RelativeLayout>
 
     <LinearLayout android:id="@+id/progressContainer"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
         android:gravity="center">
 
-        <ProgressBar style="?android:attr/progressBarStyleLarge"
+        <ProgressBar
+            style="@style/Widget.AppCompat.ProgressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView android:layout_width="wrap_content"
