@@ -65,7 +65,7 @@ dependencies {
     repositories {
         mavenCentral()
     }
-    compile project(':openCVLibrary300')
+    compile project(':openCVLibrary310')
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:cardview-v7:23.2.1'

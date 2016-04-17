@@ -21,4 +21,4 @@
  */
 
 include ':simplyDICOM'
-include ':openCVLibrary300'
+include ':openCVLibrary310'
