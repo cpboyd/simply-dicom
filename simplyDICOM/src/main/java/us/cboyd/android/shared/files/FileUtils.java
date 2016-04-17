@@ -36,6 +36,8 @@ import java.io.FileFilter;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 
+import us.cboyd.android.dicom.BuildConfig;
+
 /**
  * @version 2009-07-03
  * @author Peli
@@ -47,7 +49,7 @@ public class FileUtils {
     
     /** TAG for log messages. */
     static final String TAG = "FileUtils";
-    private static final boolean DEBUG = true; // Set to true to enable logging
+    private static final boolean DEBUG = BuildConfig.DEBUG; // Set to true to enable logging
 
     public static final String MIME_TYPE_AUDIO = "audio/*";
     public static final String MIME_TYPE_TEXT = "text/*";

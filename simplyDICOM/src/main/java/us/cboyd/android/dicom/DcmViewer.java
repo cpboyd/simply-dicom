@@ -60,7 +60,6 @@ import android.widget.TextView;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.io.DicomInputStream;
-import org.dcm4che3.io.DicomStreamException;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -79,7 +78,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import us.cboyd.android.shared.ExternalIO;
+import us.cboyd.android.shared.files.ExternalIO;
 import us.cboyd.android.shared.MultiGestureDetector;
 import us.cboyd.android.shared.files.FileUtils;
 import us.cboyd.android.shared.image.ColormapArrayAdapter;
@@ -247,7 +246,12 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
         showLoading();
 
         // Attempt to get the path for local files.
-        mInitialPath = FileUtils.getPath(this, mInitialUri);
+        // FIXME: Should FileUtils catch this?
+        try {
+            mInitialPath = FileUtils.getPath(this, mInitialUri);
+        } catch (Exception ex) {
+            mInitialPath = null;
+        }
         Log.i("cpb", "Uri: " + mInitialUri);
         Log.i("cpb", "Path: " + mInitialPath);
         // If we couldn't find a path, load the file from URI
@@ -337,11 +341,17 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
             DicomInputStream dis;
             dis = new DicomInputStream(in);
             mAttributes = dis.getFileMetaInformation();
+            if (mAttributes == null)
+                return "Missing DICOM file meta information.";
             dis.readAttributes(mAttributes, -1, -1);
             mAttributes.trimToSize();
             dis.close();
             return null;
         } catch (IOException e) {
+            // TODO Auto-generated catch block
+            Log.e("cpb", "Error: " + e.toString());
+            return null;
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             Log.e("cpb", "Error: " + e.toString());
             return null;
@@ -354,7 +364,11 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
             try {
                 mErrorMessage = loadAttributes(getContentResolver().openInputStream(files[0]));
             } catch (FileNotFoundException e) {
-                mErrorMessage = "File not found.";
+                if (e.getMessage().contains("download_unavailable")) {
+                    mErrorMessage = "Unable to download file.  Please check your connection.";
+                } else {
+                    mErrorMessage = "File not found.";
+                }
             }
 
             if (mErrorMessage != null || mAttributes == null) {
@@ -657,6 +671,7 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
     /** Called just before activity runs (after onStart). */
     @Override
     protected void onResume() {
+        // FIXME: Handle URI or files
         // If there isn't any external storage, quit the application.
         if (!ExternalIO.checkStorage()) {
             Resources res = getResources();

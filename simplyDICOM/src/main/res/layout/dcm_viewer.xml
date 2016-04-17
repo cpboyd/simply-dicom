@@ -80,7 +80,7 @@
                         android:layout_marginRight="@dimen/button_pad"
                         android:layout_toRightOf="@id/spinner_plane"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_navigate_before_white_24dp"
+                        android:src="@drawable/ic_chevron_left_white_24dp"
                         android:focusable="true"
                         android:onClick="previousImage" />
 
@@ -91,7 +91,7 @@
                         android:layout_marginRight="@dimen/button_pad"
                         android:layout_alignParentRight="true"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_navigate_next_white_24dp"
+                        android:src="@drawable/ic_chevron_right_white_24dp"
                         android:focusable="true"
                         android:onClick="nextImage" />
 
@@ -108,7 +108,7 @@
                     <SeekBar android:id="@+id/seek_idx"
                         android:layout_width="0dip"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="6dp"
                         android:layout_toRightOf="@id/btn_prev_idx"
                         android:layout_toLeftOf="@id/input_idx"/>
                 </RelativeLayout>

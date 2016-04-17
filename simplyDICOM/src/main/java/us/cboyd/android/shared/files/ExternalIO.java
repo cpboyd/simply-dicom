@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.android.shared;
+package us.cboyd.android.shared.files;
 
 import android.os.Environment;
 

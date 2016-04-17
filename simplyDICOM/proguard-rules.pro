@@ -93,6 +93,17 @@
   public protected private *;
 }
 
+# Guava 17.0+
+# http://stackoverflow.com/questions/9120338/proguard-configuration-for-guava-with-obfuscation-and-optimization
+ -dontwarn javax.annotation.**
+ -dontwarn javax.inject.**
+ -dontwarn sun.misc.Unsafe
+
+ # Guava 19.0
+ -dontwarn java.lang.ClassValue
+ -dontwarn com.google.j2objc.annotations.Weak
+ -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+
 -libraryjars libs
 -keep class android.support.** {
   public protected private *;
@@ -102,3 +113,13 @@
 # Don't warn about those in case this app is linking against an older
 # platform version.  We know about them, and they are safe.
 -dontwarn android.support.**
+
+# Remove Logging from releases:
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int i(...);
+    public static int w(...);
+    public static int d(...);
+    public static int e(...);
+}
