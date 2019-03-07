@@ -182,24 +182,28 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
         // Set the seek bar change index listener
         mIndexSeekBar.setOnSeekBarChangeListener(this);
 
-
-
         // If the saved instance state is not null get the file name
         if (savedInstanceState != null) {
             mFilePath = new File(savedInstanceState.getString(DcmVar.CURRDIR));
             mFileList = getFileList(mFilePath);
-        } else {
-            // Get the intent
-            Intent intent = getIntent();
-            if (intent != null) {
-                switch (intent.getAction()){
-                    case Intent.ACTION_VIEW:
-                        loadFile(intent);
-                        break;
-                    default:
-                        break;
-                }
-            }
+            return;
+        }
+
+        // Get the intent
+        Intent intent = getIntent();
+        if (intent == null) {
+            return;
+        }
+        String action = intent.getAction();
+        if (action == null) {
+            return;
+        }
+        switch (intent.getAction()){
+            case Intent.ACTION_VIEW:
+                loadFile(intent);
+                break;
+            default:
+                break;
         }
 	}
 
@@ -209,7 +213,9 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
     public void openFile(View view) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/*");
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(intent, REQUEST_IMAGE_GET);
         }
@@ -325,12 +331,9 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
 
                 // Get the file's extension.
                 String extension = filename.substring(ext + 1).toLowerCase(Locale.US);
-                // Check if the file has a DICOM (or DCM) extension.
-                if (extension.equals("dic") || extension.equals("dicom") || extension.equals("dcm"))
-                    return true;
 
-                // Otherwise, reject this file.
-                return false;
+                // Check if the file has a DICOM (or DCM) extension.
+                return extension.equals("dic") || extension.equals("dicom") || extension.equals("dcm");
             }
         }));
     }
@@ -407,13 +410,13 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
             int width 	= result.cols();
             DisplayMetrics displaymetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-            float displayCenterX = displaymetrics.widthPixels/2;
-            float displayCenterY = displaymetrics.heightPixels/2;
+            float displayCenterX = displaymetrics.widthPixels/2.0f;
+            float displayCenterY = displaymetrics.heightPixels/2.0f;
             mScaleY = Math.min( displaymetrics.widthPixels / (float) width,
                     displaymetrics.heightPixels / (float) height);
             Log.i("cpb", "mScaleY2X: " + mScaleY2X + " mScaleY: " + mScaleY);
-            float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2;
-            float scaledImageCenterY = (height*mScaleY)/2;
+            float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2.0f;
+            float scaledImageCenterY = (height*mScaleY)/2.0f;
             mFocusX = displayCenterX;
             mFocusY = displayCenterY;
             mMatrix = new Matrix();
@@ -517,13 +520,13 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
             int width 	= result.cols();
             DisplayMetrics displaymetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-            float displayCenterX = displaymetrics.widthPixels/2;
-            float displayCenterY = displaymetrics.heightPixels/2;
+            float displayCenterX = displaymetrics.widthPixels/2.0f;
+            float displayCenterY = displaymetrics.heightPixels/2.0f;
             mScaleY = Math.min( displaymetrics.widthPixels / (float) width,
                     displaymetrics.heightPixels / (float) height);
             Log.i("cpb", "mScaleY2X: " + mScaleY2X + " mScaleY: " + mScaleY);
-            float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2;
-            float scaledImageCenterY = (height*mScaleY)/2;
+            float scaledImageCenterX = (width*mScaleY*mScaleY2X)/2.0f;
+            float scaledImageCenterY = (height*mScaleY)/2.0f;
             mFocusX = displayCenterX;
             mFocusY = displayCenterY;
             mMatrix = new Matrix();
@@ -615,23 +618,21 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
 
                     int rows2 = currDcm.getInt(Tag.Rows, 1);
                     int cols2 = currDcm.getInt(Tag.Columns, 1);
+                    if (rows != rows2 || cols != cols2) {
+                        Log.i("cpb", "Skipping file: row/col mismatch");
+                        continue;
+                    }
+
                     if (studyUID.equals(currDcm.getString(Tag.StudyInstanceUID)) &&
                             seriesUID.equals(currDcm.getString(Tag.SeriesInstanceUID))) {
-                        if (rows != rows2 || cols != cols2) {
-                            Log.i("cpb", "Skipping file: row/col mismatch");
-                            continue;
-                        }
 
                         // If there isn't enough space in the list, allocate more.
                         while (temp.size() < instanceNum) {
                             temp.add(new Mat(rows, cols, CvType.CV_32S));
                         }
 
-                        // If invalid instance number, don't add this to the matrix.
-                        if (instanceNum > 0) {
-                            temp.get(instanceNum - 1).put(0, 0, currDcm.getInts(Tag.PixelData));
-                            mImageCount++;
-                        }
+                        temp.get(instanceNum - 1).put(0, 0, currDcm.getInts(Tag.PixelData));
+                        mImageCount++;
                     }
                 }
             }
@@ -696,24 +697,21 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
     @Override
      public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        View decorView = getWindow().getDecorView();
 
-        if (Build.VERSION.SDK_INT > 18) {
-            if (hasFocus) {
-                decorView.setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
-        } else if (Build.VERSION.SDK_INT > 15) {
-            // If the Android version is lower than Jellybean, use this call to hide
-            // the status bar.
-            // Hide the status bar.
-            int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-            decorView.setSystemUiVisibility(uiOptions);
+        if (!hasFocus) {
+            return;
         }
+
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            uiOptions |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        }
+        decorView.setSystemUiVisibility(uiOptions);
     }
 	
 	public boolean onTouch(View v, MotionEvent event) {
@@ -722,8 +720,8 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
             return false;
         mMultiDetector.onTouchEvent(event);
 
-        float scaledImageCenterX = (mMat.cols()*mScaleY*mScaleY2X)/2;
-        float scaledImageCenterY = (mMat.rows()*mScaleY)/2;
+        float scaledImageCenterX = (mMat.cols()*mScaleY*mScaleY2X)/2.0f;
+        float scaledImageCenterY = (mMat.rows()*mScaleY)/2.0f;
         
         mMatrix.reset();
         mMatrix.postScale(mScaleY*mScaleY2X, mScaleY);
@@ -1002,14 +1000,14 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
 				float 	width 	= mMat.cols();
 				DisplayMetrics displaymetrics = new DisplayMetrics();
 				getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-				float displayCenterX = displaymetrics.widthPixels/2;
-				float displayCenterY = displaymetrics.heightPixels/2;
+				float displayCenterX = displaymetrics.widthPixels/2.0f;
+				float displayCenterY = displaymetrics.heightPixels/2.0f;
 				mScaleY = Math.min(displaymetrics.widthPixels / (mScaleY2X*width),
 						displaymetrics.heightPixels / height);
 				mFocusX = displayCenterX;
 				mFocusY = displayCenterY;
-		    	float scaledImageCenterX = (mMat.cols()*mScaleY*mScaleY2X)/2;
-		        float scaledImageCenterY = (mMat.rows()*mScaleY)/2;
+		    	float scaledImageCenterX = (mMat.cols()*mScaleY*mScaleY2X)/2.0f;
+		        float scaledImageCenterY = (mMat.rows()*mScaleY)/2.0f;
 		        
 		        mMatrix.reset();
 		        mMatrix.postScale(mScaleY*mScaleY2X, mScaleY);
@@ -1101,8 +1099,8 @@ public class DcmViewer extends Activity implements OnTouchListener, CompoundButt
 			// Center the ball on the display:
 			DisplayMetrics displaymetrics = new DisplayMetrics();
 			getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-			float displayCenterX = displaymetrics.widthPixels/2;
-			float displayCenterY = displaymetrics.heightPixels/2;
+			float displayCenterX = displaymetrics.widthPixels/2.0f;
+			float displayCenterY = displaymetrics.heightPixels/2.0f;
 	        mFocusX = displayCenterX;
 	        mFocusY = displayCenterY;
 			// Reset brightness (window level) and contrast (window width) to middle:
