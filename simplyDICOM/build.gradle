@@ -26,7 +26,6 @@ import com.android.build.OutputFile
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         applicationId 'us.cboyd.android.dicom'
         minSdkVersion rootProject.ext.minSdkVersion
@@ -65,12 +64,12 @@ dependencies {
     repositories {
         mavenCentral()
     }
-    compile project(':openCVLibrary310')
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.3.0'
-    compile 'com.android.support:cardview-v7:23.3.0'
-    compile 'com.android.support:recyclerview-v7:23.3.0'
-    compile 'com.android.support:support-v13:23.3.0'
-    compile 'com.android.support:design:23.3.0'
-    compile 'com.google.guava:guava:19.0'
+    implementation project(':openCVLibrary310')
+    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*-javadoc.jar', '*-sources.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:cardview-v7:28.0.0'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'com.android.support:support-v13:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.google.guava:guava:27.0.1-android'
 }
