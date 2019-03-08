@@ -25,11 +25,12 @@ package us.cboyd.android.dicom.tag;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
-import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.SpecificCharacterSet;

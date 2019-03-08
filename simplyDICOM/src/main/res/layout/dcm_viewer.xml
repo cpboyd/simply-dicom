@@ -165,7 +165,7 @@
                 android:layout_toEndOf="@id/spinner_colormap"
                 android:button="@drawable/button_invert" />
 
-            <android.support.design.widget.FloatingActionButton
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btn_load"
                 android:layout_width="@dimen/fab_mini"
                 android:layout_height="@dimen/fab_mini"

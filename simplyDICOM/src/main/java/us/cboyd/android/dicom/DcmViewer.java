@@ -38,7 +38,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -56,6 +55,8 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;

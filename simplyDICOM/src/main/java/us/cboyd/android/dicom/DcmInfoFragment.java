@@ -26,13 +26,13 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.os.Bundle;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,9 +44,11 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.io.DicomInputStream;
 import org.opencv.android.Utils;
@@ -78,7 +80,7 @@ public class DcmInfoFragment extends Fragment {
     private static TextView     mErrText;
     private static Toolbar mToolbar;
     private static CollapsingToolbarLayout mToolbarLayout;
-    private DrawerLayout 	mDrawerLayout;
+    private DrawerLayout    mDrawerLayout;
     private ListView 		mDrawerList;
     private ListAdapter     mDrawerAdapter;
     private ListView.OnItemClickListener mDrawerListener;
