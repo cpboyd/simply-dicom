@@ -66,7 +66,6 @@ dependencies {
     repositories {
         mavenCentral()
     }
-    implementation project(':openCVLibrary310')
     implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*-javadoc.jar', '*-sources.jar'])
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.cardview:cardview:1.0.0'
@@ -75,6 +74,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation project(':opencv')
 }
 repositories {
     mavenCentral()

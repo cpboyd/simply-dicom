@@ -21,4 +21,10 @@
  */
 
 include ':simplyDICOM'
-include ':openCVLibrary310'
+
+def homePath=System.properties['user.home']
+def opencvsdk=homePath + '/dev/OpenCV-android-sdk3'
+// You can put declaration above into gradle.properties file instead (including file in HOME directory),
+// but without 'def' and apostrophe symbols ('): opencvsdk=<path_to_opencv_android_sdk_rootdir>
+include ':opencv'
+project(':opencv').projectDir = new File(opencvsdk + '/sdk')
