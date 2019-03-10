@@ -82,7 +82,7 @@ class TagRecyclerAdapter(context: Context, private val mResource: Int,
         }
         if (de != null) {
             //SpecificCharacterSet for US_ASCII
-            val cs = SpecificCharacterSet.DEFAULT
+            val cs = SpecificCharacterSet.ASCII
 
             val dStr = de.toString()
 

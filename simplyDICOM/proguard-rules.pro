@@ -80,9 +80,6 @@
 }
 
 # Don't obfuscate public libraries
--keep class org.dcm4che2.** {
-  public protected private *;
-}
 -keep class org.dcm4che3.** {
   public protected private *;
 }
@@ -103,16 +100,6 @@
  -dontwarn java.lang.ClassValue
  -dontwarn com.google.j2objc.annotations.Weak
  -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-
--libraryjars libs
--keep class android.support.** {
-  public protected private *;
-}
-
-# The support library contains references to newer platform versions.
-# Don't warn about those in case this app is linking against an older
-# platform version.  We know about them, and they are safe.
--dontwarn android.support.**
 
 # Remove Logging from releases:
 -assumenosideeffects class android.util.Log {

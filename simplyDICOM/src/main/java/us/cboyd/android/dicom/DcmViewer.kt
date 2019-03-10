@@ -619,7 +619,7 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
         mTask = LoadFilesTask(this).execute(LoadFilesTaskInput(result, file, fileList))
     }
 
-    fun setSpacing(spacing: DoubleArray, spacingZ: Double) {
+    fun setSpacing(spacing: DoubleArray, spacingZ: Double = 1.0) {
         // mPixelSpacing{X, Y, Z}
         mPixelSpacing = doubleArrayOf(spacing[1], spacing[0], spacingZ)
         // mScaleY2X = mScaleSpacing[mAxis]

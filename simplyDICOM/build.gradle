@@ -32,8 +32,8 @@ android {
         applicationId 'us.cboyd.android.dicom'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.compileSdkVersion
-        versionCode 20
-        versionName "0.9"
+        versionCode 21
+        versionName "1.0"
     }
 
     splits {
@@ -64,7 +64,7 @@ android {
 
 dependencies {
 //    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*-javadoc.jar', '*-sources.jar'])
-    implementation('org.dcm4che:dcm4che-core:5.16.0'){
+    implementation('org.dcm4che:dcm4che-core:5.16.0') {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     }
     implementation 'org.slf4j:slf4j-android:1.7.25'
