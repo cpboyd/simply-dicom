@@ -20,29 +20,26 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.android.shared;
+package us.cboyd.android.shared
 
-import android.view.View;
-
-import java.lang.reflect.Field;
+import android.view.View
 
 /**
  * A class that allows you to retrieve resources via reflection.
  * N.B. This is drastically slower than creating and using a HashMap.
  */
-public class ResourceReflection {
-	public static int getResId(String variableName, Class<?> c) {
+object ResourceReflection {
+    fun getResId(variableName: String, c: Class<*>): Int {
+        try {
+            val idField = c.getDeclaredField(variableName)
+            return idField.getInt(idField)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return -1
+        }
+    }
 
-	    try {
-	        Field idField = c.getDeclaredField(variableName);
-	        return idField.getInt(idField);
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        return -1;
-	    } 
-	}
-	
-	public static String getString(String variableName, View view) {
-	    return view.getResources().getString(getResId(variableName, String.class));
-	}
+    fun getString(variableName: String, view: View): String {
+        return view.resources.getString(getResId(variableName, String::class.java))
+    }
 }

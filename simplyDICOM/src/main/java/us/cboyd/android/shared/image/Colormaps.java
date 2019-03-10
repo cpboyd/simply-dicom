@@ -30,6 +30,7 @@ import android.graphics.drawable.PaintDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 
+/// N.B. Kotlin interprets hex as a signed number, so this file is intentionally left in Java.
 /**
  * Created by Christopher on 3/24/2015.
  */

@@ -20,23 +20,24 @@
  * THE SOFTWARE.
  */
 
-package us.cboyd.shared;
+package us.cboyd.shared
 
 /**
  * Basic Geometry functions
- * 
- * @author Christopher Boyd
  *
+ * @author Christopher Boyd
  */
 
-public class Geometry {
-	public static double rad2deg(double angle) {
-		return (angle * 180.0d / Math.PI);
-	}
-	public static double deg2rad(double angle) {
-		return (angle * Math.PI / 180.0d);
-	}
-	public static double dist2(float spanX, float spanY) {
-		return Math.sqrt(spanX * spanX + spanY * spanY);
-	}
+object Geometry {
+    fun rad2deg(angle: Double): Double {
+        return angle * 180.0 / Math.PI
+    }
+
+    fun deg2rad(angle: Double): Double {
+        return angle * Math.PI / 180.0
+    }
+
+    fun dist2(spanX: Float, spanY: Float): Double {
+        return Math.sqrt((spanX * spanX + spanY * spanY).toDouble())
+    }
 }

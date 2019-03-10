@@ -34,16 +34,17 @@ package us.cboyd.shared;
  *
  */
 
+/// N.B. Kotlin interprets hex as a signed number, so this file is intentionally left in Java.
 public class X11Color {
-    //HTML Colors
-	//Pink
+    // HTML Colors
+	// Pink
     public static final int Pink 			= 0xFFFFC0CB;
     public static final int LightPink 		= 0xFFFFB6C1;
     public static final int HotPink 		= 0xFFFF69B4;
     public static final int DeepPink 		= 0xFFFF1493;
     public static final int PaleVioletRed 	= 0xFFDB7093;
     public static final int MediumVioletRed = 0xFFC71585;
-    //Red
+    // Red
     public static final int LightSalmon 	= 0xFFFFA07A;
     public static final int Salmon 			= 0xFFFA8072;
     public static final int DarkSalmon 		= 0xFFE9967A;
@@ -53,14 +54,14 @@ public class X11Color {
     public static final int FireBrick 		= 0xFFB22222;
     public static final int DarkRed 		= 0xFF8B0000;
     public static final int Red         	= 0xFFFF0000;
-    //Orange
+    // Orange
     public static final int OrangeRed 		= 0xFFFF4500;
     public static final int Tomato 			= 0xFFFF6347;
     public static final int Coral 			= 0xFFFF7F50;
     public static final int DarkOrange 		= 0xFFFF8C00;
     public static final int Orange 			= 0xFFFFA500;
     public static final int Gold 			= 0xFFFFD700;
-    //Yellow
+    // Yellow
     public static final int Yellow      	= 0xFFFFFF00;
     public static final int LightYellow 	= 0xFFFFFFE0;
     public static final int LemonChiffon 	= 0xFFFFFACD;
@@ -89,7 +90,7 @@ public class X11Color {
     public static final int Brown 			= 0xFFA52A2A;
     public static final int Sienna 			= 0xFFA0522D;
     public static final int Maroon 			= 0xFF800000;
-    //Green
+    // Green
     public static final int DarkOliveGreen 	= 0xFF556B2F;
     public static final int Olive 			= 0xFF808000;
     public static final int OliveDrab 		= 0xFF6B8E23;
@@ -109,7 +110,7 @@ public class X11Color {
     public static final int ForestGreen 	= 0xFF228B22;
     public static final int Green 			= 0xFF008000;
     public static final int DarkGreen 		= 0xFF006400;
-    //Cyan
+    // Cyan
     public static final int MediumAquamarine = 0xFF66CDAA;
     public static final int Cyan 			= 0xFF00FFFF;
     public static final int Aqua 			= Cyan;
@@ -123,7 +124,7 @@ public class X11Color {
     public static final int CadetBlue 		= 0xFF5F9EA0;
     public static final int DarkCyan 		= 0xFF008B8B;
     public static final int Teal 			= 0xFF008080;
-    //Blue
+    // Blue
     public static final int LightSteelBlue 	= 0xFFB0C4DE;
     public static final int PowderBlue 		= 0xFFB0E0E6;
     public static final int LightBlue 		= 0xFFADD8E6;
@@ -139,7 +140,7 @@ public class X11Color {
     public static final int DarkBlue 		= 0xFF00008B;
     public static final int Navy 			= 0xFF000080;
     public static final int MidnightBlue 	= 0xFF191970;
-    //Purple
+    // Purple
     public static final int Lavender 		= 0xFFE6E6FA;
     public static final int Thistle 		= 0xFFD8BFD8;
     public static final int Plum 			= 0xFFDDA0DD;
@@ -158,7 +159,7 @@ public class X11Color {
     public static final int DarkSlateBlue 	= 0xFF483D8B;
     public static final int SlateBlue 		= 0xFF6A5ACD;
     public static final int MediumSlateBlue = 0xFF7B68EE;
-    //White
+    // White
     public static final int White 			= 0xFFFFFFFF;
     public static final int Snow 			= 0xFFFFFAFA;
     public static final int Honeydew 		= 0xFFF0FFF0;
@@ -176,7 +177,7 @@ public class X11Color {
     public static final int Linen 			= 0xFFFAF0E6;
     public static final int LavenderBlush 	= 0xFFFFF0F5;
     public static final int MistyRose 		= 0xFFFFE4E1;
-    //Gray
+    // Gray
     public static final int Gainsboro 		= 0xFFDCDCDC;
     public static final int LightGrey 		= 0xFFD3D3D3;
     public static final int Silver 			= 0xFFC0C0C0;
