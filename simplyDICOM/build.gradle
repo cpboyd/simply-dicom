@@ -63,10 +63,11 @@ android {
 }
 
 dependencies {
-    repositories {
-        mavenCentral()
+//    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*-javadoc.jar', '*-sources.jar'])
+    implementation('org.dcm4che:dcm4che-core:5.16.0'){
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     }
-    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*-javadoc.jar', '*-sources.jar'])
+    implementation 'org.slf4j:slf4j-android:1.7.25'
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
@@ -78,4 +79,7 @@ dependencies {
 }
 repositories {
     mavenCentral()
+    maven {
+        url 'https://www.dcm4che.org/maven2/'
+    }
 }
