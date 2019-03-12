@@ -28,18 +28,13 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -51,20 +46,15 @@ import kotlinx.android.synthetic.main.dcm_viewer.*
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
 import org.opencv.android.OpenCVLoader
-import org.opencv.android.Utils
 import org.opencv.core.Core
-import org.opencv.core.CvType
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 import us.cboyd.android.dicom.tasks.LoadFilesTask
 import us.cboyd.android.dicom.tasks.LoadFilesTaskInput
 import us.cboyd.android.dicom.tasks.StreamLoadTask
 import us.cboyd.android.dicom.tasks.StreamLoadTaskResult
-import us.cboyd.android.shared.MultiGestureDetector
 import us.cboyd.android.shared.files.ExternalIO
 import us.cboyd.android.shared.files.FileUtils
 import us.cboyd.android.shared.image.ColormapArrayAdapter
-import us.cboyd.shared.Geometry
 import java.io.File
 import java.io.FileFilter
 import java.io.FileInputStream
@@ -77,36 +67,23 @@ import java.util.*
  * @author Christopher Boyd
  * @version 0.6
  */
-class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeListener,
+class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
 
     private val mNoFilter: Boolean = false
     private val mShowFiles: Boolean = false
-    private var mMatrix: Matrix? = null
-    private var mScaleY2X = 1.0f
-    private var mScaleY = 1.0f
-    private var mRotDeg = 0f
-    private var mFocusX = 0f
-    private var mFocusY = 0f
 
-    private var mContrast = 0.0f
-    private var mLastContrast = mContrast
-    private var mBrightness = 50.0f
-    private var mLastBrightness = mBrightness
     private var mCmapInv = false
     private var mCmapSelect = -1
     private var mImageCount = 0
     private var mInstance = intArrayOf(0, 0, 0)
     private var mMaxIndex = intArrayOf(0, 0, 0)
-    private var mPixelSpacing = doubleArrayOf(1.0, 1.0, 1.0)
     private var mScaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
     private var mAxis = DcmVar.TRANSVERSE
 
     private var mMat: Mat? = null
     private var mMatList: List<Mat>? = null
     private var mTask: AsyncTask<*, *, *>? = null
-
-    private var mMultiDetector: MultiGestureDetector? = null
 
     var currentFile: File? = null
     var currentAttributes: Attributes? = null
@@ -116,14 +93,20 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
         setContentView(R.layout.dcm_viewer)
 
         btn_invert.setOnCheckedChangeListener(this)
-        imageView.setOnTouchListener(this)
-        spinner_colormap.adapter = ColormapArrayAdapter(this, R.layout.support_simple_spinner_dropdown_item, resources.getStringArray(R.array.colormaps_array))
+        spinner_colormap.adapter = ColormapArrayAdapter(this,
+                R.layout.support_simple_spinner_dropdown_item, resources.getStringArray(R.array.colormaps_array))
         spinner_colormap.onItemSelectedListener = this
         input_idx.setOnEditorActionListener(this)
 
         spinner_plane.onItemSelectedListener = this
         // Set the seek bar change index listener
         seek_idx.setOnSeekBarChangeListener(this)
+
+        imageView.setOnContrastChangedListener(object: DcmImageView.OnContrastChangedListener {
+            override fun onContrastChanged(brightness: Double, contrast: Double, colormap: Int, invertCmap: Boolean) {
+                contrastView.setImageContrast(brightness, contrast, colormap, invertCmap)
+            }
+        })
 
         // If the saved instance state is not null get the file name
         if (savedInstanceState != null) {
@@ -343,35 +326,6 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
         decorView.systemUiVisibility = uiOptions
     }
 
-    override fun onTouch(v: View, event: MotionEvent): Boolean {
-        // If we haven't loaded the image yet, don't process any touch events
-        if (mMat == null)
-            return false
-        mMultiDetector!!.onTouchEvent(event)
-
-        val scaledImageCenterX = mMat!!.cols().toFloat() * mScaleY * mScaleY2X / 2.0f
-        val scaledImageCenterY = mMat!!.rows() * mScaleY / 2.0f
-
-        val matrix = mMatrix
-        if (matrix != null) {
-            matrix.reset()
-            matrix.postScale(mScaleY * mScaleY2X, mScaleY)
-            matrix.postRotate(mRotDeg, scaledImageCenterX, scaledImageCenterY)
-            matrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY)
-            imageView.imageMatrix = matrix
-        }
-
-        if (event.action == MotionEvent.ACTION_UP) {
-            // End scrolling if the user lifts fingers:
-            mMultiDetector!!.resetScrollMode()
-            // Store values in case we need them:
-            mLastContrast = mContrast
-            mLastBrightness = mBrightness
-        }
-
-        return true // indicate event was handled
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         cancelLoadTask(true)
@@ -422,33 +376,34 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
             // Set the current instance if specified by user
             // This prevents resetting the view if setMax changes the progress
             if (fromUser) mInstance[mAxis] = progress
-            if (mMatList != null) {
+            val matList = mMatList
+            if (matList != null) {
                 val mat = Mat()
                 when (mAxis) {
-                    DcmVar.TRANSVERSE -> mMat = mMatList!![mInstance[mAxis]]
+                    DcmVar.TRANSVERSE -> mMat = matList[mInstance[mAxis]]
                     DcmVar.CORONAL -> {
-                        val ListY = ArrayList<Mat>()
-                        for (i in mMatList!!.indices) {
-                            ListY.add(mMatList!![i].row(mInstance[mAxis]))
+                        val listY = ArrayList<Mat>()
+                        for (i in matList.indices) {
+                            listY.add(matList[i].row(mInstance[mAxis]))
                         }
-                        Core.vconcat(ListY, mat)
-                        mMat = mat
+                        Core.vconcat(listY, mat)
+                        imageView.updateMat(mat)
                     }
                     DcmVar.SAGGITAL -> {
-                        val ListX = ArrayList<Mat>()
-                        for (i in mMatList!!.indices) {
-                            ListX.add(mMatList!![i].col(mInstance[mAxis]))
+                        val listX = ArrayList<Mat>()
+                        for (i in matList.indices) {
+                            listX.add(matList[i].col(mInstance[mAxis]))
                         }
-                        Core.hconcat(ListX, mat)
-                        mMat = mat
+                        Core.hconcat(listX, mat)
+                        imageView.updateMat(mat)
                     }
                     else -> {
                         mAxis = DcmVar.TRANSVERSE
                         seek_idx.max = mMaxIndex[mAxis] - 1
                         seek_idx.progress = mInstance[mAxis]
+                        imageView.updateMat(mat)
                     }
                 }
-                updateImage()
             }
 
             // Update the UI
@@ -532,32 +487,8 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
     fun loadResult(result: StreamLoadTaskResult) {
         currentAttributes = result.attributes
         val mat = result.mat
-        // If this is the first time displaying an image, center it.
-        val height = mat.rows()
-        val width = mat.cols()
-        val displaymetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displaymetrics)
-        val displayCenterX = displaymetrics.widthPixels / 2.0f
-        val displayCenterY = displaymetrics.heightPixels / 2.0f
-        mScaleY = Math.min(displaymetrics.widthPixels / width.toFloat(),
-                displaymetrics.heightPixels / height.toFloat())
-        Log.i("cpb", "mScaleY2X: $mScaleY2X mScaleY: $mScaleY")
-        val scaledImageCenterX = width.toFloat() * mScaleY * mScaleY2X / 2.0f
-        val scaledImageCenterY = height * mScaleY / 2.0f
-        mFocusX = displayCenterX
-        mFocusY = displayCenterY
-        val matrix = Matrix()
-        matrix.postScale(mScaleY * mScaleY2X, mScaleY)
-        matrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY)
-        imageView.imageMatrix = matrix
-        mMatrix = matrix
-        mMat = mat
-        updateImage()
+        imageView.updateMat(mat)
         mImageCount++
-
-        val multiDetector = MultiGestureDetector(applicationContext, MultiListener())
-        multiDetector.setHorizontalMargin(25.0f * displaymetrics.density)
-        mMultiDetector = multiDetector
 
         // Eliminate the loading symbol
         hideLoading()
@@ -621,7 +552,7 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
 
     fun setSpacing(spacing: DoubleArray, spacingZ: Double = 1.0) {
         // mPixelSpacing{X, Y, Z}
-        mPixelSpacing = doubleArrayOf(spacing[1], spacing[0], spacingZ)
+//        mPixelSpacing = doubleArrayOf(spacing[1], spacing[0], spacingZ)
         // mScaleY2X = mScaleSpacing[mAxis]
         mScaleSpacing = doubleArrayOf(spacing[1] / spacing[0], spacing[1] / spacingZ, spacingZ / spacing[0])
     }
@@ -642,43 +573,6 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
             seek_idx.max = result.size - 1
             seek_idx.progress = mInstance[mAxis]
         }
-    }
-
-    /**
-     * Update the current image
-     *
-     */
-    private fun updateImage() {
-        val mat = mMat ?: return
-        val minmax = Core.minMaxLoc(mat)
-        val diff = minmax.maxVal - minmax.minVal
-        val ImWidth = (1 - mContrast / 100.0) * diff
-        //val  ImMax 	= ImWidth + (diff - ImWidth) * (1.0d - (mBrightness / 100.0d)) + minmax.minVal
-        val ImMin = (diff - ImWidth) * (1.0 - mBrightness / 100.0) + minmax.minVal
-        var alpha = 255.0 / ImWidth
-        var beta = alpha * -ImMin
-        val height = mat.rows()
-        val width = mat.cols()
-
-        if (mCmapInv) {
-            alpha *= -1.0
-            beta = 255.0 - beta
-        }
-
-        val temp = Mat(height, width, CvType.CV_32S)
-        //Core.normalize(mat, temp, ImMin, ImMax, Core.NORM_MINMAX)
-        mat.convertTo(temp, CvType.CV_8UC1, alpha, beta)
-        if (mCmapSelect >= 0) {
-            Imgproc.applyColorMap(temp, temp, mCmapSelect)
-            //applyColorMap returns a BGR image, but createBitmap expects RGB
-            //do a conversion to swap blue and red channels:
-            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR)
-        }
-
-        // Set the image
-        val imageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(temp, imageBitmap, true)
-        imageView.setImageBitmap(imageBitmap)
     }
 
     /**
@@ -724,38 +618,15 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
             R.id.spinner_colormap -> {
                 mCmapSelect = position - 1
                 Log.i("cpb", "Colormap: $mCmapSelect id: $id")
-                contrastView.setImageContrast(mBrightness.toDouble(), mContrast.toDouble(), mCmapSelect, mCmapInv)
-                //TODO: Remove testing comparison
-//                contrastSelect.setBackground(Colormaps.getColormapDrawable(position, mCmapInv))
-                updateImage()
+                imageView.setColormap(mCmapSelect, mCmapInv)
             }
             R.id.spinner_plane -> {
-                if (mMatList == null || mMatrix == null)
+                if (mMatList == null)
                     return
                 mAxis = position
-                mScaleY2X = mScaleSpacing[mAxis].toFloat()
                 seek_idx.max = mMaxIndex[mAxis] - 1
                 seek_idx.progress = mInstance[mAxis]
-                Log.i("cpb", "Axis: $mAxis id: $id Scale: $mScaleY2X")
-                val height = mMat!!.rows().toFloat()
-                val width = mMat!!.cols().toFloat()
-                val displaymetrics = DisplayMetrics()
-                windowManager.defaultDisplay.getMetrics(displaymetrics)
-                val displayCenterX = displaymetrics.widthPixels / 2.0f
-                val displayCenterY = displaymetrics.heightPixels / 2.0f
-                mScaleY = Math.min(displaymetrics.widthPixels / (mScaleY2X * width),
-                        displaymetrics.heightPixels / height)
-                mFocusX = displayCenterX
-                mFocusY = displayCenterY
-                val scaledImageCenterX = width * mScaleY * mScaleY2X / 2.0f
-                val scaledImageCenterY = height * mScaleY / 2.0f
-
-                val matrix = mMatrix ?: return
-                matrix.reset()
-                matrix.postScale(mScaleY * mScaleY2X, mScaleY)
-                matrix.postRotate(mRotDeg, scaledImageCenterX, scaledImageCenterY)
-                matrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY)
-                imageView.imageMatrix = matrix
+                imageView.setScaleY2X(mScaleSpacing[mAxis].toFloat())
             }
         }
     }
@@ -799,10 +670,7 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
             R.id.btn_invert -> {
                 mCmapInv = isChecked
                 (spinner_colormap.adapter as ColormapArrayAdapter).invertColormap(mCmapInv)
-                contrastView.setImageContrast(mBrightness.toDouble(), mContrast.toDouble(), mCmapSelect, mCmapInv)
-                //TODO: Remove testing comparison
-//                contrastSelect.setBackground(Colormaps.getColormapDrawable(mCmapSelect + 1, mCmapInv))
-                updateImage()
+                imageView.setColormap(mCmapSelect, mCmapInv)
             }
         }
     }
@@ -816,67 +684,6 @@ class DcmViewer : Activity(), OnTouchListener, CompoundButton.OnCheckedChangeLis
             return true
         }
         return false
-    }
-
-    /**
-     * MultiListener Class
-     *
-     * @author Christopher Boyd
-     */
-    private inner class MultiListener : MultiGestureDetector.SimpleMultiGestureListener() {
-        override fun onDown(e: MotionEvent): Boolean {
-            return clearFocus()
-        }
-
-        override fun onDoubleTapEvent(e: MotionEvent): Boolean {
-            // Center the ball on the display:
-            val displaymetrics = DisplayMetrics()
-            windowManager.defaultDisplay.getMetrics(displaymetrics)
-            val displayCenterX = displaymetrics.widthPixels / 2.0f
-            val displayCenterY = displaymetrics.heightPixels / 2.0f
-            mFocusX = displayCenterX
-            mFocusY = displayCenterY
-            // Reset brightness (window level) and contrast (window width) to middle:
-            mBrightness = 50.0f
-            mContrast = 0.0f
-            updateImage()
-            contrastView.setImageContrast(mBrightness.toDouble(), mContrast.toDouble(), mCmapSelect, mCmapInv)
-            return true
-        }
-
-        override fun onMove(e1: MotionEvent, e2: MotionEvent,
-                            distanceX: Float, distanceY: Float, numPointers: Int): Boolean {
-            when (numPointers) {
-                1 -> {
-                    mFocusX -= distanceX
-                    mFocusY -= distanceY
-                    return true
-                }
-                2 -> {
-                    // Do different things, depending on whether the fingers are moving in X or Y.
-                    if (mMultiDetector!!.isTravelY) {
-                        mContrast = mLastContrast
-                        mBrightness = Math.max(0.0f, Math.min(100.0f, mBrightness - distanceY / 5.0f))
-                    } else {
-                        mBrightness = mLastBrightness
-                        mContrast = Math.max(0.0f, Math.min(100.0f, mContrast + distanceX / 10.0f))
-                    }
-                    updateImage()
-                    contrastView.setImageContrast(mBrightness.toDouble(), mContrast.toDouble(), mCmapSelect, mCmapInv)
-                    return true
-                }
-                else -> return false
-            }
-        }
-
-        override fun onScale(e1: MotionEvent, e2: MotionEvent, scaleFactor: Double, angle: Double): Boolean {
-            mScaleY *= scaleFactor.toFloat()
-            // Prevent the oval from being too small:
-            mScaleY = Math.max(0.1f, Math.min(mScaleY, 100.0f))
-
-            mRotDeg += Geometry.rad2deg(angle).toFloat()
-            return true
-        }
     }
 
     companion object {

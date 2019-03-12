@@ -24,8 +24,10 @@ package us.cboyd.android.shared.image
 
 import android.content.Context
 import android.graphics.*
+import android.os.Build
 import android.util.AttributeSet
 import android.widget.ImageView
+import androidx.annotation.RequiresApi
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -49,8 +51,10 @@ class ImageContrastView : ImageView {
      * @param context
      */
     constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle)
+    @JvmOverloads
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0): super(context, attrs, defStyleAttr)
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr, defStyleRes)
 
     /**
      * Sets the brightness and contrast values
@@ -58,7 +62,7 @@ class ImageContrastView : ImageView {
      * @param contrast
      */
     @JvmOverloads
-    fun setImageContrast(brightness: Double, contrast: Double, colormap: Int = -1, inv: Boolean = false) {
+    fun setImageContrast(brightness: Double = 50.0, contrast: Double = 0.0, colormap: Int = -1, invertCmap: Boolean = false) {
         val diff = width.toDouble()
         val ImWidth = (1 - contrast / 100.0) * diff
         var alpha = 255.0 / ImWidth
@@ -74,10 +78,11 @@ class ImageContrastView : ImageView {
             cmap.put(0, i, i.toDouble())
             i++
         }
-        if (inv) {
+        if (invertCmap) {
             alpha *= -1.0
             beta = 255.0 - beta
         }
+
         cmap.convertTo(cmap, CvType.CV_8UC1, alpha, beta)
         if (colormap >= 0) {
             Imgproc.applyColorMap(cmap, cmap, colormap)

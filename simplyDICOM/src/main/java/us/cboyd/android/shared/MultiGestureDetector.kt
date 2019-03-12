@@ -177,7 +177,7 @@ class MultiGestureDetector : GestureDetector {
         }
     }
 
-    constructor(context: Context, listener: GestureDetector.OnGestureListener) : super(context, listener, null) {}
+    constructor(context: Context, listener: GestureDetector.OnGestureListener) : super(context, listener, null)
 
     /**
      * Creates a GestureDetector with the supplied listener that runs deferred
@@ -197,8 +197,7 @@ class MultiGestureDetector : GestureDetector {
      * if `listener` is null.
      */
     constructor(context: Context, listener: GestureDetector.OnGestureListener,
-                handler: Handler) : super(context, listener, handler) {
-    }
+                handler: Handler) : super(context, listener, handler)
 
     companion object {
         /** Scroll Mode Values  */
@@ -229,10 +228,9 @@ class MultiGestureDetector : GestureDetector {
 
         /** Determine if angle is small enough  */
         private fun smallAngle(angle: Double): Boolean {
-            var angle = angle
-            angle = Geometry.rad2deg(Math.abs(angle))
+            val angleDeg = Geometry.rad2deg(Math.abs(angle))
             // The sweet spot seems to be around 20 degrees:
-            return 0.0 <= angle && angle < 20.0 || 160.0 < angle && angle <= 180.0
+            return 0.0 <= angleDeg && angleDeg < 20.0 || 160.0 < angleDeg && angleDeg <= 180.0
         }
 
         /**
