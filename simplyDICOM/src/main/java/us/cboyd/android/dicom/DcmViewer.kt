@@ -175,11 +175,10 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 
         // Attempt to get the path for local files.
         // FIXME: Should FileUtils catch this?
-        val initialPath: String?
-        try {
-            initialPath = FileUtils.getPath(this, initialUri)
+        val initialPath: String? = try {
+            FileUtils.getPath(this, initialUri)
         } catch (ex: Exception) {
-            return
+            null
         }
 
         Log.i("cpb", "Uri: $initialUri")
