@@ -163,7 +163,8 @@ object FileUtils {
      * @return The MIME type for the give Uri.
      */
     fun getMimeType(context: Context, uri: Uri): String? {
-        val file = File(getPath(context, uri))
+        val path = getPath(context, uri) ?: return null
+        val file = File(path)
         return getMimeType(file)
     }
 

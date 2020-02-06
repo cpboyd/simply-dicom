@@ -8,12 +8,12 @@ import android.view.View
  */
 object ResourceReflection {
     fun getResId(variableName: String, c: Class<*>): Int {
-        try {
+        return try {
             val idField = c.getDeclaredField(variableName)
-            return idField.getInt(idField)
+            idField.getInt(idField)
         } catch (e: Exception) {
             e.printStackTrace()
-            return -1
+            -1
         }
     }
 

@@ -87,16 +87,15 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         })
 
         // If the saved instance state is not null get the file name
-        if (savedInstanceState != null) {
-            val file = File(savedInstanceState.getString(DcmVar.DCMFILE))
-            // TODO: Reload state?
-            return
-        }
+        // TODO: Reload state?
+//        val filePath = savedInstanceState?.getString(DcmVar.DCMFILE);
+//        if (filePath != null) {
+//            val file = File(filePath)
+//            return
+//        }
 
         // Get the intent
-        val intent = intent ?: return
-        val action = intent.action ?: return
-        when (intent.action) {
+        when (intent?.action) {
             Intent.ACTION_VIEW -> loadFile(intent)
             else -> {
             }
@@ -164,17 +163,19 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // If we couldn't find a path, load the file from URI
         if (initialPath == null) {
             loadUriTask(initialUri)
-        } else {
-            // Check if we need permissions to load the series.
-            if (needPermission(PERMISSIONS[0])) {
-                mInitialUri = initialUri
-                mInitialPath = initialPath
-                requestPermissions(PERMISSIONS, PERMISSION_REQUEST_CODE)
-            } else {
-                // Load the file
-                loadFileTask(initialPath)
-            }
+            return
         }
+
+        // Check if we need permissions to load the series.
+        if (!needPermission(PERMISSIONS[0])) {
+            // Load the file
+            loadFileTask(initialPath)
+            return
+        }
+
+        mInitialUri = initialUri
+        mInitialPath = initialPath
+        requestPermissions(PERMISSIONS, PERMISSION_REQUEST_CODE)
     }
 
     private fun loadUriTask(uri: Uri) {
@@ -191,6 +192,10 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     }
 
     private fun loadFileTask(pathname: String?) {
+        if (pathname == null) {
+            return
+        }
+
         // Get the File object for the current file
         val file = File(pathname)
         currentFile = file
@@ -236,7 +241,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // If not a directory, get the file's parent directory.
         val currDir = if (file.isDirectory) file else file.parentFile
         // If we don't have permission to read the current directory, return an empty list.
-        return if (!currDir.canRead()) ArrayList() else Arrays.asList(*currDir.listFiles(FileFilter { path ->
+        return if (!currDir.canRead()) ArrayList() else listOf(*currDir.listFiles(FileFilter { path ->
             // Reject directories and hidden files (if we're not showing them)
             if (path.isDirectory || !mShowFiles && path.isHidden)
                 return@FileFilter false
@@ -322,12 +327,12 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     /* (non-Javadoc)
 	 * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
 	 */
-    override fun onSaveInstanceState(outState: Bundle?) {
+    override fun onSaveInstanceState(outState: Bundle) {
         // If anything is null, don't save the state.
         val filePath = currentFile ?: return
 
         // Otherwise, save the current file name
-        outState?.putString(DcmVar.DCMFILE, filePath.absolutePath)
+        outState.putString(DcmVar.DCMFILE, filePath.absolutePath)
 
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState)
@@ -521,7 +526,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         val cols = attributes.getInt(Tag.Columns, 1)
         val instanceNum = attributes.getInt(Tag.InstanceNumber, -1)
 
-        val instanceZ = Math.max(instanceNum - 1, 0)
+        val instanceZ = (instanceNum - 1).coerceAtLeast(0)
         mInstance = intArrayOf(instanceZ, rows / 2, cols / 2)
 
         mTask = LoadFilesTask(this).execute(LoadFilesTaskInput(result, file, fileList))
@@ -623,7 +628,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 //                input_idx.setError("< 0");
 //            else if (userInput > mMaxIndex[mAxis])
 //                input_idx.setError("> " + mMaxIndex[mAxis]);
-            mInstance[mAxis] = Math.max(0, Math.min(mMaxIndex[mAxis], userInput) - 1)
+            mInstance[mAxis] = userInput.coerceIn(0, mMaxIndex[mAxis])
             v.text = (mInstance[mAxis] + 1).toString()
             // Changing the progress bar will set the image
             seek_idx.progress = mInstance[mAxis]

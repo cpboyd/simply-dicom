@@ -125,11 +125,6 @@ class DcmImageView: ImageView, View.OnTouchListener {
 
     fun updateMat(mat: Mat?) {
         mMat = mat
-        // If mat is null, clear the image
-        if (mat == null) {
-            setImageDrawable(null)
-            return
-        }
 
         // If this is the first time displaying an image, center it.
         setScaleY2X()
@@ -148,8 +143,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
         multiDetector.setHorizontalMargin(25.0f * displayMetrics.density)
         val displayCenterX = displayMetrics.widthPixels / 2.0f
         val displayCenterY = displayMetrics.heightPixels / 2.0f
-        mScaleY = Math.min(displayMetrics.widthPixels / (mScaleY2X * width),
-                displayMetrics.heightPixels / height)
+        mScaleY = (displayMetrics.widthPixels / (mScaleY2X * width)).coerceAtMost(displayMetrics.heightPixels / height)
         Log.i("cpb", "mScaleY2X: $mScaleY2X mScaleY: $mScaleY")
         mFocusX = displayCenterX
         mFocusY = displayCenterY
@@ -247,10 +241,10 @@ class DcmImageView: ImageView, View.OnTouchListener {
                     // Do different things, depending on whether the fingers are moving in X or Y.
                     if (multiDetector.isTravelY) {
                         mContrast = mLastContrast
-                        mBrightness = Math.max(0.0, Math.min(100.0, mBrightness - distanceY / 5.0))
+                        mBrightness = (mBrightness - distanceY / 5.0).coerceIn(0.0, 100.0)
                     } else {
                         mBrightness = mLastBrightness
-                        mContrast = Math.max(0.0, Math.min(100.0, mContrast + distanceX / 10.0))
+                        mContrast = (mContrast + distanceX / 10.0).coerceIn(0.0, 100.0)
                     }
                     setImageContrast(mBrightness, mContrast, mColormap, mInvertCmap)
                     return true
@@ -260,9 +254,8 @@ class DcmImageView: ImageView, View.OnTouchListener {
         }
 
         override fun onScale(e1: MotionEvent, e2: MotionEvent, scaleFactor: Double, angle: Double): Boolean {
-            mScaleY *= scaleFactor.toFloat()
             // Prevent the oval from being too small:
-            mScaleY = Math.max(0.1f, Math.min(mScaleY, 100.0f))
+            mScaleY = (mScaleY * scaleFactor).toFloat().coerceIn(0.1f, 100.0f)
 
             mRotDeg += Geometry.rad2deg(angle).toFloat()
             return true

@@ -29,10 +29,12 @@ class ImageContrastView : ImageView {
      * @param context
      */
     constructor(context: Context) : super(context)
+
     @JvmOverloads
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0): super(context, attrs, defStyleAttr)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr, defStyleRes)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     /**
      * Sets the brightness and contrast values
@@ -92,7 +94,7 @@ class ImageContrastView : ImageView {
         // Draw the level, min, and max lines.
         canvas.drawPath(dashPath, dashPaint)
         // Draw "0" at pixel 1, or else it won't show up.
-        canvas.drawLine(Math.max(mMin, 1.0).toFloat(), 0.0f, Math.max(mMin, 1.0).toFloat(), height.toFloat(), linePaint)
+        canvas.drawLine(mMin.coerceAtLeast(1.0).toFloat(), 0.0f, mMin.coerceAtLeast(1.0).toFloat(), height.toFloat(), linePaint)
         canvas.drawLine(mMax.toFloat(), 0.0f, mMax.toFloat(), height.toFloat(), linePaint)
 
     }

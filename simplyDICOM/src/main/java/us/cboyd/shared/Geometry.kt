@@ -1,5 +1,7 @@
 package us.cboyd.shared
 
+import kotlin.math.sqrt
+
 /**
  * Basic Geometry functions
  *
@@ -16,6 +18,8 @@ object Geometry {
     }
 
     fun dist2(spanX: Float, spanY: Float): Double {
-        return Math.sqrt((spanX * spanX + spanY * spanY).toDouble())
+        val x = spanX.toDouble()
+        val y = spanY.toDouble()
+        return sqrt((x * x + y * y))
     }
 }

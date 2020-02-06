@@ -9,10 +9,10 @@ package us.cboyd.android.dicom
 
 object DcmVar {
     /** Axis Orientation  */
-    val TRANSVERSE = 0
-    val CORONAL = 1
-    val SAGGITAL = 2
+    const val TRANSVERSE = 0
+    const val CORONAL = 1
+    const val SAGGITAL = 2
 
     /** Bundle Key / Intent Extra  */
-    val DCMFILE = "DCMFile"
+    const val DCMFILE = "DCMFile"
 }

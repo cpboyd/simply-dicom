@@ -13,6 +13,7 @@ import org.dcm4che3.data.VR
 import us.cboyd.android.dicom.DcmRes
 import us.cboyd.android.dicom.DcmUid
 import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Created by Christopher on 6/1/2015.
@@ -20,13 +21,8 @@ import java.text.SimpleDateFormat
 class TagRecyclerAdapter(context: Context, private val mResource: Int,
                          private val mAttributes: Attributes, arrayId: Int,
                          private var mDebugMode: Boolean) : RecyclerView.Adapter<TagViewHolder>() {
-    private val mRes: Resources
-    private val mTags: IntArray
-
-    init {
-        mRes = context.resources
-        mTags = mRes.getIntArray(arrayId)
-    }
+    private val mRes: Resources = context.resources
+    private val mTags: IntArray = mRes.getIntArray(arrayId)
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TagViewHolder {
@@ -67,6 +63,7 @@ class TagRecyclerAdapter(context: Context, private val mResource: Int,
             // If in Debug mode, just display the string as-is without any special processing.
             if (mDebugMode) {
                 holder.text1.text = dStr
+                return
                 // Otherwise, make the fields easier to read.
                 // Start by formatting the Person Names.
             } else if (dvr == VR.PN) {
@@ -74,19 +71,18 @@ class TagRecyclerAdapter(context: Context, private val mResource: Int,
                 temp2 = dStr.split("\\^".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 // May omit '^' for trailing null component groups.
                 // Use a switch-case statement to deal with this.
-                when (temp2.size) {
+                holder.text1.text = when (temp2.size) {
                     // Last, First
-                    2 -> temp = "${temp2[0]}, ${temp2[1]}"
+                    2 -> "${temp2[0]}, ${temp2[1]}"
                     // Last, First Middle
-                    3 -> temp = "${temp2[0]}, ${temp2[1]} ${temp2[2]}"
+                    3 -> "${temp2[0]}, ${temp2[1]} ${temp2[2]}"
                     // Last, Prefix First Middle
-                    4 -> temp = "${temp2[0]}, ${temp2[3]} ${temp2[1]} ${temp2[2]}"
+                    4 -> "${temp2[0]}, ${temp2[3]} ${temp2[1]} ${temp2[2]}"
                     // Last, Prefix First Middle, Suffix
-                    5 -> temp = "${temp2[0]}, ${temp2[3]} ${temp2[1]} ${temp2[2]}, ${temp2[4]}"
+                    5 -> "${temp2[0]}, ${temp2[3]} ${temp2[1]} ${temp2[2]}, ${temp2[4]}"
                     // All other cases, just display the unmodified string.
-                    else -> temp = dStr
+                    else -> dStr
                 }
-                holder.text1.text = temp
                 // Translate the known UIDs into plain-text.
             } else if (dvr == VR.UI) {
                 temp = DcmUid.get(dStr, mRes)
@@ -95,58 +91,63 @@ class TagRecyclerAdapter(context: Context, private val mResource: Int,
                 holder.text1.text = temp2[0]
                 // Format the date according to the current locale.
             } else if (Build.VERSION.SDK_INT >= 18) {
-                if (dvr == VR.DA) {
-                    val sdf = SimpleDateFormat("yyyyMMdd")
-                    try {
-                        val vDate = sdf.parse(dStr)
-                        val dPat = DateFormat.getBestDateTimePattern(
-                                mRes.configuration.locale, "MMMMdyyyy")
-                        sdf.applyPattern(dPat)
-                        holder.text1.text = sdf.format(vDate)
-                    } catch (e: Exception) {
-                        // If the date string couldn't be parsed, display the unmodified string.
+                when (dvr) {
+                    VR.DA -> {
+                        val sdf = SimpleDateFormat("yyyyMMdd", Locale.US)
+                        try {
+                            val vDate = sdf.parse(dStr)
+                            val dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.configuration.locale, "MMMMdyyyy")
+                            sdf.applyPattern(dPat)
+                            holder.text1.text = sdf.format(vDate)
+                        } catch (e: Exception) {
+                            // If the date string couldn't be parsed, display the unmodified string.
+                            holder.text1.text = dStr
+                        }
+
+                        // Format the date & time according to the current locale.
+                    }
+                    VR.DT -> {
+                        val sdf = SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ", Locale.US)
+                        try {
+                            // Note: The DICOM standard allows for 6 fractional seconds,
+                            // but Java can only handle 3.
+                            //
+                            // Therefore, we must limit the string length.
+                            // Use concat to re-append the time-zone.
+                            val vDate = sdf.parse(
+                                    dStr.substring(0, 18) + dStr.substring(21, dStr.length))
+                            val dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.configuration.locale, "MMMMdyyyyHHmmssSSSZZZZ")
+                            sdf.applyPattern(dPat)
+                            holder.text1.text = sdf.format(vDate)
+                        } catch (e: Exception) {
+                            // If the date string couldn't be parsed, display the unmodified string.
+                            holder.text1.text = dStr
+                        }
+
+                        // Format the time according to the current locale.
+                    }
+                    VR.TM -> {
+                        val sdf = SimpleDateFormat("HHmmss.SSS", Locale.US)
+                        try {
+                            // Note: The DICOM standard allows for 6 fractional seconds,
+                            // but Java can only handle 3.
+                            // Therefore, we must limit the string length.
+                            val vDate = sdf.parse(dStr.substring(0, 10))
+                            val dPat = DateFormat.getBestDateTimePattern(
+                                    mRes.configuration.locale, "HHmmssSSS")
+                            sdf.applyPattern(dPat)
+                            holder.text1.text = sdf.format(vDate)
+                        } catch (e: Exception) {
+                            // If the time string couldn't be parsed, display the unmodified string.
+                            holder.text1.text = dStr
+                        }
+
+                    }
+                    else -> {
                         holder.text1.text = dStr
                     }
-
-                    // Format the date & time according to the current locale.
-                } else if (dvr == VR.DT) {
-                    val sdf = SimpleDateFormat("yyyyMMddHHmmss.SSSSSSZZZ")
-                    try {
-                        // Note: The DICOM standard allows for 6 fractional seconds,
-                        // but Java can only handle 3.
-                        //
-                        // Therefore, we must limit the string length.
-                        // Use concat to re-append the time-zone.
-                        val vDate = sdf.parse(
-                                dStr.substring(0, 18) + dStr.substring(21, dStr.length))
-                        val dPat = DateFormat.getBestDateTimePattern(
-                                mRes.configuration.locale, "MMMMdyyyyHHmmssSSSZZZZ")
-                        sdf.applyPattern(dPat)
-                        holder.text1.text = sdf.format(vDate)
-                    } catch (e: Exception) {
-                        // If the date string couldn't be parsed, display the unmodified string.
-                        holder.text1.text = dStr
-                    }
-
-                    // Format the time according to the current locale.
-                } else if (dvr == VR.TM) {
-                    val sdf = SimpleDateFormat("HHmmss.SSS")
-                    try {
-                        // Note: The DICOM standard allows for 6 fractional seconds,
-                        // but Java can only handle 3.
-                        // Therefore, we must limit the string length.
-                        val vDate = sdf.parse(dStr.substring(0, 10))
-                        val dPat = DateFormat.getBestDateTimePattern(
-                                mRes.configuration.locale, "HHmmssSSS")
-                        sdf.applyPattern(dPat)
-                        holder.text1.text = sdf.format(vDate)
-                    } catch (e: Exception) {
-                        // If the time string couldn't be parsed, display the unmodified string.
-                        holder.text1.text = dStr
-                    }
-
-                } else {
-                    holder.text1.text = dStr
                 }
             } else {
                 holder.text1.text = dStr

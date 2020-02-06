@@ -2,7 +2,6 @@ package us.cboyd.android.dicom.tasks
 
 import android.os.AsyncTask
 import android.util.Log
-import android.view.View
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
 import org.dcm4che3.io.DicomInputStream
@@ -12,7 +11,8 @@ import us.cboyd.android.dicom.DcmViewer
 import java.io.File
 import java.io.IOException
 import java.lang.ref.WeakReference
-import java.util.ArrayList
+import java.util.*
+import kotlin.math.abs
 
 class LoadFilesTaskInput(val attributes: Attributes, val mat: Mat, val currentFile: File, val fileList: List<File>) {
     constructor(result: StreamLoadTaskResult, currentFile: File, fileList: List<File>) :
@@ -41,7 +41,7 @@ class LoadFilesTask internal constructor(context: DcmViewer) : AsyncTask<LoadFil
             return null
         }
 
-        val instanceZ = Math.max(instance - 1, 0)
+        val instanceZ = (instance - 1).coerceAtLeast(0)
 
         val temp = ArrayList<Mat?>(instance)
         temp[instanceZ] = input.mat
@@ -83,7 +83,7 @@ class LoadFilesTask internal constructor(context: DcmViewer) : AsyncTask<LoadFil
                     // Get currently loaded attributes
                     val viewer = viewerRef.get()
                     if (viewer == null || viewer.isFinishing) return null
-                    viewer.setSpacing(spacing, Math.abs(startPos[2] - nextPos[2]))
+                    viewer.setSpacing(spacing, abs(startPos[2] - nextPos[2]))
                 }
 
                 val rows2 = currDcm.getInt(Tag.Rows, 1)

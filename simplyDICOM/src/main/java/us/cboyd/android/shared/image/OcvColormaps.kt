@@ -1,6 +1,7 @@
 package us.cboyd.android.shared.image
 
 import android.util.Log
+import kotlin.math.floor
 
 /**
  * Created by Christopher on 3/23/2015.
@@ -18,44 +19,44 @@ class OcvColormaps {
         for (i in cmap.indices) {
             val length = cmap[i].r!!.size
             var quarter = length / 8.0
-            var qfloor = Math.floor(quarter).toInt()
+            var qfloor = floor(quarter).toInt()
             var qfrac = quarter - qfloor
             Log.i("cpb", "Cmap " + i + "[0]: " + cmap[i].r!![0] + " " + cmap[i].g!![0] + " " + cmap[i].b!![0])
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.125]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length / 4.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.25]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length * 3 / 8.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.325]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length / 2.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.5]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length * 5 / 8.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.625]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length * 3 / 4.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.75]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
             }
             quarter = length * 7 / 8.0
-            qfloor = Math.floor(quarter).toInt()
+            qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
                 Log.i("cpb", "Cmap " + i + "[0.825]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)

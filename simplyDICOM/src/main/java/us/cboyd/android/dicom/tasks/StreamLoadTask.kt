@@ -39,7 +39,7 @@ class StreamLoadTask internal constructor(context: DcmViewer) : AsyncTask<InputS
             }
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            Log.e("cpb", "Error loadAttributes: $e")
+            Log.e("cpb", "IO Error loadAttributes: $e")
         } catch (e: Exception) {
             // TODO Auto-generated catch block
             Log.e("cpb", "Error loadAttributes: $e")

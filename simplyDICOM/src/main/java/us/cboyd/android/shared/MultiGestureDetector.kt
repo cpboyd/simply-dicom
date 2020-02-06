@@ -7,6 +7,8 @@ import android.view.MotionEvent
 import android.view.View
 
 import us.cboyd.shared.Geometry
+import kotlin.math.abs
+import kotlin.math.atan2
 
 /**
  * Detects various gestures and events using the supplied [MotionEvent]s.
@@ -27,7 +29,7 @@ class MultiGestureDetector : GestureDetector {
 
     /** Returns whether travel is along the X axis  */
     val isTravelX: Boolean
-        get() = Math.abs(mCurrentX - mInitialX) > Math.abs(mCurrentY - mInitialY)
+        get() = abs(mCurrentX - mInitialX) > abs(mCurrentY - mInitialY)
 
     /** Returns whether travel is along the Y axis  */
     val isTravelY: Boolean
@@ -65,7 +67,7 @@ class MultiGestureDetector : GestureDetector {
      *
      * @author Christopher Boyd
      */
-    open class SimpleMultiGestureListener : GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener {
+    open class SimpleMultiGestureListener : OnGestureListener, GestureDetector.OnDoubleTapListener {
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
             return false
@@ -83,7 +85,7 @@ class MultiGestureDetector : GestureDetector {
                 mCurrSpanX = e2.getX(1) - e2.getX(0)
                 mCurrSpanY = e2.getY(1) - e2.getY(0)
                 mPrevAngle = mCurrAngle
-                mCurrAngle = Math.atan2(mCurrSpanY.toDouble(), mCurrSpanX.toDouble())
+                mCurrAngle = atan2(mCurrSpanY.toDouble(), mCurrSpanX.toDouble())
                 mPrevSpan = mCurrSpan
                 mCurrSpan = Geometry.dist2(mCurrSpanX, mCurrSpanY)
             }
@@ -155,7 +157,7 @@ class MultiGestureDetector : GestureDetector {
         }
     }
 
-    constructor(context: Context, listener: GestureDetector.OnGestureListener) : super(context, listener, null)
+    constructor(context: Context, listener: OnGestureListener) : super(context, listener, null)
 
     /**
      * Creates a GestureDetector with the supplied listener that runs deferred
@@ -174,7 +176,7 @@ class MultiGestureDetector : GestureDetector {
      * @throws NullPointerException
      * if `listener` is null.
      */
-    constructor(context: Context, listener: GestureDetector.OnGestureListener,
+    constructor(context: Context, listener: OnGestureListener,
                 handler: Handler) : super(context, listener, handler)
 
     companion object {
@@ -206,7 +208,7 @@ class MultiGestureDetector : GestureDetector {
 
         /** Determine if angle is small enough  */
         private fun smallAngle(angle: Double): Boolean {
-            val angleDeg = Geometry.rad2deg(Math.abs(angle))
+            val angleDeg = Geometry.rad2deg(abs(angle))
             // The sweet spot seems to be around 20 degrees:
             return 0.0 <= angleDeg && angleDeg < 20.0 || 160.0 < angleDeg && angleDeg <= 180.0
         }

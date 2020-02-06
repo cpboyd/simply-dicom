@@ -152,53 +152,53 @@ class DcmInfoFragment : Fragment() {
 
     fun updateDicomInfo(currFile: String?) {
         mCurrFile = currFile
+
+        if (currFile == null) {
+            showImage(false)
+//            text_fileError.text = resources.getString(R.string.err_unknown_state)
+            return
+        }
+
         val file = File(currFile)
         collapsingToolbar.title = file.name
         toolbar.subtitle = file.parent
-
-        if (currFile != null) {
-            try {
-                // Read in the DicomObject
-                DicomInputStream(FileInputStream(file)).use { dis ->
-                    val attributes = dis.fileMetaInformation ?: Attributes()
-                    mAttributes = attributes
-                    // Raw data set (DICOM data without a file format meta-header)
-                    dis.readAttributes(attributes, -1, -1)
-                    attributes.trimToSize()
-                    attributes.internalizeStringValues(true)
-                }
-            } catch (ex: IOException) {
-                showImage(false)
-                // TODO: Re-add error text
+        try {
+            // Read in the DicomObject
+            DicomInputStream(FileInputStream(file)).use { dis ->
+                val attributes = dis.fileMetaInformation ?: Attributes()
+                mAttributes = attributes
+                // Raw data set (DICOM data without a file format meta-header)
+                dis.readAttributes(attributes, -1, -1)
+                attributes.trimToSize()
+                attributes.internalizeStringValues(true)
+            }
+        } catch (ex: IOException) {
+            showImage(false)
+            // TODO: Re-add error text
 //                val sw = StringWriter()
 //                PrintWriter(sw).use { pw ->
 //                    ex.printStackTrace(pw)
 //                    text_fileError.text = (resources.getString(R.string.err_file_read) +
 //                            "$currFile\n\nIO Exception: ${ex.message}\n\n$sw")
 //                }
-                return
-            }
+            return
+        }
 
-            try {
-                checkDcmImage()
+        try {
+            checkDcmImage()
 
-                // TODO: Add selector for info tag listing
-                recyclerView.adapter = TagRecyclerAdapter(activity!!, R.layout.item_tag, mAttributes!!, R.array.dcmint_default, mDebugMode)
+            // TODO: Add selector for info tag listing
+            recyclerView.adapter = TagRecyclerAdapter(activity!!, R.layout.item_tag, mAttributes!!, R.array.dcmint_default, mDebugMode)
 
-            } catch (ex: Exception) {
-                showImage(false)
-                // TODO: Re-add error text
+        } catch (ex: Exception) {
+            showImage(false)
+            // TODO: Re-add error text
 //                val sw = StringWriter()
 //                PrintWriter(sw).use { pw ->
 //                    ex.printStackTrace(pw)
 //                    text_fileError.text = (resources.getString(R.string.err_file_display) +
 //                            "$currFile\n\nIO Exception: ${ex.message}\n\n$sw")
 //                }
-            }
-
-        } else {
-            showImage(false)
-//            text_fileError.text = resources.getString(R.string.err_unknown_state)
         }
     }
 
@@ -253,22 +253,18 @@ class DcmInfoFragment : Fragment() {
         if (width > displayMetrics.heightPixels)
             width *= 0.5
         val maxHeight = displayMetrics.heightPixels - 3.0 * 72.0 * displayMetrics.density.toDouble()
-        val height = Math.min(maxHeight, width / scaleY2X)
+        val height = (width / scaleY2X).coerceAtMost(maxHeight)
         backdrop.maxHeight = height.toInt() //displayMetrics.heightPixels - (int)(3*72*displayMetrics.density))
     }
 
     private fun updateModeIcon() {
-        if (toolbar != null) {
-            val menu = toolbar.menu
-            if (menu != null) {
-                val item = toolbar.menu.findItem(R.id.debug_mode)
-                if (mDebugMode) {
-                    item.setIcon(R.drawable.ic_visibility_white_24dp)
-                } else {
-                    item.setIcon(R.drawable.ic_visibility_off_white_24dp)
-                    item.icon.alpha = 128
-                }
-            }
+        val item = toolbar?.menu?.findItem(R.id.debug_mode) ?: return
+
+        if (mDebugMode) {
+            item.setIcon(R.drawable.ic_visibility_white_24dp)
+        } else {
+            item.setIcon(R.drawable.ic_visibility_off_white_24dp)
+            item.icon.alpha = 128
         }
     }
 

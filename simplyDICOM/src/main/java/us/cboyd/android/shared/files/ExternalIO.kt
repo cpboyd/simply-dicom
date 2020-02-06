@@ -19,21 +19,24 @@ object ExternalIO {
         /* Code for checkStorage taken directly from:
 		 * http://developer.android.com/guide/topics/data/data-storage.html#filesExternal
 		 */
-        val state = Environment.getExternalStorageState()
 
-        if (Environment.MEDIA_MOUNTED == state) {
-            // We can read and write the media
-            mExternalStorageWritable = true
-            mExternalStorageAvailable = mExternalStorageWritable
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY == state) {
-            // We can only read the media
-            mExternalStorageAvailable = true
-            mExternalStorageWritable = false
-        } else {
-            // Something else is wrong. It may be one of many other states,
-            //  but all we need to know is we can neither read nor write
-            mExternalStorageWritable = false
-            mExternalStorageAvailable = mExternalStorageWritable
+        when (Environment.getExternalStorageState()) {
+            Environment.MEDIA_MOUNTED -> {
+                // We can read and write the media
+                mExternalStorageWritable = true
+                mExternalStorageAvailable = mExternalStorageWritable
+            }
+            Environment.MEDIA_MOUNTED_READ_ONLY -> {
+                // We can only read the media
+                mExternalStorageAvailable = true
+                mExternalStorageWritable = false
+            }
+            else -> {
+                // Something else is wrong. It may be one of many other states,
+                //  but all we need to know is we can neither read nor write
+                mExternalStorageWritable = false
+                mExternalStorageAvailable = mExternalStorageWritable
+            }
         }
 
         return mExternalStorageAvailable

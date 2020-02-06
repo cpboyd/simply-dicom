@@ -14,16 +14,8 @@ class TagViewHolder
 // Complex data items may need more than one view per item, and
 // you provide access to all the views for a data item in a view holder
 (itemView: View) : RecyclerView.ViewHolder(itemView) {
-    var tagLeft: TextView
-    var tagRight: TextView
-    var text1: TextView
-    var text2: TextView
-
-    init {
-        // Initialize the holder
-        tagLeft = itemView.findViewById(R.id.tagLeft)
-        tagRight = itemView.findViewById(R.id.tagRight)
-        text1 = itemView.findViewById(R.id.text1)
-        text2 = itemView.findViewById(R.id.text2)
-    }
+    var tagLeft: TextView = itemView.findViewById(R.id.tagLeft)
+    var tagRight: TextView = itemView.findViewById(R.id.tagRight)
+    var text1: TextView = itemView.findViewById(R.id.text1)
+    var text2: TextView = itemView.findViewById(R.id.text2)
 }
