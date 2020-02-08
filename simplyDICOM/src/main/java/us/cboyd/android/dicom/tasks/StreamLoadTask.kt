@@ -14,9 +14,14 @@ import java.io.InputStream
 import java.lang.ref.WeakReference
 
 fun matFrom(attributes: Attributes): Mat {
-    val mat = Mat(attributes.getInt(Tag.Rows, 1),
-            attributes.getInt(Tag.Columns, 1), CvType.CV_32S)
-    mat.put(0, 0, attributes.getInts(Tag.PixelData))
+    val rows = attributes.getInt(Tag.Rows, 1)
+    val cols = attributes.getInt(Tag.Columns, 1)
+    val mat = Mat(rows, cols, CvType.CV_32S)
+    val pix = attributes.getInts(Tag.PixelData)
+    // TODO: Show popup error message
+    if (pix != null && pix.isNotEmpty()) {
+        mat.put(0, 0, pix)
+    }
     return mat
 }
 
