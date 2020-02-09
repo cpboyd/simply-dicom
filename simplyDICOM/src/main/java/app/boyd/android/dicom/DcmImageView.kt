@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom
+package app.boyd.android.dicom
 
 import android.app.Activity
 import android.content.Context
@@ -19,8 +19,8 @@ import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import us.cboyd.android.shared.MultiGestureDetector
-import us.cboyd.shared.Geometry
+import app.boyd.android.shared.MultiGestureDetector
+import app.boyd.shared.Geometry
 
 class DcmImageView: ImageView, View.OnTouchListener {
     interface OnContrastChangedListener {

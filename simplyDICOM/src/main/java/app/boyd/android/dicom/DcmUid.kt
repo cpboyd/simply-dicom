@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom
+package app.boyd.android.dicom
 
 import android.content.res.Resources
 import java.util.HashMap

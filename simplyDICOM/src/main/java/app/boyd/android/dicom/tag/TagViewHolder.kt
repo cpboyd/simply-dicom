@@ -1,10 +1,10 @@
-package us.cboyd.android.dicom.tag
+package app.boyd.android.dicom.tag
 
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-import us.cboyd.android.dicom.R
+import app.boyd.android.dicom.R
 
 /**
  * Created by Christopher on 3/11/2015.

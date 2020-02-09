@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom
+package app.boyd.android.dicom
 
 import android.app.Activity
 import android.graphics.Bitmap
@@ -21,7 +21,7 @@ import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import us.cboyd.android.dicom.tag.TagRecyclerAdapter
+import app.boyd.android.dicom.tag.TagRecyclerAdapter
 import java.io.*
 
 /**

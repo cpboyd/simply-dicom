@@ -1,4 +1,4 @@
-package us.cboyd.android.shared
+package app.boyd.android.shared
 
 import android.view.View
 

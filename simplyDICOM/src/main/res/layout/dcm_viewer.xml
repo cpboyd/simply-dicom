@@ -12,7 +12,8 @@
         <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-            <us.cboyd.android.dicom.DcmImageView android:id="@+id/imageView"
+            <app.boyd.android.dicom.DcmImageView
+                android:id="@+id/imageView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="matrix" />
@@ -26,7 +27,7 @@
             android:gravity="center_vertical"
             android:layout_gravity="center_horizontal" >
 
-            <us.cboyd.android.shared.image.ImageContrastView
+            <app.boyd.android.shared.image.ImageContrastView
                 android:id="@+id/contrastView"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/icon_size"

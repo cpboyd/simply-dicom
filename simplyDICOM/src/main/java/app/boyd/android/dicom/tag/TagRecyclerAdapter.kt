@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom.tag
+package app.boyd.android.dicom.tag
 
 import android.content.Context
 import android.content.res.Resources
@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.SpecificCharacterSet
 import org.dcm4che3.data.VR
-import us.cboyd.android.dicom.DcmRes
-import us.cboyd.android.dicom.DcmUid
+import app.boyd.android.dicom.DcmRes
+import app.boyd.android.dicom.DcmUid
 import java.text.SimpleDateFormat
 import java.util.*
 

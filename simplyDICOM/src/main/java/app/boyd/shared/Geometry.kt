@@ -1,4 +1,4 @@
-package us.cboyd.shared
+package app.boyd.shared
 
 import kotlin.math.sqrt
 

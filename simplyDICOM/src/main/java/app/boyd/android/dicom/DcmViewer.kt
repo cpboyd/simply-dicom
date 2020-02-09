@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom
+package app.boyd.android.dicom
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -24,8 +24,8 @@ import org.dcm4che3.data.Tag
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import us.cboyd.android.dicom.tasks.*
-import us.cboyd.android.shared.image.ColormapArrayAdapter
+import app.boyd.android.dicom.tasks.*
+import app.boyd.android.shared.image.ColormapArrayAdapter
 import java.io.File
 import kotlin.collections.ArrayList
 

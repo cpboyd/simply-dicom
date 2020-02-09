@@ -1,4 +1,4 @@
-package us.cboyd.android.shared.image
+package app.boyd.android.shared.image
 
 import android.content.Context
 import android.graphics.*
@@ -10,7 +10,7 @@ import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import us.cboyd.shared.X11Color
+import app.boyd.shared.X11Color
 
 class ImageContrastView : ImageView {
     // Paint and path effects used for drawing lines

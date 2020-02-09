@@ -1,9 +1,6 @@
-package us.cboyd.android.dicom;
+package app.boyd.android.dicom;
 
 import android.content.res.Resources;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /// N.B. Kotlin interprets hex as a signed number, so this file is intentionally left in Java.
 public class DcmRes {

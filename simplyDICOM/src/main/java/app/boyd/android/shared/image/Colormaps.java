@@ -1,4 +1,4 @@
-package us.cboyd.android.shared.image;
+package app.boyd.android.shared.image;
 
 import android.graphics.Color;
 import android.graphics.LinearGradient;

@@ -1,4 +1,4 @@
-package us.cboyd.android.shared
+package app.boyd.android.shared
 
 import android.content.Context
 import android.os.Handler
@@ -6,7 +6,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 
-import us.cboyd.shared.Geometry
+import app.boyd.shared.Geometry
 import kotlin.math.abs
 import kotlin.math.atan2
 

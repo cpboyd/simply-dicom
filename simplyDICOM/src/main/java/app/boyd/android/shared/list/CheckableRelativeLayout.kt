@@ -1,11 +1,11 @@
-package us.cboyd.android.shared.list
+package app.boyd.android.shared.list
 
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.Checkable
 import android.widget.RelativeLayout
 
-import us.cboyd.android.dicom.R
+import app.boyd.android.dicom.R
 
 /**
  * Created by Christopher on 3/23/2015.

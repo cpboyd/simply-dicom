@@ -1,4 +1,4 @@
-package us.cboyd.android.dicom.tasks
+package app.boyd.android.dicom.tasks
 
 import android.net.Uri
 import android.os.AsyncTask
@@ -7,8 +7,8 @@ import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
 import org.opencv.core.CvType
 import org.opencv.core.Mat
-import us.cboyd.android.dicom.DcmUtils
-import us.cboyd.android.dicom.DcmViewer
+import app.boyd.android.dicom.DcmUtils
+import app.boyd.android.dicom.DcmViewer
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs
