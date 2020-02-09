@@ -1,11 +1,9 @@
 package us.cboyd.android.dicom
 
-import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
@@ -26,30 +24,18 @@ import org.dcm4che3.data.Tag
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import us.cboyd.android.dicom.tasks.LoadFilesTask
-import us.cboyd.android.dicom.tasks.LoadFilesTaskInput
-import us.cboyd.android.dicom.tasks.StreamLoadTask
-import us.cboyd.android.dicom.tasks.StreamLoadTaskResult
-import us.cboyd.android.shared.files.ExternalIO
-import us.cboyd.android.shared.files.FileUtils
+import us.cboyd.android.dicom.tasks.*
 import us.cboyd.android.shared.image.ColormapArrayAdapter
 import java.io.File
-import java.io.FileFilter
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * DICOMViewer Class
  *
  * @author Christopher Boyd
- * @version 0.6
  */
 class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
-
-    private val mNoFilter: Boolean = false
-    private val mShowFiles: Boolean = false
 
     private var mCmapInv = false
     private var mCmapSelect = -1
@@ -105,19 +91,21 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     /** Open file intent  */
     private val REQUEST_IMAGE_GET = 1
     fun openFile(view: View) {
+        // TODO: Use ACTION_OPEN_DOCUMENT for persistable access?
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "application/*"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        if (Build.VERSION.SDK_INT >= 18) {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = "application/*"
         if (intent.resolveActivity(packageManager) != null) {
             startActivityForResult(intent, REQUEST_IMAGE_GET)
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
-        if (requestCode == REQUEST_IMAGE_GET && resultCode == Activity.RESULT_OK) {
-            loadFile(data)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent) {
+        if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
+            loadFile(intent)
         }
     }
 
@@ -134,159 +122,14 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     }
 
     // File Load
-    private var mInitialPath: String? = null
-    private var mInitialUri: Uri? = null
-    private val PERMISSIONS = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-    private val PERMISSION_REQUEST_CODE = 200
-    private fun loadFile(data: Intent) {
-        // Check for multiple files
-        val files = data.clipData
-        val initialUri = if (files == null) data.data else files.getItemAt(0).uri
-        if (initialUri == null) {
-            showSnackbar("File not found.")
-            return
-        }
-
+    private fun loadFile(intent: Intent) {
         // Show loading UI
         showLoading()
-
-        // Attempt to get the path for local files.
-        // FIXME: Should FileUtils catch this?
-        val initialPath: String? = try {
-            FileUtils.getPath(this, initialUri)
-        } catch (ex: Exception) {
-            null
-        }
-
-        Log.i("cpb", "Uri: $initialUri")
-        Log.i("cpb", "Path: $initialPath")
-        // If we couldn't find a path, load the file from URI
-        if (initialPath == null) {
-            loadUriTask(initialUri)
-            return
-        }
-
-        // Check if we need permissions to load the series.
-        if (!needPermission(PERMISSIONS[0])) {
-            // Load the file
-            loadFileTask(initialPath)
-            return
-        }
-
-        mInitialUri = initialUri
-        mInitialPath = initialPath
-        requestPermissions(PERMISSIONS, PERMISSION_REQUEST_CODE)
-    }
-
-    private fun loadUriTask(uri: Uri) {
-        try {
-            StreamLoadTask(this).execute(contentResolver.openInputStream(uri))
-        } catch (e: FileNotFoundException) {
-            val errorMsg = if (e.message?.contains("download_unavailable") == true) {
-                "Unable to download file.  Please check your connection."
-            } else {
-                "File not found."
-            }
-            showLoadError(errorMsg)
-        }
-    }
-
-    private fun loadFileTask(pathname: String?) {
-        if (pathname == null) {
-            return
-        }
-
-        // Get the File object for the current file
-        val file = File(pathname)
-        currentFile = file
-        try {
-            StreamLoadTask(this).execute(FileInputStream(file))
-        } catch (e: FileNotFoundException) {
-            showLoadError("File not found.")
-        }
-    }
-
-    private fun needPermission(permission: String): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onRequestPermissionsResult(permsRequestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        when (permsRequestCode) {
-            PERMISSION_REQUEST_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Load the file
-                    loadFileTask(mInitialPath)
-                    return
-                }
-
-                val initialUri = mInitialUri ?: return
-
-                // If the URI was a file, tell the user we need permission.
-                if ("file".equals(initialUri.scheme, ignoreCase = true)) {
-                    showSnackbar("Please \"Allow\" permission to read files.")
-                    return
-                }
-
-                // Otherwise, try to load from the URI.
-                loadUriTask(initialUri)
-                // TODO: Notify user that we need permissions to load the entire series.
-                showSnackbar("Read permission denied.  Loading single file.")
-            }
-        }
-    }
-
-    // Return a list of the DICOM files
-    fun getFileList(file: File): List<File> {
-        // If not a directory, get the file's parent directory.
-        val currDir = if (file.isDirectory) file else file.parentFile
-        // If we don't have permission to read the current directory, return an empty list.
-        return if (!currDir.canRead()) ArrayList() else listOf(*currDir.listFiles(FileFilter { path ->
-            // Reject directories and hidden files (if we're not showing them)
-            if (path.isDirectory || !mShowFiles && path.isHidden)
-                return@FileFilter false
-            // If there's no file extension filter, accept all files.
-            if (mNoFilter)
-                return@FileFilter true
-
-            // Otherwise, find where the extension starts (i.e. the last '.')
-            val filename = path.name
-            val ext = filename.lastIndexOf(".")
-
-            // No extension found.  May or may not be a DICOM file.
-            if (ext == -1)
-                return@FileFilter true
-
-            // Get the file's extension.
-            val extension = filename.substring(ext + 1).toLowerCase(Locale.US)
-
-            // Check if the file has a DICOM (or DCM) extension.
-            extension == "dic" || extension == "dicom" || extension == "dcm"
-        }))
+        IntentLoadTask(this).execute(intent)
     }
 
     fun cancelLoadTask(force: Boolean = false) {
         mTask?.cancel(force)
-    }
-
-    /** Called just before activity runs (after onStart).  */
-    override fun onResume() {
-        // FIXME: Handle URI or files
-        // If there isn't any external storage, quit the application.
-        if (!ExternalIO.checkStorage()) {
-            val res = resources
-
-            val builder = AlertDialog.Builder(this)
-            builder.setMessage(res.getString(R.string.err_mesg_disk))
-                    .setTitle(res.getString(R.string.err_title_disk))
-                    .setCancelable(false)
-                    .setPositiveButton(res.getString(R.string.err_close)
-                    ) { dialog, id -> this@DcmViewer.finish() }
-            val alertDialog = builder.create()
-            alertDialog.show()
-        }
-
-        super.onResume()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -302,7 +145,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= 19) {
             uiOptions = uiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         }
         decorView.systemUiVisibility = uiOptions
@@ -466,7 +309,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         hideLoading()
     }
 
-    fun loadResult(result: StreamLoadTaskResult) {
+    fun loadResult(result: IntentLoadTaskResult) {
         currentAttributes = result.attributes
         val mat = result.mat
         imageView.updateMat(mat)
@@ -475,61 +318,19 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // Eliminate the loading symbol
         hideLoading()
 
-        val currentFile = currentFile
-        if (currentFile != null) {
-            loadOtherFiles(result, currentFile)
-        } else {
+        val uris = result.uris
+        if (uris.isNullOrEmpty()) {
             navigationToolbar.visibility = View.INVISIBLE
             // TODO: Handle multiple URI load
             progressContainer2.visibility = View.INVISIBLE
+            return
         }
+
+        loadOtherFiles(result, uris)
     }
 
-    fun loadOtherFiles(result: StreamLoadTaskResult, file: File) {
-        val currDir = if (file.isDirectory) file else file.parentFile
-        // Get the files contained in the parent directory of the current file
-        val fileList = getFileList(currDir)
-        // If the files array is null or its length is less than 1, there is an error because
-        // it must at least contain 1 file: the current file
-        if (fileList.isEmpty()) {
-            showSnackbar("This directory contains no DICOM files.")
-            return
-        }
-
-        // Get the file index in the array
-        val currFileIndex = fileList.indexOf(file)
-
-        // If the current file index is negative
-        // or greater or equal to the files array
-        // length there is an error
-        if (currFileIndex < 0 || currFileIndex >= fileList.size) {
-            showSnackbar("The image file could not be found.")
-            return
-        }
-
-        // Initialize views and navigation bar
-        // Check if the seek bar must be shown or not
-        if (fileList.size == 1) {
-            navigationToolbar.visibility = View.INVISIBLE
-        } else {
-            // Set the visibility of the previous button
-            if (currFileIndex == 0) {
-                btn_prev_idx.visibility = View.INVISIBLE
-            } else if (currFileIndex == fileList.size - 1) {
-                btn_next_idx.visibility = View.INVISIBLE
-            }
-        }
-
-        mMatList ?: return
-        val attributes = currentAttributes ?: return
-        val rows = attributes.getInt(Tag.Rows, 1)
-        val cols = attributes.getInt(Tag.Columns, 1)
-        val instanceNum = attributes.getInt(Tag.InstanceNumber, -1)
-
-        val instanceZ = (instanceNum - 1).coerceAtLeast(0)
-        mInstance = intArrayOf(instanceZ, rows / 2, cols / 2)
-
-        mTask = LoadFilesTask(this).execute(LoadFilesTaskInput(result, file, fileList))
+    fun loadOtherFiles(result: IntentLoadTaskResult, uris: List<Uri>) {
+        mTask = UrisLoadTask(this).execute(UrisLoadTaskInput(result, uris))
     }
 
     fun setSpacing(spacing: DoubleArray, spacingZ: Double = 1.0) {
@@ -539,21 +340,40 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         mScaleSpacing = doubleArrayOf(spacing[1] / spacing[0], spacing[1] / spacingZ, spacingZ / spacing[0])
     }
 
-    fun loadResult(result: List<Mat>?) {
+    fun loadResult(result: Pair<List<Mat>, List<Int>>?) {
         progressContainer2.visibility = View.INVISIBLE
-        if (result?.isEmpty() != false) {
+        val mat = result?.first ?: return
+        if (mat.isNullOrEmpty()) {
             return
         }
 
-        mMatList = result
-        mMaxIndex = intArrayOf(result.size, result[0].rows(), result[0].cols())
+        mMatList = mat
+        mMaxIndex = intArrayOf(mat.size, mat[0].rows(), mat[0].cols())
+        if (mat.size <= 1) {
+            return
+        }
+
         // If there's more than one image, display the navbar
-        if (result.count() > 1) {
-            navigationToolbar.visibility = View.VISIBLE
-            // Display the current file index
-            //input_idx.setText(String.valueOf(mInstance + 1))
-            seek_idx.max = result.size - 1
-            seek_idx.progress = mInstance[mAxis]
+        navigationToolbar.visibility = View.VISIBLE
+        // Display the current file index
+        //input_idx.setText(String.valueOf(mInstance + 1))
+        seek_idx.max = mat.size - 1
+
+        val attributes = currentAttributes ?: return
+        val rows = attributes.getInt(Tag.Rows, 1)
+        val cols = attributes.getInt(Tag.Columns, 1)
+        val instanceNum = attributes.getInt(Tag.InstanceNumber, -1)
+
+        val zList = result.second
+        val z = zList.indexOf(instanceNum).coerceAtLeast(0)
+        mInstance = intArrayOf(z, rows / 2, cols / 2)
+        seek_idx.progress = mInstance[mAxis]
+
+        // Set the visibility of the previous button
+        if (z == 0) {
+            btn_prev_idx.visibility = View.INVISIBLE
+        } else if (z == seek_idx.max) {
+            btn_next_idx.visibility = View.INVISIBLE
         }
     }
 

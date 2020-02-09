@@ -1,16 +1,14 @@
 package us.cboyd.android.dicom.tasks
 
+import android.content.Intent
+import android.net.Uri
 import android.os.AsyncTask
-import android.util.Log
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
-import org.dcm4che3.io.DicomInputStream
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import us.cboyd.android.dicom.DcmUtils
 import us.cboyd.android.dicom.DcmViewer
-import java.io.IOException
-import java.io.InputStream
 import java.lang.ref.WeakReference
 
 fun matFrom(attributes: Attributes): Mat {
@@ -25,56 +23,50 @@ fun matFrom(attributes: Attributes): Mat {
     return mat
 }
 
-class StreamLoadTaskResult(val attributes: Attributes, val mat: Mat = matFrom(attributes))
+class IntentLoadTaskResult(val attributes: Attributes, val uris: List<Uri>, val mat: Mat = matFrom(attributes))
 
-class StreamLoadTask internal constructor(context: DcmViewer) : AsyncTask<InputStream, Int, StreamLoadTaskResult>() {
+class IntentLoadTask internal constructor(context: DcmViewer) : AsyncTask<Intent, Int, IntentLoadTaskResult?>() {
 
     private val viewerRef: WeakReference<DcmViewer> = WeakReference(context)
     // TODO: Refactor to string resource
     private var errorMsg: String? = null
 
-    private fun loadAttributes(input: InputStream?): Attributes? {
-        try {
-            // Read in the DicomObject
-            DicomInputStream(input).use { dis ->
-                val attributes = dis.fileMetaInformation ?: return null
-                dis.readAttributes(attributes, -1, -1)
-                attributes.trimToSize()
-                return attributes
+    override fun doInBackground(vararg intents: Intent): IntentLoadTaskResult? {
+        val viewer = viewerRef.get()
+        if (viewer == null || viewer.isFinishing) return null
+
+        val intent = intents.firstOrNull() ?: return null
+        val multi = intent.clipData
+
+        val uris = ArrayList<Uri>()
+        if (multi == null) {
+            val uri = intent.data ?: return null
+            val pair = DcmUtils.checkAttributes(viewer, uri)
+            errorMsg = pair.second
+            return pair.first?.let { IntentLoadTaskResult(it, uris) }
+        }
+
+        var attr: Attributes? = null
+        for (i in 0 until multi.itemCount) {
+            val uri = multi.getItemAt(i)?.uri ?: continue
+
+            // If we've already found attributes, just add the rest to a list
+            if (attr != null) {
+                uris.add(uri)
+                continue
             }
-        } catch (e: IOException) {
-            // TODO Auto-generated catch block
-            Log.e("cpb", "IO Error loadAttributes: $e")
-        } catch (e: Exception) {
-            // TODO Auto-generated catch block
-            Log.e("cpb", "Error loadAttributes: $e")
-        }
-        return null
-    }
 
-    override fun doInBackground(vararg files: InputStream): StreamLoadTaskResult? {
-        System.gc()
-
-        val attributes = loadAttributes(files[0])
-
-        if (attributes == null) {
-            errorMsg = "Missing DICOM file meta information."
-            return null
+            val pair = DcmUtils.checkAttributes(viewer, uri)
+            // TODO: Add error list for all files?
+            errorMsg = pair.second
+            pair.first?.let { attr = it }
         }
 
-        val error = DcmUtils.checkDcmImage(attributes)
-        if (error != 0) {
-            val viewer = viewerRef.get()
-            if (viewer == null || viewer.isFinishing) return null
-            errorMsg = viewer.resources.getString(error)
-            return null
-        }
-
-        return StreamLoadTaskResult(attributes)
+        return attr?.let { IntentLoadTaskResult(it, uris) }
     }
 
     // After loading, adjust display.
-    override fun onPostExecute(result: StreamLoadTaskResult?) {
+    override fun onPostExecute(result: IntentLoadTaskResult?) {
         // get a reference to the activity if it is still there
         val viewer = viewerRef.get()
         if (viewer == null || viewer.isFinishing) return

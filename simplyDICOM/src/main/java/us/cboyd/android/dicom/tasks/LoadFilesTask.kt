@@ -1,29 +1,28 @@
 package us.cboyd.android.dicom.tasks
 
+import android.net.Uri
 import android.os.AsyncTask
 import android.util.Log
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
-import org.dcm4che3.io.DicomInputStream
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import us.cboyd.android.dicom.DcmUtils
 import us.cboyd.android.dicom.DcmViewer
-import java.io.File
-import java.io.IOException
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs
 
-class LoadFilesTaskInput(val attributes: Attributes, val mat: Mat, val currentFile: File, val fileList: List<File>) {
-    constructor(result: StreamLoadTaskResult, currentFile: File, fileList: List<File>) :
-            this(result.attributes, result.mat, currentFile, fileList)
+class UrisLoadTaskInput(val attributes: Attributes, val mat: Mat, val uriList: List<Uri>) {
+    constructor(result: IntentLoadTaskResult, uriList: List<Uri>) :
+            this(result.attributes, result.mat, uriList)
 }
 
-class LoadFilesTask internal constructor(context: DcmViewer) : AsyncTask<LoadFilesTaskInput, Pair<Int, Int>, List<Mat>>() {
+class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoadTaskInput, Pair<Int, Int>, Pair<List<Mat>, List<Int>>?>() {
 
     private val viewerRef: WeakReference<DcmViewer> = WeakReference(context)
 
-    override fun doInBackground(vararg params: LoadFilesTaskInput): List<Mat>? {
+    override fun doInBackground(vararg params: UrisLoadTaskInput): Pair<List<Mat>, List<Int>>? {
         val input = params[0]
         val attributes = input.attributes
         val rows = attributes.getInt(Tag.Rows, 1)
@@ -34,81 +33,75 @@ class LoadFilesTask internal constructor(context: DcmViewer) : AsyncTask<LoadFil
         val spacing = attributes.getDoubles(Tag.PixelSpacing)
         val startPos = attributes.getDoubles(Tag.ImagePositionPatient)
 
-        val fileList = input.fileList
-        val totalFiles = fileList.size
+        val uriList = input.uriList
+        val totalFiles = uriList.size
         // If this is the only file, or this has an invalid instance number... Just return.
         if (instance < 1 || totalFiles == 1) {
             return null
         }
 
         val instanceZ = (instance - 1).coerceAtLeast(0)
+        val matList = ArrayList<Mat?>()
+        val zList = ArrayList<Int?>()
+        for (i in 0 until instanceZ) {
+            matList.add(null)
+            zList.add(null)
+        }
+        matList.add(input.mat)
+        zList.add(instanceZ)
 
-        val temp = ArrayList<Mat?>(instance)
-        temp[instanceZ] = input.mat
-
-        for (i in 0 until totalFiles) {
+        for ((i, uri) in uriList.withIndex()) {
             publishProgress(i, totalFiles)
-            val currFile = fileList[i]
-            if (currFile != input.currentFile) {
-                var currDcm: Attributes? = null
-                Log.i("cpb", "Attempting GC")
-                System.gc()
-                // Read in the DicomObject
-                try {
-                    val dis = DicomInputStream(currFile)
-                    currDcm = dis.fileMetaInformation
-                    dis.readAttributes(currDcm!!, -1, -1)
-                    currDcm.trimToSize()
-                    dis.close()
-                } catch (e: IOException) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace()
+
+            val viewer = viewerRef.get()
+            if (viewer == null || viewer.isFinishing) {
+                return null
+            }
+
+            val pair = DcmUtils.checkAttributes(viewer, uri)
+            val currDcm = pair.first ?: continue
+
+            // Check the instance number
+            val instanceNum = currDcm.getInt(Tag.InstanceNumber, -1)
+            // If it's less than 1, continue to the next image.
+            if (instanceNum < 1) {
+                Log.i("cpb", "Skipping file: no valid instance number")
+                continue
+            }
+
+            // Spacing definition moved up
+            if (spacing != null && (instanceZ + 2 == instanceNum || instanceNum == instanceZ)) {
+                val nextPos = currDcm.getDoubles(Tag.ImagePositionPatient)
+                // Get currently loaded attributes
+                viewer.setSpacing(spacing, abs(startPos[2] - nextPos[2]))
+            }
+
+            val rows2 = currDcm.getInt(Tag.Rows, 1)
+            val cols2 = currDcm.getInt(Tag.Columns, 1)
+            if (rows != rows2 || cols != cols2) {
+                Log.i("cpb", "Skipping file: row/col mismatch")
+                continue
+            }
+
+            if (studyUID == currDcm.getString(Tag.StudyInstanceUID) && seriesUID == currDcm.getString(Tag.SeriesInstanceUID)) {
+                // If there isn't enough space in the list, allocate more.
+                while (matList.size < instanceNum) {
+                    matList.add(null)
+                    zList.add(null)
                 }
 
-                // If the DICOM file was empty, continue.
-                if (currDcm == null)
-                    continue
+                val mat = Mat(rows, cols, CvType.CV_32S)
+                mat.put(0, 0, currDcm.getInts(Tag.PixelData))
 
-                // Check the instance number
-                val instanceNum = currDcm.getInt(Tag.InstanceNumber, -1)
-                // If it's less than 1, continue to the next image.
-                if (instanceNum < 1) {
-                    Log.i("cpb", "Skipping file: no valid instance number")
-                    continue
-                }
-
-                // Spacing definition moved up
-                if (spacing != null && (instanceZ + 2 == instanceNum || instanceNum == instanceZ)) {
-                    val nextPos = currDcm.getDoubles(Tag.ImagePositionPatient)
-                    // Get currently loaded attributes
-                    val viewer = viewerRef.get()
-                    if (viewer == null || viewer.isFinishing) return null
-                    viewer.setSpacing(spacing, abs(startPos[2] - nextPos[2]))
-                }
-
-                val rows2 = currDcm.getInt(Tag.Rows, 1)
-                val cols2 = currDcm.getInt(Tag.Columns, 1)
-                if (rows != rows2 || cols != cols2) {
-                    Log.i("cpb", "Skipping file: row/col mismatch")
-                    continue
-                }
-
-                if (studyUID == currDcm.getString(Tag.StudyInstanceUID) && seriesUID == currDcm.getString(Tag.SeriesInstanceUID)) {
-                    // If there isn't enough space in the list, allocate more.
-                    while (temp.size < instanceNum) {
-                        temp.add(null)
-                    }
-
-                    val mat = Mat(rows, cols, CvType.CV_32S)
-                    mat.put(0, 0, currDcm.getInts(Tag.PixelData))
-                    temp[instanceNum - 1] = mat
-                }
+                val z = instanceNum - 1
+                matList[z] = mat
+                zList[z] = z
             }
         }
 
         // Display 100% (if only briefly)
         publishProgress(totalFiles, totalFiles)
-        return temp.filterNotNull()
+        return Pair(matList.filterNotNull(), zList.filterNotNull())
     }
 
     private fun publishProgress(currentIndex: Int, totalFiles: Int) {
@@ -124,7 +117,7 @@ class LoadFilesTask internal constructor(context: DcmViewer) : AsyncTask<LoadFil
     }
 
     // After loading, adjust display.
-    override fun onPostExecute(result: List<Mat>?) {
+    override fun onPostExecute(result: Pair<List<Mat>, List<Int>>?) {
         // get a reference to the activity if it is still there
         val viewer = viewerRef.get()
         if (viewer == null || viewer.isFinishing) return
