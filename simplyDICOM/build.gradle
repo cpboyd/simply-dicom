@@ -2,23 +2,20 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
-import com.android.build.OutputFile
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId 'us.cboyd.android.dicom'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.compileSdkVersion
-        versionCode 7000022
-        versionName "1.0.1"
+        versionCode 7000023
+        versionName "1.0.2"
     }
 
     splits {
         abi {
             include 'armeabi', 'mips', 'mips64'
             enable true
-//            universalApk true
         }
     }
     buildTypes {
@@ -42,7 +39,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
     implementation 'com.google.android.material:material:1.1.0'
-    implementation 'com.google.guava:guava:28.2-android'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation project(':opencv')
 }
