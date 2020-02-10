@@ -13,10 +13,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.AdapterView
-import android.widget.CompoundButton
-import android.widget.SeekBar
-import android.widget.TextView
+import android.widget.*
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.dcm_viewer.*
 import org.dcm4che3.data.Attributes
@@ -36,6 +33,7 @@ import kotlin.collections.ArrayList
  */
 class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
+    private val axisSpinner: Spinner = findViewById(R.id.spinner_plane)
 
     private var mCmapInv = false
     private var mCmapSelect = -1
@@ -47,10 +45,11 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 
     private var mMat: Mat? = null
     private var mMatList: List<Mat>? = null
+    private var zList: List<Int>? = null
     private var mTask: AsyncTask<*, *, *>? = null
 
-    var currentFile: File? = null
-    var currentAttributes: Attributes? = null
+    private var currentFile: File? = null
+    private var currentAttributes: Attributes? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -203,47 +202,46 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
             if (fromUser) mInstance[mAxis] = progress
             val matList = mMatList
             if (matList != null) {
-                val mat = Mat()
-                when (mAxis) {
-                    DcmVar.TRANSVERSE -> mMat = matList[mInstance[mAxis]]
+                val newMat = when (mAxis) {
+                    DcmVar.TRANSVERSE -> matList[mInstance[mAxis]]
                     DcmVar.CORONAL -> {
                         val listY = ArrayList<Mat>()
-                        for (i in matList.indices) {
-                            listY.add(matList[i].row(mInstance[mAxis]))
+                        for (z in matList) {
+                            listY.add(z.row(mInstance[mAxis]))
                         }
+                        val mat = Mat()
                         Core.vconcat(listY, mat)
-                        imageView.updateMat(mat)
+                        mat
                     }
                     DcmVar.SAGGITAL -> {
                         val listX = ArrayList<Mat>()
-                        for (i in matList.indices) {
-                            listX.add(matList[i].col(mInstance[mAxis]))
+                        for (z in matList) {
+                            listX.add(z.col(mInstance[mAxis]))
                         }
+                        val mat = Mat()
                         Core.hconcat(listX, mat)
-                        imageView.updateMat(mat)
+                        mat
                     }
                     else -> {
-                        mAxis = DcmVar.TRANSVERSE
-                        seek_idx.max = mMaxIndex[mAxis] - 1
-                        seek_idx.progress = mInstance[mAxis]
-                        imageView.updateMat(mat)
+                        updateAxis()
+                        matList[mInstance[mAxis]]
                     }
                 }
+                imageView.updateMat(newMat)
             }
 
             // Update the UI
             input_idx.setText((mInstance[mAxis] + 1).toString())
 
             // Set the visibility of the previous button
-            when {
-                mInstance[mAxis] <= 0 -> {
-                    mInstance[mAxis] = 0
+            mInstance[mAxis] = mInstance[mAxis].coerceIn(0, mMaxIndex[mAxis])
+            when (mInstance[mAxis]) {
+                 0 -> {
                     btn_prev_idx.visibility = View.INVISIBLE
                     btn_next_idx.visibility = View.VISIBLE
 
                 }
-                mInstance[mAxis] >= mMaxIndex[mAxis] - 1 -> {
-                    mInstance[mAxis] = mMaxIndex[mAxis] - 1
+                mMaxIndex[mAxis] -> {
                     btn_next_idx.visibility = View.INVISIBLE
                     btn_prev_idx.visibility = View.VISIBLE
 
@@ -342,14 +340,16 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 
     fun loadResult(result: Pair<List<Mat>, List<Int>>?) {
         progressContainer2.visibility = View.INVISIBLE
-        val mat = result?.first ?: return
-        if (mat.isNullOrEmpty()) {
+        val mats = result?.first ?: return
+        if (mats.isNullOrEmpty()) {
             return
         }
 
-        mMatList = mat
-        mMaxIndex = intArrayOf(mat.size, mat[0].rows(), mat[0].cols())
-        if (mat.size <= 1) {
+        mMatList = mats
+        val rows = mats[0].rows()
+        val cols = mats[0].cols()
+        mMaxIndex = intArrayOf(mats.size - 1, rows - 1, cols - 1)
+        if (mats.size <= 1) {
             return
         }
 
@@ -357,24 +357,15 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         navigationToolbar.visibility = View.VISIBLE
         // Display the current file index
         //input_idx.setText(String.valueOf(mInstance + 1))
-        seek_idx.max = mat.size - 1
 
         val attributes = currentAttributes ?: return
-        val rows = attributes.getInt(Tag.Rows, 1)
-        val cols = attributes.getInt(Tag.Columns, 1)
         val instanceNum = attributes.getInt(Tag.InstanceNumber, -1)
 
-        val zList = result.second
-        val z = zList.indexOf(instanceNum).coerceAtLeast(0)
+        val zs = result.second
+        val z = zs.indexOf(instanceNum).coerceAtLeast(0)
+        zList = zs
         mInstance = intArrayOf(z, rows / 2, cols / 2)
-        seek_idx.progress = mInstance[mAxis]
-
-        // Set the visibility of the previous button
-        if (z == 0) {
-            btn_prev_idx.visibility = View.INVISIBLE
-        } else if (z == seek_idx.max) {
-            btn_next_idx.visibility = View.INVISIBLE
-        }
+        updateAxis()
     }
 
     /**
@@ -404,6 +395,28 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         alertDialog.show()
     }
 
+    private fun updateAxis(axis: Int = DcmVar.TRANSVERSE) {
+        if (axisSpinner.selectedItemPosition != axis) {
+            axisSpinner.setSelection(axis)
+            return
+        }
+
+        if (mMatList == null)
+            return
+        mAxis = axis.coerceIn(0, 2)
+        seek_idx.max = mMaxIndex[mAxis]
+        val idx = mInstance[mAxis]
+        seek_idx.progress = idx
+        imageView.setScaleY2X(mScaleSpacing[mAxis].toFloat())
+
+        // Set the visibility of the previous button
+        if (idx == 0) {
+            btn_prev_idx.visibility = View.INVISIBLE
+        } else if (idx == seek_idx.max) {
+            btn_next_idx.visibility = View.INVISIBLE
+        }
+    }
+
     /**
      * Spinner's onItemSelected
      * @param parent
@@ -423,12 +436,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
                 imageView.setColormap(mCmapSelect, mCmapInv)
             }
             R.id.spinner_plane -> {
-                if (mMatList == null)
-                    return
-                mAxis = position
-                seek_idx.max = mMaxIndex[mAxis] - 1
-                seek_idx.progress = mInstance[mAxis]
-                imageView.setScaleY2X(mScaleSpacing[mAxis].toFloat())
+                updateAxis(position)
             }
         }
     }
