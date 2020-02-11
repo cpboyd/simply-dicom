@@ -44,7 +44,7 @@
                     android:gravity="center_vertical"
                     android:longClickable="true">
                     <Spinner
-                        android:id="@+id/spinner_plane"
+                        android:id="@+id/spinnerAxis"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_alignParentLeft="true"
@@ -56,7 +56,7 @@
                         android:layout_height="@dimen/button_size"
                         android:layout_marginLeft="@dimen/button_pad"
                         android:layout_marginRight="@dimen/button_pad"
-                        android:layout_toRightOf="@id/spinner_plane"
+                        android:layout_toRightOf="@id/spinnerAxis"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_chevron_left_white_24dp"
                         android:focusable="true"
@@ -129,7 +129,7 @@
             </FrameLayout>
 
             <Spinner
-                android:id="@+id/spinner_colormap"
+                android:id="@+id/spinnerColormap"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/button_size"
                 android:layout_below="@id/navigationFrame" />
@@ -139,8 +139,8 @@
                 android:layout_margin="@dimen/button_pad"
                 android:padding="@dimen/button_pad"
                 android:layout_below="@id/navigationFrame"
-                android:layout_toRightOf="@id/spinner_colormap"
-                android:layout_toEndOf="@id/spinner_colormap"
+                android:layout_toRightOf="@id/spinnerColormap"
+                android:layout_toEndOf="@id/spinnerColormap"
                 android:button="@drawable/button_invert" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton

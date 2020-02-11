@@ -33,7 +33,6 @@ import kotlin.collections.ArrayList
  */
 class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
-    private val axisSpinner: Spinner = findViewById(R.id.spinner_plane)
 
     private var mCmapInv = false
     private var mCmapSelect = -1
@@ -41,7 +40,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     private var mInstance = intArrayOf(0, 0, 0)
     private var mMaxIndex = intArrayOf(0, 0, 0)
     private var mScaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
-    private var mAxis = DcmVar.TRANSVERSE
+    private var mAxis = Axis.TRANSVERSE
 
     private var mMat: Mat? = null
     private var mMatList: List<Mat>? = null
@@ -56,12 +55,12 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         setContentView(R.layout.dcm_viewer)
 
         btn_invert.setOnCheckedChangeListener(this)
-        spinner_colormap.adapter = ColormapArrayAdapter(this,
+        spinnerColormap.adapter = ColormapArrayAdapter(this,
                 R.layout.support_simple_spinner_dropdown_item, resources.getStringArray(R.array.colormaps_array))
-        spinner_colormap.onItemSelectedListener = this
+        spinnerColormap.onItemSelectedListener = this
         input_idx.setOnEditorActionListener(this)
 
-        spinner_plane.onItemSelectedListener = this
+        spinnerAxis.onItemSelectedListener = this
         // Set the seek bar change index listener
         seek_idx.setOnSeekBarChangeListener(this)
 
@@ -199,49 +198,45 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         try {
             // Set the current instance if specified by user
             // This prevents resetting the view if setMax changes the progress
-            if (fromUser) mInstance[mAxis] = progress
+            if (fromUser) currentInstance = progress
             val matList = mMatList
             if (matList != null) {
                 val newMat = when (mAxis) {
-                    DcmVar.TRANSVERSE -> matList[mInstance[mAxis]]
-                    DcmVar.CORONAL -> {
+                    Axis.TRANSVERSE -> matList[currentInstance]
+                    Axis.CORONAL -> {
                         val listY = ArrayList<Mat>()
                         for (z in matList) {
-                            listY.add(z.row(mInstance[mAxis]))
+                            listY.add(z.row(currentInstance))
                         }
                         val mat = Mat()
                         Core.vconcat(listY, mat)
                         mat
                     }
-                    DcmVar.SAGGITAL -> {
+                    Axis.SAGITTAL -> {
                         val listX = ArrayList<Mat>()
                         for (z in matList) {
-                            listX.add(z.col(mInstance[mAxis]))
+                            listX.add(z.col(currentInstance))
                         }
                         val mat = Mat()
                         Core.hconcat(listX, mat)
                         mat
                     }
-                    else -> {
-                        updateAxis()
-                        matList[mInstance[mAxis]]
-                    }
                 }
-                imageView.updateMat(newMat)
+                imageView.mat = newMat
             }
 
             // Update the UI
-            input_idx.setText((mInstance[mAxis] + 1).toString())
+            input_idx.setText((currentInstance + 1).toString())
 
             // Set the visibility of the previous button
-            mInstance[mAxis] = mInstance[mAxis].coerceIn(0, mMaxIndex[mAxis])
-            when (mInstance[mAxis]) {
+            currentInstance = currentInstance.coerceIn(0, currentMax)
+            when (currentInstance) {
                  0 -> {
                     btn_prev_idx.visibility = View.INVISIBLE
                     btn_next_idx.visibility = View.VISIBLE
 
                 }
-                mMaxIndex[mAxis] -> {
+                currentMax -> {
                     btn_next_idx.visibility = View.INVISIBLE
                     btn_prev_idx.visibility = View.VISIBLE
 
@@ -278,9 +273,9 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     @Synchronized
     fun previousImage(view: View) {
         clearFocus()
-        mInstance[mAxis]--
+        currentInstance--
         // Changing the progress bar will set the image
-        seek_idx.progress = mInstance[mAxis]
+        seek_idx.progress = currentInstance
     }
 
     /**
@@ -290,9 +285,9 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     @Synchronized
     fun nextImage(view: View) {
         clearFocus()
-        mInstance[mAxis]++
+        currentInstance++
         // Changing the progress bar will set the image
-        seek_idx.progress = mInstance[mAxis]
+        seek_idx.progress = currentInstance
     }
 
     fun updateProgress(progress: Pair<Int, Int>) {
@@ -310,7 +305,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     fun loadResult(result: IntentLoadTaskResult) {
         currentAttributes = result.attributes
         val mat = result.mat
-        imageView.updateMat(mat)
+        imageView.mat = mat
         mImageCount++
 
         // Eliminate the loading symbol
@@ -395,19 +390,20 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         alertDialog.show()
     }
 
-    private fun updateAxis(axis: Int = DcmVar.TRANSVERSE) {
-        if (axisSpinner.selectedItemPosition != axis) {
-            axisSpinner.setSelection(axis)
+    private fun updateAxis(axis: Int = 0) {
+        if (spinnerAxis.selectedItemPosition != axis) {
+            spinnerAxis.setSelection(axis)
             return
         }
 
         if (mMatList == null)
             return
-        mAxis = axis.coerceIn(0, 2)
-        seek_idx.max = mMaxIndex[mAxis]
-        val idx = mInstance[mAxis]
+        val axes = Axis.values()
+        mAxis = axes[axis.coerceIn(0, axes.size - 1)]
+        seek_idx.max = currentMax
+        val idx = currentInstance
         seek_idx.progress = idx
-        imageView.setScaleY2X(mScaleSpacing[mAxis].toFloat())
+        imageView.scaleY2X = currentScale
 
         // Set the visibility of the previous button
         if (idx == 0) {
@@ -430,12 +426,12 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // An item was selected. You can retrieve the selected item using
         // parent.getItemAtPosition(position)
         when (parent.id) {
-            R.id.spinner_colormap -> {
+            R.id.spinnerColormap -> {
                 mCmapSelect = position - 1
                 Log.i("cpb", "Colormap: $mCmapSelect id: $id")
                 imageView.setColormap(mCmapSelect, mCmapInv)
             }
-            R.id.spinner_plane -> {
+            R.id.spinnerAxis -> {
                 updateAxis(position)
             }
         }
@@ -449,17 +445,29 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         clearFocus()
     }
 
+    private var currentInstance: Int
+    get() = mInstance[mAxis.ordinal]
+    set(value) {
+        mInstance[mAxis.ordinal] = value
+    }
+
+    private val currentMax: Int
+        get() = mMaxIndex[mAxis.ordinal]
+
+    private val currentScale: Double
+        get() = mScaleSpacing[mAxis.ordinal]
+
     override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
             val userInput = Integer.parseInt(v.text.toString())
 //            if (userInput < 0)
 //                input_idx.setError("< 0");
-//            else if (userInput > mMaxIndex[mAxis])
-//                input_idx.setError("> " + mMaxIndex[mAxis]);
-            mInstance[mAxis] = userInput.coerceIn(0, mMaxIndex[mAxis])
-            v.text = (mInstance[mAxis] + 1).toString()
+//            else if (userInput > currentMax)
+//                input_idx.setError("> " + currentMax);
+            currentInstance = userInput.coerceIn(0, currentMax)
+            v.text = (currentInstance + 1).toString()
             // Changing the progress bar will set the image
-            seek_idx.progress = mInstance[mAxis]
+            seek_idx.progress = currentInstance
             // Hide the keyboard (clearing focus keeps it open)
             hideKeyboard(v)
             // Clear focus from EditText
@@ -479,7 +487,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         when (buttonView.id) {
             R.id.btn_invert -> {
                 mCmapInv = isChecked
-                (spinner_colormap.adapter as ColormapArrayAdapter).invertColormap(mCmapInv)
+                (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap(mCmapInv)
                 imageView.setColormap(mCmapSelect, mCmapInv)
             }
         }

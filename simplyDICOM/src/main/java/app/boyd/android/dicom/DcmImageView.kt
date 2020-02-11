@@ -35,12 +35,28 @@ class DcmImageView: ImageView, View.OnTouchListener {
     private var mLastBrightness = mBrightness
     private var mInvertCmap = false
     private var mColormap = -1
-    private var mMat: Mat? = null
-    private var mScaleY2X = 1.0f
+    private var _mat: Mat? = null
+    var mat
+        get() = _mat
+        set(value) {
+            _mat = value
+
+            // If this is the first time displaying an image, center it.
+            updateScale()
+            redrawImage()
+        }
+
     private var mScaleY = 1.0f
     private var mRotDeg = 0.0f
     private var mFocusX = 0.0f
     private var mFocusY = 0.0f
+    private var _scaleY2X = 1.0
+    var scaleY2X
+        get() = _scaleY2X
+        set(value) {
+            _scaleY2X = value
+            updateScale()
+        }
 
     constructor(context: Context): super(context)
     @JvmOverloads
@@ -75,30 +91,17 @@ class DcmImageView: ImageView, View.OnTouchListener {
         setColormap(colormap, invertCmap)
     }
 
-    /**
-     * Update the current image
-     *
-     */
-    fun updateImage(mat: Mat?, brightness: Double = 50.0, contrast: Double = 0.0, colormap: Int = -1, invertCmap: Boolean = false) {
-        mMat = mat
-        setImageContrast(brightness, contrast, colormap, invertCmap)
-    }
-
     private fun redrawImage() {
-        val mat = mMat
         // If mat is null, clear the image
-        if (mat == null) {
-            setImageDrawable(null)
-            return
-        }
+        val mat = mat ?: return setImageDrawable(null)
 
-        val minmax = Core.minMaxLoc(mat)
-        val diff = minmax.maxVal - minmax.minVal
-        val ImWidth = (1.0 - mContrast / 100.0) * diff
-        //val  ImMax 	= ImWidth + (diff - ImWidth) * (1.0d - (mBrightness / 100.0d)) + minmax.minVal
-        val ImMin = (diff - ImWidth) * (1.0 - mBrightness / 100.0) + minmax.minVal
-        var alpha = 255.0 / ImWidth
-        var beta = alpha * -ImMin
+        val minMax = Core.minMaxLoc(mat)
+        val diff = minMax.maxVal - minMax.minVal
+        val imWidth = (1.0 - mContrast / 100.0) * diff
+        //val imMax = imWidth + (diff - imWidth) * (1.0 - (mBrightness / 100.0)) + minMax.minVal
+        val imMin = (diff - imWidth) * (1.0 - mBrightness / 100.0) + minMax.minVal
+        var alpha = 255.0 / imWidth
+        var beta = alpha * -imMin
 
         if (mInvertCmap) {
             alpha *= -1.0
@@ -123,28 +126,20 @@ class DcmImageView: ImageView, View.OnTouchListener {
         setImageBitmap(imageBitmap)
     }
 
-    fun updateMat(mat: Mat?) {
-        mMat = mat
+    private fun updateScale() {
+        val mat = mat ?: return
 
-        // If this is the first time displaying an image, center it.
-        setScaleY2X()
-        redrawImage()
-    }
-
-    fun setScaleY2X(scaleY2X: Float = 1.0f) {
-        mScaleY2X = scaleY2X
-        val mat = mMat ?: return
-
-        val height = mat.rows().toFloat()
-        val width = mat.cols().toFloat()
         val windowManager = windowManager ?: return
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         multiDetector.setHorizontalMargin(25.0f * displayMetrics.density)
         val displayCenterX = displayMetrics.widthPixels / 2.0f
         val displayCenterY = displayMetrics.heightPixels / 2.0f
-        mScaleY = (displayMetrics.widthPixels / (mScaleY2X * width)).coerceAtMost(displayMetrics.heightPixels / height)
-        Log.i("cpb", "mScaleY2X: $mScaleY2X mScaleY: $mScaleY")
+
+        val height = mat.rows().toDouble()
+        val width = mat.cols().toDouble()
+        mScaleY = (displayMetrics.widthPixels / (scaleY2X * width)).coerceAtMost(displayMetrics.heightPixels / height).toFloat()
+        Log.i("cpb", "scaleY2X: $scaleY2X mScaleY: $mScaleY")
         mFocusX = displayCenterX
         mFocusY = displayCenterY
         
@@ -152,12 +147,13 @@ class DcmImageView: ImageView, View.OnTouchListener {
     }
 
     private fun updateMatrix() {
-        val mat = mMat ?: return
-        val scaledImageCenterX = mat.cols().toFloat() * mScaleY * mScaleY2X / 2.0f
-        val scaledImageCenterY = mat.rows().toFloat() * mScaleY / 2.0f
+        val mat = mat ?: return
+        val scaleX = (mScaleY * scaleY2X).toFloat()
+        val scaledImageCenterX = mat.cols() * scaleX/ 2.0f
+        val scaledImageCenterY = mat.rows() * mScaleY / 2.0f
 
         val matrix = Matrix()
-        matrix.postScale(mScaleY * mScaleY2X, mScaleY)
+        matrix.postScale(scaleX, mScaleY)
         matrix.postRotate(mRotDeg, scaledImageCenterX, scaledImageCenterY)
         matrix.postTranslate(mFocusX - scaledImageCenterX, mFocusY - scaledImageCenterY)
         imageMatrix = matrix
@@ -165,7 +161,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
         // If we haven't loaded the image yet, don't process any touch events
-        val mat = mMat ?: return false
+        mat ?: return false
         multiDetector.onTouchEvent(event)
 
         updateMatrix()

@@ -8,11 +8,11 @@ package app.boyd.android.dicom
  */
 
 object DcmVar {
-    /** Axis Orientation  */
-    const val TRANSVERSE = 0
-    const val CORONAL = 1
-    const val SAGGITAL = 2
-
     /** Bundle Key / Intent Extra  */
     const val DCMFILE = "DCMFile"
+}
+
+/** Axis Orientation  */
+enum class Axis {
+    TRANSVERSE, CORONAL, SAGITTAL
 }
