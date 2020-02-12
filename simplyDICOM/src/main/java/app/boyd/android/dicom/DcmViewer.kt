@@ -23,7 +23,6 @@ import org.opencv.core.Core
 import org.opencv.core.Mat
 import app.boyd.android.dicom.tasks.*
 import app.boyd.android.shared.image.ColormapArrayAdapter
-import java.io.File
 import kotlin.collections.ArrayList
 
 /**
@@ -42,13 +41,23 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     private var mScaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
     private var mAxis = Axis.TRANSVERSE
 
-    private var mMat: Mat? = null
     private var mMatList: List<Mat>? = null
     private var zList: List<Int>? = null
     private var mTask: AsyncTask<*, *, *>? = null
 
-    private var currentFile: File? = null
     private var currentAttributes: Attributes? = null
+
+    private var currentInstance: Int
+        get() = mInstance[mAxis.ordinal]
+        set(value) {
+            mInstance[mAxis.ordinal] = value
+        }
+
+    private val currentMax: Int
+        get() = mMaxIndex[mAxis.ordinal]
+
+    private val currentScale: Double
+        get() = mScaleSpacing[mAxis.ordinal]
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,13 +79,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
             }
         })
 
-        // If the saved instance state is not null get the file name
         // TODO: Reload state?
-//        val filePath = savedInstanceState?.getString(DcmVar.DCMFILE);
-//        if (filePath != null) {
-//            val file = File(filePath)
-//            return
-//        }
 
         // Get the intent
         when (intent?.action) {
@@ -101,7 +104,8 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        intent ?: return
         if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
             loadFile(intent)
         }
@@ -152,7 +156,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     override fun onDestroy() {
         super.onDestroy()
         cancelLoadTask(true)
-        mMat = null
         mMatList = null
         currentAttributes = null
 
@@ -165,34 +168,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         }
     }
 
-    /* (non-Javadoc)
-	 * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
-	 */
-    override fun onSaveInstanceState(outState: Bundle) {
-        // If anything is null, don't save the state.
-        val filePath = currentFile ?: return
-
-        // Otherwise, save the current file name
-        outState.putString(DcmVar.DCMFILE, filePath.absolutePath)
-
-        // Always call the superclass so it can save the view hierarchy state
-        super.onSaveInstanceState(outState)
-    }
-
-
-    override fun onLowMemory() {
-        // Hint the garbage collector
-        System.gc()
-
-        // Show the exit alert dialog
-        showExitAlertDialog("ERROR: Low Memory", "Low on memory")
-
-        super.onLowMemory()
-    }
-
-    /* (non-Javadoc)
-	 * @see android.widget.SeekBar.OnSeekBarChangeListener#onProgressChanged(android.widget.SeekBar, int, boolean)
-	 */
     @Synchronized
     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
         try {
@@ -445,18 +420,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         clearFocus()
     }
 
-    private var currentInstance: Int
-    get() = mInstance[mAxis.ordinal]
-    set(value) {
-        mInstance[mAxis.ordinal] = value
-    }
-
-    private val currentMax: Int
-        get() = mMaxIndex[mAxis.ordinal]
-
-    private val currentScale: Double
-        get() = mScaleSpacing[mAxis.ordinal]
-
     override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
             val userInput = Integer.parseInt(v.text.toString())
@@ -509,7 +472,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         init {
             if (!OpenCVLoader.initDebug()) {
                 // Handle initialization error
-                Log.d("cpb", "No openCV")
+                Log.d("cpb", "ERROR: Unable to load OpenCV")
             }
         }
 

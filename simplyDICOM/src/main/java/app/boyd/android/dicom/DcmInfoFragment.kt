@@ -28,7 +28,6 @@ import java.io.*
  * DICOM InfoFragment
  *
  * @author Christopher Boyd
- * @version 0.7
  */
 class DcmInfoFragment : Fragment() {
     private var mDrawerAdapter: ListAdapter? = null
@@ -51,7 +50,6 @@ class DcmInfoFragment : Fragment() {
         }
     }
 
-    private var mCurrFile: String? = null
     private var mAttributes: Attributes? = null
     private var mDebugMode = false
     private var mInflater: LayoutInflater? = null
@@ -66,10 +64,6 @@ class DcmInfoFragment : Fragment() {
                 adapter.setDebugMode(mDebugMode)
             }
         }
-
-    // TODO: Remove function (needed for DcmViewer)
-    val dicomFile: String?
-        get() = mCurrFile
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
@@ -94,13 +88,6 @@ class DcmInfoFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        // If activity recreated (such as from screen rotate), restore
-        // the previous article selection set by onSaveInstanceState().
-        // This is primarily necessary when in the two-pane layout.
-        if (savedInstanceState != null) {
-            mCurrFile = savedInstanceState.getString(DcmVar.DCMFILE)
-        }
-
         // Inflate the layout for this fragment
         mInflater = inflater
         val view = inflater.inflate(R.layout.dcm_info, container, false)
@@ -123,25 +110,6 @@ class DcmInfoFragment : Fragment() {
         return view
     }
 
-    /** onStart makes the fragment visible to the user
-     * (based on its containing activity being started).  */
-    override fun onStart() {
-        super.onStart()
-
-        // During startup, check if there are arguments passed to the fragment.
-        // onStart is a good place to do this because the layout has already been
-        // applied to the fragment at this point so we can safely call the method
-        // below that sets the article text.
-        val args = arguments
-        if (args != null) {
-            // Set article based on argument passed in
-            updateDicomInfo(args.getString(DcmVar.DCMFILE))
-        } else if (mCurrFile != null) {
-            // Set article based on saved instance state defined during onCreateView
-            updateDicomInfo(mCurrFile)
-        }
-    }
-
     fun setDrawerList(adapter: ListAdapter) {
         mDrawerAdapter = adapter
         if (left_drawer != null) {
@@ -151,8 +119,6 @@ class DcmInfoFragment : Fragment() {
     }
 
     fun updateDicomInfo(currFile: String?) {
-        mCurrFile = currFile
-
         if (currFile == null) {
             showImage(false)
 //            text_fileError.text = resources.getString(R.string.err_unknown_state)
@@ -185,10 +151,11 @@ class DcmInfoFragment : Fragment() {
         }
 
         try {
-            checkDcmImage()
+            val attributes = mAttributes ?: return
+            checkDcmImage(attributes)
 
             // TODO: Add selector for info tag listing
-            recyclerView.adapter = TagRecyclerAdapter(activity!!, R.layout.item_tag, mAttributes!!, R.array.dcmint_default, mDebugMode)
+            recyclerView.adapter = TagRecyclerAdapter(activity!!, R.layout.item_tag, attributes, R.array.dcmint_default, mDebugMode)
 
         } catch (ex: Exception) {
             showImage(false)
@@ -202,23 +169,19 @@ class DcmInfoFragment : Fragment() {
         }
     }
 
-    fun checkDcmImage() {
+    fun checkDcmImage(attributes: Attributes) {
         showImage(false)
-        val error = DcmUtils.checkDcmImage(mAttributes!!)
+        val error = DcmUtils.checkDcmImage(attributes)
         if (error == 0) {
-            loadDcmImage()
+            loadDcmImage(attributes)
             return
         }
 //        text_fileError.setText(error)
     }
 
-    fun loadDcmImage() {
-        val attributes = mAttributes ?: return
-        val pixels: IntArray? = attributes.getInts(Tag.PixelData)
-        if (pixels == null) {
+    fun loadDcmImage(attributes: Attributes) {
+        val pixels = attributes.getInts(Tag.PixelData) ?: return
 //            text_fileError.text = resources.getString(R.string.err_null_pixeldata)
-            return
-        }
 
         // Set the PixelData to null to free memory.
         attributes.setNull(Tag.PixelData, VR.OB)
@@ -235,8 +198,8 @@ class DcmInfoFragment : Fragment() {
         }
 
         // Determine the minmax
-        val minmax = Core.minMaxLoc(temp)
-        val diff = minmax.maxVal - minmax.minVal
+        val minMax = Core.minMaxLoc(temp)
+        val diff = minMax.maxVal - minMax.minVal
         temp.convertTo(temp, CvType.CV_8UC1, 255.0 / diff, 0.0)
         // Make the demo image bluish, rather than black and white.
         Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE)
@@ -266,13 +229,6 @@ class DcmInfoFragment : Fragment() {
             item.setIcon(R.drawable.ic_visibility_off_white_24dp)
             item.icon.alpha = 128
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
-        // Save the current article selection in case we need to recreate the fragment
-        outState.putString(DcmVar.DCMFILE, mCurrFile)
     }
 
     fun showImage(isImage: Boolean) {
