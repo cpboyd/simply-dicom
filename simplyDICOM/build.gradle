@@ -8,8 +8,8 @@ android {
         applicationId 'us.cboyd.android.dicom'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.compileSdkVersion
-        versionCode 7000026
-        versionName "1.0.5"
+        versionCode 7000027
+        versionName "1.0.6"
     }
 
     splits {

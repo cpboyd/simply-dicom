@@ -121,9 +121,16 @@ class DcmImageView: ImageView, View.OnTouchListener {
         }
 
         // Set the image
-        val imageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(temp, imageBitmap, true)
-        setImageBitmap(imageBitmap)
+        try {
+            val imageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            Utils.matToBitmap(temp, imageBitmap, true)
+            setImageBitmap(imageBitmap)
+        } catch (ex: OutOfMemoryError) {
+            System.gc()
+
+            (activity as? DcmViewer)?.showExitAlertDialog("ERROR: Out of memory",
+                    "This DICOM series required more memory than your device could provide.")
+        }
     }
 
     private fun updateScale() {

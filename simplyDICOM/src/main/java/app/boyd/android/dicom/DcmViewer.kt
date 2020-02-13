@@ -353,7 +353,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
      * @param title Title of the AlertDialog.
      * @param message Message of the AlertDialog.
      */
-    private fun showExitAlertDialog(title: String, message: String) {
+    internal fun showExitAlertDialog(title: String, message: String) {
 
         val builder = AlertDialog.Builder(this)
         builder.setMessage(message)
