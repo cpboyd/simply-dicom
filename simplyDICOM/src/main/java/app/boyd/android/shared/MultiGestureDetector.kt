@@ -69,14 +69,15 @@ class MultiGestureDetector : GestureDetector {
      */
     open class SimpleMultiGestureListener : OnGestureListener, GestureDetector.OnDoubleTapListener {
 
-        override fun onSingleTapUp(e: MotionEvent): Boolean {
+        override fun onSingleTapUp(e: MotionEvent?): Boolean {
             return false
         }
 
-        override fun onLongPress(e: MotionEvent) {}
+        override fun onLongPress(e: MotionEvent?) {}
 
-        override fun onScroll(e1: MotionEvent, e2: MotionEvent,
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?,
                               distanceX: Float, distanceY: Float): Boolean {
+            e2 ?: return false
             val numPointers = calcAvgPosition(e2)
             // Calculate span and angle
             if (numPointers == 2) {
@@ -112,11 +113,10 @@ class MultiGestureDetector : GestureDetector {
             when (mScrollMode) {
                 MOVE -> return onMove(e1, e2, distanceX, distanceY, numPointers)
                 SCALE -> {
-                    val scaleFactor: Double
-                    if (mPrevSpan > 0) {
-                        scaleFactor = mCurrSpan / mPrevSpan
+                    val scaleFactor = if (mPrevSpan > 0) {
+                        mCurrSpan / mPrevSpan
                     } else {
-                        scaleFactor = 1.0
+                        1.0
                     }
                     return onScale(e1, e2, scaleFactor, mCurrAngle - mPrevAngle)
                 }
@@ -124,35 +124,35 @@ class MultiGestureDetector : GestureDetector {
             return false
         }
 
-        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float,
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float,
                              velocityY: Float): Boolean {
             return false
         }
 
-        override fun onShowPress(e: MotionEvent) {}
+        override fun onShowPress(e: MotionEvent?) {}
 
-        override fun onDown(e: MotionEvent): Boolean {
+        override fun onDown(e: MotionEvent?): Boolean {
             return false
         }
 
-        override fun onDoubleTap(e: MotionEvent): Boolean {
+        override fun onDoubleTap(e: MotionEvent?): Boolean {
             return false
         }
 
-        override fun onDoubleTapEvent(e: MotionEvent): Boolean {
+        override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
             return false
         }
 
-        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+        override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
             return false
         }
 
-        open fun onMove(e1: MotionEvent, e2: MotionEvent, distanceX: Float,
+        open fun onMove(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float,
                         distanceY: Float, numPointers: Int): Boolean {
             return false
         }
 
-        open fun onScale(e1: MotionEvent, e2: MotionEvent, scaleFactor: Double, angle: Double): Boolean {
+        open fun onScale(e1: MotionEvent?, e2: MotionEvent?, scaleFactor: Double, angle: Double): Boolean {
             return false
         }
     }

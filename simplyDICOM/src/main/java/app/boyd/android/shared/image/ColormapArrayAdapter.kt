@@ -16,7 +16,6 @@ import android.widget.ArrayAdapter
  * into a ListAdapter.
  */
 class ColormapArrayAdapter : ArrayAdapter<String> {
-    private val mColormapDrawables: IntArray? = null
     private var mCmapInvert: Boolean = false
 
     constructor(context: Context, resource: Int, strings: Array<String>) : super(context, resource, strings)

@@ -159,14 +159,14 @@ class DcmImageView: ImageView, View.OnTouchListener {
         imageMatrix = matrix
     }
 
-    override fun onTouch(v: View, event: MotionEvent): Boolean {
+    override fun onTouch(v: View, event: MotionEvent?): Boolean {
         // If we haven't loaded the image yet, don't process any touch events
         mat ?: return false
         multiDetector.onTouchEvent(event)
 
         updateMatrix()
 
-        if (event.action == MotionEvent.ACTION_UP) {
+        if (event?.action == MotionEvent.ACTION_UP) {
             // End scrolling if the user lifts fingers:
             multiDetector.resetScrollMode()
             // Store values in case we need them:
@@ -205,11 +205,11 @@ class DcmImageView: ImageView, View.OnTouchListener {
      * @author Christopher Boyd
      */
     private inner class MultiListener : MultiGestureDetector.SimpleMultiGestureListener() {
-        override fun onDown(e: MotionEvent): Boolean {
+        override fun onDown(e: MotionEvent?): Boolean {
             return clearActivityFocus()
         }
 
-        override fun onDoubleTapEvent(e: MotionEvent): Boolean {
+        override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
             // Center the ball on the display:
             val windowManager = windowManager ?: return false
             val displayMetrics = DisplayMetrics()
@@ -225,7 +225,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
             return true
         }
 
-        override fun onMove(e1: MotionEvent, e2: MotionEvent,
+        override fun onMove(e1: MotionEvent?, e2: MotionEvent?,
                             distanceX: Float, distanceY: Float, numPointers: Int): Boolean {
             when (numPointers) {
                 1 -> {
@@ -249,7 +249,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
             }
         }
 
-        override fun onScale(e1: MotionEvent, e2: MotionEvent, scaleFactor: Double, angle: Double): Boolean {
+        override fun onScale(e1: MotionEvent?, e2: MotionEvent?, scaleFactor: Double, angle: Double): Boolean {
             // Prevent the oval from being too small:
             mScaleY = (mScaleY * scaleFactor).toFloat().coerceIn(0.1f, 100.0f)
 

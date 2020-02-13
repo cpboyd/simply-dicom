@@ -395,12 +395,12 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
      * @param position
      * @param id
      */
-    override fun onItemSelected(parent: AdapterView<*>, view: View,
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?,
                                 position: Int, id: Long) {
         clearFocus()
         // An item was selected. You can retrieve the selected item using
         // parent.getItemAtPosition(position)
-        when (parent.id) {
+        when (parent?.id) {
             R.id.spinnerColormap -> {
                 mCmapSelect = position - 1
                 Log.i("cpb", "Colormap: $mCmapSelect id: $id")
@@ -416,27 +416,30 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
      *
      * @param parent
      */
-    override fun onNothingSelected(parent: AdapterView<*>) {
+    override fun onNothingSelected(parent: AdapterView<*>?) {
         clearFocus()
     }
 
-    override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean {
-        if (actionId == EditorInfo.IME_ACTION_DONE) {
-            val userInput = Integer.parseInt(v.text.toString())
+    override fun onEditorAction(view: TextView?, actionId: Int, event: KeyEvent?): Boolean {
+        val text = view?.text ?: return false
+        if (actionId != EditorInfo.IME_ACTION_DONE) {
+            return false
+        }
+
+        val userInput = Integer.parseInt(text.toString())
 //            if (userInput < 0)
 //                input_idx.setError("< 0");
 //            else if (userInput > currentMax)
 //                input_idx.setError("> " + currentMax);
-            currentInstance = userInput.coerceIn(0, currentMax)
-            v.text = (currentInstance + 1).toString()
-            // Changing the progress bar will set the image
-            seek_idx.progress = currentInstance
-            // Hide the keyboard (clearing focus keeps it open)
-            hideKeyboard(v)
-            // Clear focus from EditText
-            input_idx.clearFocus()
-        }
-        return false
+        currentInstance = userInput.coerceIn(0, currentMax)
+        view.text = (currentInstance + 1).toString()
+        // Changing the progress bar will set the image
+        seek_idx.progress = currentInstance
+        // Hide the keyboard (clearing focus keeps it open)
+        hideKeyboard(view)
+        // Clear focus from EditText
+        input_idx.clearFocus()
+        return true
     }
 
     /**
@@ -444,10 +447,10 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
      * @param buttonView
      * @param isChecked
      */
-    override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+    override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
         clearFocus()
         // Check which toggle button was changed
-        when (buttonView.id) {
+        when (buttonView?.id) {
             R.id.btn_invert -> {
                 mCmapInv = isChecked
                 (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap(mCmapInv)

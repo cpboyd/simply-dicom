@@ -19,9 +19,9 @@ class ImageContrastView : ImageView {
     private val dashPath = Path()
     private val dash = DashPathEffect(floatArrayOf(5f, 8f), 0f)
     // Brightness & contrast values
-    private var mLevel: Double = 0.toDouble()
-    private var mMax: Double = 0.toDouble()
-    private var mMin: Double = 0.toDouble()
+    private var mLevel: Double = 0.0
+    private var mMax: Double = 0.0
+    private var mMin: Double = 0.0
 
     /**
      * Constructors
@@ -44,12 +44,12 @@ class ImageContrastView : ImageView {
     @JvmOverloads
     fun setImageContrast(brightness: Double = 50.0, contrast: Double = 0.0, colormap: Int = -1, invertCmap: Boolean = false) {
         val diff = width.toDouble()
-        val ImWidth = (1 - contrast / 100.0) * diff
-        var alpha = 255.0 / ImWidth
+        val imWidth = (1 - contrast / 100.0) * diff
+        var alpha = 255.0 / imWidth
         var beta = alpha * -mMin
-        mLevel = ImWidth / 2.0 + (diff - ImWidth) * (1.0 - brightness / 100.0)
-        mMax = ImWidth + (diff - ImWidth) * (1.0 - brightness / 100.0)
-        mMin = (diff - ImWidth) * (1.0 - brightness / 100.0)
+        mLevel = imWidth / 2.0 + (diff - imWidth) * (1.0 - brightness / 100.0)
+        mMax = imWidth + (diff - imWidth) * (1.0 - brightness / 100.0)
+        mMin = (diff - imWidth) * (1.0 - brightness / 100.0)
 
         val n = diff.toInt()
         val cmap = Mat(1, n, CvType.CV_32S)
@@ -80,8 +80,9 @@ class ImageContrastView : ImageView {
      *
      * This allows for use with setImageBitmap() or setImageDrawable()
      */
-    override fun onDraw(canvas: Canvas) {
+    override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+        canvas ?: return
         // Set the line color to lime green.
         linePaint.color = X11Color.LimeGreen
         dashPaint.color = X11Color.LimeGreen
@@ -91,6 +92,7 @@ class ImageContrastView : ImageView {
         dashPath.rewind()
         dashPath.moveTo(mLevel.toFloat(), 0.0f)
         dashPath.lineTo(mLevel.toFloat(), height.toFloat())
+
         // Draw the level, min, and max lines.
         canvas.drawPath(dashPath, dashPaint)
         // Draw "0" at pixel 1, or else it won't show up.
