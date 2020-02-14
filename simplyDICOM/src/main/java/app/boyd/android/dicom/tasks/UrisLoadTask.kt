@@ -18,11 +18,13 @@ class UrisLoadTaskInput(val attributes: Attributes, val mat: Mat, val uriList: L
             this(result.attributes, result.mat, uriList)
 }
 
-class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoadTaskInput, Pair<Int, Int>, Pair<List<Mat>, List<Int>>?>() {
+class UrisLoadTaskResult(val currentInstance: Int, val matList: List<Mat>, val zList: List<Int>)
+
+class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoadTaskInput, Pair<Int, Int>, UrisLoadTaskResult?>() {
 
     private val viewerRef: WeakReference<DcmViewer> = WeakReference(context)
 
-    override fun doInBackground(vararg params: UrisLoadTaskInput): Pair<List<Mat>, List<Int>>? {
+    override fun doInBackground(vararg params: UrisLoadTaskInput): UrisLoadTaskResult? {
         val input = params[0]
         val attributes = input.attributes
         val rows = attributes.getInt(Tag.Rows, 1)
@@ -101,7 +103,7 @@ class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoad
 
         // Display 100% (if only briefly)
         publishProgress(totalFiles, totalFiles)
-        return Pair(matList.filterNotNull(), zList.filterNotNull())
+        return UrisLoadTaskResult(instanceZ, matList.filterNotNull(), zList.filterNotNull())
     }
 
     private fun publishProgress(currentIndex: Int, totalFiles: Int) {
@@ -117,7 +119,7 @@ class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoad
     }
 
     // After loading, adjust display.
-    override fun onPostExecute(result: Pair<List<Mat>, List<Int>>?) {
+    override fun onPostExecute(result: UrisLoadTaskResult?) {
         // get a reference to the activity if it is still there
         val viewer = viewerRef.get()
         if (viewer == null || viewer.isFinishing) return

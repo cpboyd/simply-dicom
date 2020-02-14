@@ -19,8 +19,9 @@ import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import app.boyd.android.shared.MultiGestureDetector
+import app.boyd.android.shared.gesture.MultiGestureDetector
 import app.boyd.shared.Geometry
+import app.boyd.shared.coercePercent
 
 class DcmImageView: ImageView, View.OnTouchListener {
     interface OnContrastChangedListener {
@@ -73,11 +74,14 @@ class DcmImageView: ImageView, View.OnTouchListener {
         mContrastListener = listener
     }
 
-    fun setColormap(colormap: Int = -1, invertCmap: Boolean = false) {
-        mColormap = colormap
+    fun invertColormap(invertCmap: Boolean = false) {
         mInvertCmap = invertCmap
-        redrawImage()
-        mContrastListener?.onContrastChanged(mBrightness, mContrast, colormap, invertCmap)
+        updateColormap()
+    }
+
+    fun setColormap(colormap: Int = -1) {
+        mColormap = colormap
+        updateColormap()
     }
 
     /**
@@ -85,10 +89,15 @@ class DcmImageView: ImageView, View.OnTouchListener {
      * @param brightness
      * @param contrast
      */
-    fun setImageContrast(brightness: Double = 50.0, contrast: Double = 0.0, colormap: Int = -1, invertCmap: Boolean = false) {
+    fun setImageContrast(brightness: Double = 50.0, contrast: Double = 0.0) {
         mBrightness = brightness
         mContrast = contrast
-        setColormap(colormap, invertCmap)
+        updateColormap()
+    }
+
+    private fun updateColormap() {
+        redrawImage()
+        mContrastListener?.onContrastChanged(mBrightness, mContrast, mColormap, mInvertCmap)
     }
 
     private fun redrawImage() {
@@ -139,7 +148,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
         val windowManager = windowManager ?: return
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
-        multiDetector.setHorizontalMargin(25.0f * displayMetrics.density)
+        multiDetector.setHorizontalMargin(25.0 * displayMetrics.density)
         val displayCenterX = displayMetrics.widthPixels / 2.0f
         val displayCenterY = displayMetrics.heightPixels / 2.0f
 
@@ -228,7 +237,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
             // Reset brightness (window level) and contrast (window width) to middle:
             mBrightness = 50.0
             mContrast = 0.0
-            setImageContrast(mBrightness, mContrast, mColormap, mInvertCmap)
+            setImageContrast(mBrightness, mContrast)
             return true
         }
 
@@ -244,12 +253,12 @@ class DcmImageView: ImageView, View.OnTouchListener {
                     // Do different things, depending on whether the fingers are moving in X or Y.
                     if (multiDetector.isTravelY) {
                         mContrast = mLastContrast
-                        mBrightness = (mBrightness - distanceY / 5.0).coerceIn(0.0, 100.0)
+                        mBrightness = (mBrightness - distanceY / 5.0).coercePercent()
                     } else {
                         mBrightness = mLastBrightness
-                        mContrast = (mContrast + distanceX / 10.0).coerceIn(0.0, 100.0)
+                        mContrast = (mContrast + distanceX / 10.0).coercePercent()
                     }
-                    setImageContrast(mBrightness, mContrast, mColormap, mInvertCmap)
+                    setImageContrast(mBrightness, mContrast)
                     return true
                 }
                 else -> return false
@@ -258,7 +267,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
 
         override fun onScale(e1: MotionEvent?, e2: MotionEvent?, scaleFactor: Double, angle: Double): Boolean {
             // Prevent the oval from being too small:
-            mScaleY = (mScaleY * scaleFactor).toFloat().coerceIn(0.1f, 100.0f)
+            mScaleY = (mScaleY * scaleFactor).coercePercent().toFloat()
 
             mRotDeg += Geometry.rad2deg(angle).toFloat()
             return true

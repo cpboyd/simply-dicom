@@ -6,11 +6,11 @@ import android.os.Build
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
+import app.boyd.shared.X11Color
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import app.boyd.shared.X11Color
 
 class ImageContrastView : ImageView {
     // Paint and path effects used for drawing lines
@@ -19,9 +19,9 @@ class ImageContrastView : ImageView {
     private val dashPath = Path()
     private val dash = DashPathEffect(floatArrayOf(5f, 8f), 0f)
     // Brightness & contrast values
-    private var mLevel: Double = 0.0
-    private var mMax: Double = 0.0
-    private var mMin: Double = 0.0
+    private var mLevel = 0.0
+    private var mMax = 0.0
+    private var mMin = 0.0
 
     /**
      * Constructors

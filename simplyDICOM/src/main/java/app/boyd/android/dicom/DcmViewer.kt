@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
@@ -13,17 +12,17 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.CompoundButton
+import android.widget.SeekBar
+import android.widget.TextView
+import app.boyd.android.dicom.tasks.*
+import app.boyd.android.shared.image.ColormapArrayAdapter
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.dcm_viewer.*
-import org.dcm4che3.data.Attributes
-import org.dcm4che3.data.Tag
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import app.boyd.android.dicom.tasks.*
-import app.boyd.android.shared.image.ColormapArrayAdapter
-import kotlin.collections.ArrayList
 
 /**
  * DICOMViewer Class
@@ -32,10 +31,6 @@ import kotlin.collections.ArrayList
  */
 class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
-
-    private var mCmapInv = false
-    private var mCmapSelect = -1
-    private var mImageCount = 0
     private var mInstance = intArrayOf(0, 0, 0)
     private var mMaxIndex = intArrayOf(0, 0, 0)
     private var mScaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
@@ -44,8 +39,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     private var mMatList: List<Mat>? = null
     private var zList: List<Int>? = null
     private var mTask: AsyncTask<*, *, *>? = null
-
-    private var currentAttributes: Attributes? = null
 
     private var currentInstance: Int
         get() = mInstance[mAxis.ordinal]
@@ -125,12 +118,14 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 
     // File Load
     private fun loadFile(intent: Intent) {
+        // TODO: Add prompt before clearing current data?
+        cancelLoadTask()
         // Show loading UI
         showLoading()
         IntentLoadTask(this).execute(intent)
     }
 
-    fun cancelLoadTask(force: Boolean = false) {
+    private fun cancelLoadTask(force: Boolean = false) {
         mTask?.cancel(force)
     }
 
@@ -157,7 +152,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         super.onDestroy()
         cancelLoadTask(true)
         mMatList = null
-        currentAttributes = null
 
         // Free the drawable callback
         if (imageView != null) {
@@ -268,7 +262,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     fun updateProgress(progress: Pair<Int, Int>) {
         val currentIndex = progress.first
         val totalFiles = progress.second
-        loadProgress.progress = (currentIndex / totalFiles.toFloat() * 100).toInt()
+        loadProgress.progress = (currentIndex / totalFiles.toDouble() * 100).toInt()
         progressText.text = "$currentIndex/$totalFiles"
     }
 
@@ -278,10 +272,8 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     }
 
     fun loadResult(result: IntentLoadTaskResult) {
-        currentAttributes = result.attributes
         val mat = result.mat
         imageView.mat = mat
-        mImageCount++
 
         // Eliminate the loading symbol
         hideLoading()
@@ -294,10 +286,6 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
             return
         }
 
-        loadOtherFiles(result, uris)
-    }
-
-    fun loadOtherFiles(result: IntentLoadTaskResult, uris: List<Uri>) {
         mTask = UrisLoadTask(this).execute(UrisLoadTaskInput(result, uris))
     }
 
@@ -308,9 +296,9 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         mScaleSpacing = doubleArrayOf(spacing[1] / spacing[0], spacing[1] / spacingZ, spacingZ / spacing[0])
     }
 
-    fun loadResult(result: Pair<List<Mat>, List<Int>>?) {
+    fun loadResult(result: UrisLoadTaskResult?) {
         progressContainer2.visibility = View.INVISIBLE
-        val mats = result?.first ?: return
+        val mats = result?.matList ?: return
         if (mats.isNullOrEmpty()) {
             return
         }
@@ -328,10 +316,9 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // Display the current file index
         //input_idx.setText(String.valueOf(mInstance + 1))
 
-        val attributes = currentAttributes ?: return
-        val instanceNum = attributes.getInt(Tag.InstanceNumber, -1)
+        val instanceNum = result.currentInstance
 
-        val zs = result.second
+        val zs = result.zList
         val z = zs.indexOf(instanceNum).coerceAtLeast(0)
         zList = zs
         mInstance = intArrayOf(z, rows / 2, cols / 2)
@@ -402,9 +389,9 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // parent.getItemAtPosition(position)
         when (parent?.id) {
             R.id.spinnerColormap -> {
-                mCmapSelect = position - 1
-                Log.i("cpb", "Colormap: $mCmapSelect id: $id")
-                imageView.setColormap(mCmapSelect, mCmapInv)
+                val cmapSelect = position - 1
+                Log.i("cpb", "Colormap: $cmapSelect id: $id")
+                imageView.setColormap(cmapSelect)
             }
             R.id.spinnerAxis -> {
                 updateAxis(position)
@@ -452,9 +439,8 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // Check which toggle button was changed
         when (buttonView?.id) {
             R.id.btn_invert -> {
-                mCmapInv = isChecked
-                (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap(mCmapInv)
-                imageView.setColormap(mCmapSelect, mCmapInv)
+                (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap(isChecked)
+                imageView.invertColormap(isChecked)
             }
         }
     }

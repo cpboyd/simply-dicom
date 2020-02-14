@@ -1,4 +1,4 @@
-package app.boyd.android.shared
+package app.boyd.android.shared.gesture
 
 import android.content.Context
 import android.os.Handler
@@ -36,29 +36,25 @@ class MultiGestureDetector : GestureDetector {
         get() = !isTravelX
 
     /** Returns the current scroll mode  */
-    val scrollMode: Short
+    val scrollMode: ScrollMode
         get() = mScrollMode
 
-    fun setTopMargin(margin: Float) {
+    fun setTopMargin(margin: Double) {
         mMarginTop = margin
     }
 
-    fun setBottomMargin(margin: Float) {
+    fun setBottomMargin(margin: Double) {
         mMarginBottom = margin
     }
 
-    fun setHorizontalMargin(margin: Float) {
-        setHorizontalMargin(margin, margin)
-    }
-
-    fun setHorizontalMargin(marginTop: Float, marginBottom: Float) {
+    fun setHorizontalMargin(marginTop: Double, marginBottom: Double = marginTop) {
         mMarginTop = marginTop
         mMarginBottom = marginBottom
     }
 
     /** Reset the scroll mode to NO_SCROLL  */
     fun resetScrollMode() {
-        mScrollMode = NO_SCROLL
+        mScrollMode = ScrollMode.NO_SCROLL
     }
 
     /**
@@ -78,7 +74,10 @@ class MultiGestureDetector : GestureDetector {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?,
                               distanceX: Float, distanceY: Float): Boolean {
             e2 ?: return false
-            val numPointers = calcAvgPosition(e2)
+            val numPointers = e2.pointerCount
+            val avg = e2.calcAvgPosition()
+            mCurrentX = avg.first
+            mCurrentY = avg.second
             // Calculate span and angle
             if (numPointers == 2) {
                 //mPrevSpanX = mCurrSpanX;
@@ -90,15 +89,15 @@ class MultiGestureDetector : GestureDetector {
                 mPrevSpan = mCurrSpan
                 mCurrSpan = Geometry.dist2(mCurrSpanX, mCurrSpanY)
             }
-            if (mScrollMode == NO_SCROLL) {
+            if (mScrollMode == ScrollMode.NO_SCROLL) {
                 // Store initial positions
                 mInitialX = mCurrentX
                 mInitialY = mCurrentY
                 // Set ScrollMode
-                if (numPointers == 1 || smallAngle(mCurrAngle)) {
-                    mScrollMode = MOVE
+                if (numPointers == 1 || mCurrAngle.isAngleSmall()) {
+                    mScrollMode = ScrollMode.MOVE
                 } else {
-                    mScrollMode = SCALE
+                    mScrollMode = ScrollMode.SCALE
                     // Return false to prevent onScale with an incorrect PreviousAngle.
                     return false
                 }
@@ -110,18 +109,20 @@ class MultiGestureDetector : GestureDetector {
                     return false
             }
 
-            when (mScrollMode) {
-                MOVE -> return onMove(e1, e2, distanceX, distanceY, numPointers)
-                SCALE -> {
+            return when (mScrollMode) {
+                ScrollMode.MOVE -> onMove(e1, e2, distanceX, distanceY, numPointers)
+                ScrollMode.SCALE -> {
                     val scaleFactor = if (mPrevSpan > 0) {
                         mCurrSpan / mPrevSpan
                     } else {
                         1.0
                     }
-                    return onScale(e1, e2, scaleFactor, mCurrAngle - mPrevAngle)
+                    onScale(e1, e2, scaleFactor, mCurrAngle - mPrevAngle)
+                }
+                else -> {
+                    false
                 }
             }
-            return false
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float,
@@ -180,55 +181,24 @@ class MultiGestureDetector : GestureDetector {
                 handler: Handler) : super(context, listener, handler)
 
     companion object {
-        /** Scroll Mode Values  */
-        val NO_SCROLL: Short = 0
-        val MOVE: Short = 1
-        val SCALE: Short = 2
-        val MOVE2: Short = 3
-
         /** Internal Variables  */
-        private var mScrollMode = NO_SCROLL
-        private var mPrevAngle: Double = 0.toDouble()
-        private var mCurrAngle: Double = 0.toDouble()
+        private var mScrollMode = ScrollMode.NO_SCROLL
+        private var mPrevAngle = 0.0
+        private var mCurrAngle = 0.0
 
         /** X & Y difference between pointers  */
-        private var mInitialX: Float = 0.toFloat()
-        private var mInitialY: Float = 0.toFloat()
-        private var mCurrentX: Float = 0.toFloat()
-        private var mCurrentY: Float = 0.toFloat()
-        //private static float mPrevSpanX = 0;
-        //private static float mPrevSpanY = 0;
-        private var mCurrSpanX: Float = 0.toFloat()
-        private var mCurrSpanY: Float = 0.toFloat()
-        private var mPrevSpan: Double = 0.toDouble()
-        private var mCurrSpan: Double = 0.toDouble()
+        private var mInitialX = 0.0
+        private var mInitialY = 0.0
+        private var mCurrentX = 0.0
+        private var mCurrentY = 0.0
+        //private var mPrevSpanX = 0.0
+        //private var mPrevSpanY = 0.0
+        private var mCurrSpanX = 0.0f
+        private var mCurrSpanY = 0.0f
+        private var mPrevSpan = 0.0
+        private var mCurrSpan = 0.0
 
-        private var mMarginTop: Float = 0.toFloat()
-        private var mMarginBottom: Float = 0.toFloat()
-
-        /** Determine if angle is small enough  */
-        private fun smallAngle(angle: Double): Boolean {
-            val angleDeg = Geometry.rad2deg(abs(angle))
-            // The sweet spot seems to be around 20 degrees:
-            return 0.0 <= angleDeg && angleDeg < 20.0 || 160.0 < angleDeg && angleDeg <= 180.0
-        }
-
-        /**
-         * Calculates the average X & Y positions, returns the [MotionEvent]'s
-         * pointer count.
-         */
-        private fun calcAvgPosition(e2: MotionEvent): Int {
-            val numPointers = e2.pointerCount
-            // Store initial positions
-            mCurrentX = 0f
-            mCurrentY = 0f
-            for (i in 0 until numPointers) {
-                mCurrentX += e2.getX(i)
-                mCurrentY += e2.getY(i)
-            }
-            mCurrentX /= numPointers.toFloat()
-            mCurrentY /= numPointers.toFloat()
-            return numPointers
-        }
+        private var mMarginTop = 0.0
+        private var mMarginBottom = 0.0
     }
 }
