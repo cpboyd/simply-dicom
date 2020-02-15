@@ -3,7 +3,6 @@ package app.boyd.android.dicom
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.Build
 import android.util.AttributeSet
@@ -14,7 +13,6 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
-import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -117,23 +115,15 @@ class DcmImageView: ImageView, View.OnTouchListener {
             beta = 255.0 - beta
         }
 
-        val height = mat.rows()
-        val width = mat.cols()
-        val temp = Mat(height, width, CvType.CV_32S)
+        val rows = mat.rows()
+        val cols = mat.cols()
+        val temp = Mat(rows, cols, CvType.CV_32S)
         //Core.normalize(mat, temp, ImMin, ImMax, Core.NORM_MINMAX)
         mat.convertTo(temp, CvType.CV_8UC1, alpha, beta)
-        if (mColormap >= 0) {
-            Imgproc.applyColorMap(temp, temp, mColormap)
-            //applyColorMap returns a BGR image, but createBitmap expects RGB
-            //do a conversion to swap blue and red channels:
-            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR)
-        }
 
         // Set the image
         try {
-            val imageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            Utils.matToBitmap(temp, imageBitmap, true)
-            setImageBitmap(imageBitmap)
+            setImageBitmap(temp.toBitmap(mColormap))
         } catch (ex: OutOfMemoryError) {
             System.gc()
 

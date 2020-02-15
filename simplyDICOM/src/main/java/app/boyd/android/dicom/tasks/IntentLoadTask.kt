@@ -3,27 +3,14 @@ package app.boyd.android.dicom.tasks
 import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
-import org.dcm4che3.data.Attributes
-import org.dcm4che3.data.Tag
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import app.boyd.android.dicom.DcmUtils
 import app.boyd.android.dicom.DcmViewer
+import app.boyd.android.dicom.checkAttributes
+import app.boyd.android.dicom.getMat
+import org.dcm4che3.data.Attributes
+import org.opencv.core.Mat
 import java.lang.ref.WeakReference
 
-fun matFrom(attributes: Attributes): Mat {
-    val rows = attributes.getInt(Tag.Rows, 1)
-    val cols = attributes.getInt(Tag.Columns, 1)
-    val mat = Mat(rows, cols, CvType.CV_32S)
-    val pix = attributes.getInts(Tag.PixelData)
-    // TODO: Show popup error message
-    if (pix != null && pix.isNotEmpty()) {
-        mat.put(0, 0, pix)
-    }
-    return mat
-}
-
-class IntentLoadTaskResult(val attributes: Attributes, val uris: List<Uri>, val mat: Mat = matFrom(attributes))
+class IntentLoadTaskResult(val attributes: Attributes, val uris: List<Uri>, val mat: Mat? = attributes.getMat())
 
 class IntentLoadTask internal constructor(context: DcmViewer) : AsyncTask<Intent, Int, IntentLoadTaskResult?>() {
 
@@ -41,7 +28,7 @@ class IntentLoadTask internal constructor(context: DcmViewer) : AsyncTask<Intent
         val uris = ArrayList<Uri>()
         if (multi == null) {
             val uri = intent.data ?: return null
-            val pair = DcmUtils.checkAttributes(viewer, uri)
+            val pair = viewer.checkAttributes(uri)
             errorMsg = pair.second
             return pair.first?.let { IntentLoadTaskResult(it, uris) }
         }
@@ -56,7 +43,7 @@ class IntentLoadTask internal constructor(context: DcmViewer) : AsyncTask<Intent
                 continue
             }
 
-            val pair = DcmUtils.checkAttributes(viewer, uri)
+            val pair = viewer.checkAttributes(uri)
             // TODO: Add error list for all files?
             errorMsg = pair.second
             pair.first?.let { attr = it }

@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
+import app.boyd.android.dicom.toBitmap
 import app.boyd.shared.X11Color
 import org.opencv.android.Utils
 import org.opencv.core.CvType
@@ -64,15 +65,7 @@ class ImageContrastView : ImageView {
         }
 
         cmap.convertTo(cmap, CvType.CV_8UC1, alpha, beta)
-        if (colormap >= 0) {
-            Imgproc.applyColorMap(cmap, cmap, colormap)
-            //applyColorMap returns a BGR image, but createBitmap expects RGB
-            //do a conversion to swap blue and red channels:
-            Imgproc.cvtColor(cmap, cmap, Imgproc.COLOR_RGB2BGR)
-        }
-        val cmapBitmap = Bitmap.createBitmap(n, 1, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(cmap, cmapBitmap, false)
-        setImageBitmap(cmapBitmap)
+        setImageBitmap(cmap.toBitmap(colormap))
     }
 
     /**

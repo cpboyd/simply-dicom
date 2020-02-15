@@ -11,6 +11,7 @@ import android.widget.ListAdapter
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import app.boyd.android.dicom.tag.TagRecyclerAdapter
 import kotlinx.android.synthetic.main.dcm_info.*
 import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
@@ -19,10 +20,10 @@ import org.dcm4che3.io.DicomInputStream
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
-import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import app.boyd.android.dicom.tag.TagRecyclerAdapter
-import java.io.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 
 /**
  * DICOM InfoFragment
@@ -172,7 +173,7 @@ class DcmInfoFragment : Fragment() {
 
     fun checkDcmImage(attributes: Attributes) {
         showImage(false)
-        val error = DcmUtils.checkDcmImage(attributes)
+        val error = attributes.checkImage()
         if (error == 0) {
             loadDcmImage(attributes)
             return
@@ -182,29 +183,20 @@ class DcmInfoFragment : Fragment() {
 
     fun loadDcmImage(attributes: Attributes) {
         try {
-            val pixels = attributes.getInts(Tag.PixelData) ?: return
+            val mat = attributes.getMat() ?: return
 //            text_fileError.text = resources.getString(R.string.err_null_pixeldata)
 
             // Set the PixelData to null to free memory.
             attributes.setNull(Tag.PixelData, VR.OB)
             showImage(true)
-            val rows = attributes.getInt(Tag.Rows, 1)
-            val cols = attributes.getInt(Tag.Columns, 1)
-            val temp = Mat(rows, cols, CvType.CV_32S)
-            temp.put(0, 0, pixels)
 
             // Determine the minmax
-            val minMax = Core.minMaxLoc(temp)
+            val minMax = Core.minMaxLoc(mat)
             val diff = minMax.maxVal - minMax.minVal
-            temp.convertTo(temp, CvType.CV_8UC1, 255.0 / diff, 0.0)
-            // Make the demo image bluish, rather than black and white.
-            Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE)
-            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR)
+            mat.convertTo(mat, CvType.CV_8UC1, 255.0 / diff, 0.0)
 
             // Set the image
-            val imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888)
-            Utils.matToBitmap(temp, imageBitmap, true)
-            backdrop.setImageBitmap(imageBitmap)
+            backdrop.setImageBitmap(mat.toBitmap())
         } catch (ex: OutOfMemoryError) {
             System.gc()
             // TODO: Display error?
@@ -212,9 +204,10 @@ class DcmInfoFragment : Fragment() {
         }
         // [Y, X] or [row, column]
         val spacing = attributes.getDoubles(Tag.PixelSpacing)
-        var scaleY2X = 1.0
-        if (spacing != null) {
-            scaleY2X = spacing[1] / spacing[0]
+        val scaleY2X = if (spacing != null) {
+            spacing[1] / spacing[0]
+        } else {
+            1.0
         }
         backdrop.scaleX = scaleY2X.toFloat()
         // Limit the height of the image view to display at least two ListView entries (and toolbar).

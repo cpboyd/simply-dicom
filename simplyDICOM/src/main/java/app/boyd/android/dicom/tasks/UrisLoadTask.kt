@@ -7,13 +7,13 @@ import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
 import org.opencv.core.CvType
 import org.opencv.core.Mat
-import app.boyd.android.dicom.DcmUtils
 import app.boyd.android.dicom.DcmViewer
+import app.boyd.android.dicom.checkAttributes
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs
 
-class UrisLoadTaskInput(val attributes: Attributes, val mat: Mat, val uriList: List<Uri>) {
+class UrisLoadTaskInput(val attributes: Attributes, val mat: Mat?, val uriList: List<Uri>) {
     constructor(result: IntentLoadTaskResult, uriList: List<Uri>) :
             this(result.attributes, result.mat, uriList)
 }
@@ -60,7 +60,7 @@ class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoad
                 return null
             }
 
-            val pair = DcmUtils.checkAttributes(viewer, uri)
+            val pair = viewer.checkAttributes(uri)
             val currDcm = pair.first ?: continue
 
             // Check the instance number
