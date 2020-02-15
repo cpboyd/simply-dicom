@@ -10,6 +10,7 @@ import org.dcm4che3.data.Tag
 import org.dcm4che3.data.UID
 import org.dcm4che3.io.DicomInputStream
 import org.opencv.android.Utils
+import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
@@ -108,13 +109,36 @@ fun Attributes.getMat(): Mat? {
     return mat
 }
 
+fun Core.MinMaxLocResult.span(): Double {
+    return this.maxVal - this.minVal
+}
+
+fun Mat.minMaxSpan(): Double {
+    // Determine the minMax
+    return Core.minMaxLoc(this).span()
+}
+
+fun Mat.adjustContrast(span: Double = this.minMaxSpan(), min: Double = 0.0, invert: Boolean = false): Mat {
+    val clone = this.clone()
+
+    var gain = 255.0 / span
+    var bias = gain * -min
+    if (invert) {
+        gain *= -1.0
+        bias = 255.0 - bias
+    }
+    // Core.normalize(mat, temp, ImMin, ImMax, Core.NORM_MINMAX)
+    clone.convertTo(clone, CvType.CV_8UC1, gain, bias)
+    return clone
+}
+
 fun Mat.toBitmap(colormap: Int = Imgproc.COLORMAP_BONE): Bitmap {
     // Grayscale is just the lack of a colormap:
     if (colormap >= 0) {
-    Imgproc.applyColorMap(this, this, colormap.coerceIn(0, 20))
-    // applyColorMap returns a BGR image, but createBitmap expects RGB
-    // do a conversion to swap blue and red channels:
-    Imgproc.cvtColor(this, this, Imgproc.COLOR_RGB2BGR)
+        Imgproc.applyColorMap(this, this, colormap.coerceIn(0, 20))
+        // applyColorMap returns a BGR image, but createBitmap expects RGB
+        // do a conversion to swap blue and red channels:
+        Imgproc.cvtColor(this, this, Imgproc.COLOR_RGB2BGR)
     }
 
     val cols = this.cols()

@@ -1,17 +1,19 @@
 package app.boyd.android.shared.image
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.DashPathEffect
+import android.graphics.Paint
+import android.graphics.Path
 import android.os.Build
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
+import app.boyd.android.dicom.adjustContrast
 import app.boyd.android.dicom.toBitmap
 import app.boyd.shared.X11Color
-import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 
 class ImageContrastView : ImageView {
     // Paint and path effects used for drawing lines
@@ -46,26 +48,18 @@ class ImageContrastView : ImageView {
     fun setImageContrast(brightness: Double = 50.0, contrast: Double = 0.0, colormap: Int = -1, invertCmap: Boolean = false) {
         val diff = width.toDouble()
         val imWidth = (1 - contrast / 100.0) * diff
-        var alpha = 255.0 / imWidth
-        var beta = alpha * -mMin
         mLevel = imWidth / 2.0 + (diff - imWidth) * (1.0 - brightness / 100.0)
         mMax = imWidth + (diff - imWidth) * (1.0 - brightness / 100.0)
         mMin = (diff - imWidth) * (1.0 - brightness / 100.0)
 
         val n = diff.toInt()
         val cmap = Mat(1, n, CvType.CV_32S)
-        var i = 0
-        while (i < n) {
+        for (i in 0 until n) {
             cmap.put(0, i, i.toDouble())
-            i++
-        }
-        if (invertCmap) {
-            alpha *= -1.0
-            beta = 255.0 - beta
         }
 
-        cmap.convertTo(cmap, CvType.CV_8UC1, alpha, beta)
-        setImageBitmap(cmap.toBitmap(colormap))
+        val temp = cmap.adjustContrast(imWidth, mMin, invertCmap)
+        setImageBitmap(temp.toBitmap(colormap))
     }
 
     /**

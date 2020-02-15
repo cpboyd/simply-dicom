@@ -1,7 +1,6 @@
 package app.boyd.android.dicom
 
 import android.app.Activity
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -17,10 +16,6 @@ import org.dcm4che3.data.Attributes
 import org.dcm4che3.data.Tag
 import org.dcm4che3.data.VR
 import org.dcm4che3.io.DicomInputStream
-import org.opencv.android.Utils
-import org.opencv.core.Core
-import org.opencv.core.CvType
-import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -190,13 +185,9 @@ class DcmInfoFragment : Fragment() {
             attributes.setNull(Tag.PixelData, VR.OB)
             showImage(true)
 
-            // Determine the minmax
-            val minMax = Core.minMaxLoc(mat)
-            val diff = minMax.maxVal - minMax.minVal
-            mat.convertTo(mat, CvType.CV_8UC1, 255.0 / diff, 0.0)
-
             // Set the image
-            backdrop.setImageBitmap(mat.toBitmap())
+            val temp = mat.adjustContrast()
+            backdrop.setImageBitmap(temp.toBitmap())
         } catch (ex: OutOfMemoryError) {
             System.gc()
             // TODO: Display error?

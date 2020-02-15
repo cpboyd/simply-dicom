@@ -13,13 +13,11 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
-import org.opencv.core.Core
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 import app.boyd.android.shared.gesture.MultiGestureDetector
 import app.boyd.shared.Geometry
 import app.boyd.shared.coercePercent
+import org.opencv.core.Core
+import org.opencv.core.Mat
 
 class DcmImageView: ImageView, View.OnTouchListener {
     interface OnContrastChangedListener {
@@ -103,23 +101,12 @@ class DcmImageView: ImageView, View.OnTouchListener {
         val mat = mat ?: return setImageDrawable(null)
 
         val minMax = Core.minMaxLoc(mat)
-        val diff = minMax.maxVal - minMax.minVal
+        val diff = minMax.span()
         val imWidth = (1.0 - mContrast / 100.0) * diff
         //val imMax = imWidth + (diff - imWidth) * (1.0 - (mBrightness / 100.0)) + minMax.minVal
         val imMin = (diff - imWidth) * (1.0 - mBrightness / 100.0) + minMax.minVal
-        var alpha = 255.0 / imWidth
-        var beta = alpha * -imMin
 
-        if (mInvertCmap) {
-            alpha *= -1.0
-            beta = 255.0 - beta
-        }
-
-        val rows = mat.rows()
-        val cols = mat.cols()
-        val temp = Mat(rows, cols, CvType.CV_32S)
-        //Core.normalize(mat, temp, ImMin, ImMax, Core.NORM_MINMAX)
-        mat.convertTo(temp, CvType.CV_8UC1, alpha, beta)
+        val temp = mat.adjustContrast(imWidth, imMin, mInvertCmap)
 
         // Set the image
         try {
