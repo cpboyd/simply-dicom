@@ -17,51 +17,54 @@ class OcvColormaps {
         val cmaps = OcvColormaps()
         val cmap = arrayOf(cmaps.Autumn(), cmaps.Bone(), cmaps.Cool(), cmaps.Hot(), cmaps.HSV(), cmaps.Jet(), cmaps.Ocean(), cmaps.Pink(), cmaps.Rainbow(), cmaps.Spring(), cmaps.Summer(), cmaps.Winter())
         for (i in cmap.indices) {
-            val length = cmap[i].r!!.size
+            val r = cmap[i].r ?: continue
+            val g = cmap[i].g ?: continue
+            val b = cmap[i].b ?: continue
+            val length = r.size
             var quarter = length / 8.0
             var qfloor = floor(quarter).toInt()
             var qfrac = quarter - qfloor
-            Log.i("cpb", "Cmap " + i + "[0]: " + cmap[i].r!![0] + " " + cmap[i].g!![0] + " " + cmap[i].b!![0])
+            Log.i("cpb", "Cmap " + i + "[0]: " + r[0] + " " + g[0] + " " + b[0])
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.125]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.125]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length / 4.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.25]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.25]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length * 3 / 8.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.325]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.325]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length / 2.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.5]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.5]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length * 5 / 8.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.625]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.625]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length * 3 / 4.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.75]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.75]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
             quarter = length * 7 / 8.0
             qfloor = floor(quarter).toInt()
             qfrac = quarter - qfloor
             if (quarter == qfloor.toDouble()) {
-                Log.i("cpb", "Cmap " + i + "[0.825]: " + (cmap[i].r!![qfloor] + cmap[i].r!![qfloor - 1]) / 2 + " " + (cmap[i].g!![qfloor] + cmap[i].g!![qfloor - 1]) / 2 + " " + (cmap[i].b!![qfloor] + cmap[i].b!![qfloor - 1]) / 2)
+                Log.i("cpb", "Cmap " + i + "[0.825]: " + (r[qfloor] + r[qfloor - 1]) / 2 + " " + (g[qfloor] + g[qfloor - 1]) / 2 + " " + (b[qfloor] + b[qfloor - 1]) / 2)
             }
-            Log.i("cpb", "Cmap " + i + "[1]: " + cmap[i].r!![length - 1] + " " + cmap[i].g!![length - 1] + " " + cmap[i].b!![length - 1])
+            Log.i("cpb", "Cmap " + i + "[1]: " + r[length - 1] + " " + g[length - 1] + " " + b[length - 1])
         }
     }
 

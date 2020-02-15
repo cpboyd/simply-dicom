@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -88,9 +87,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     fun openFile(view: View) {
         // TODO: Use ACTION_OPEN_DOCUMENT for persistable access?
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        if (Build.VERSION.SDK_INT >= 18) {
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-        }
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         intent.type = "application/*"
         if (intent.resolveActivity(packageManager) != null) {
@@ -137,16 +134,12 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
             return
         }
 
-        val decorView = window.decorView
-        var uiOptions = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        if (Build.VERSION.SDK_INT >= 19) {
-            uiOptions = uiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        }
-        decorView.systemUiVisibility = uiOptions
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
     }
 
     override fun onDestroy() {

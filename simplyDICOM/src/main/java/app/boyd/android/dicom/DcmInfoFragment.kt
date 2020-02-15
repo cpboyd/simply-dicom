@@ -51,17 +51,17 @@ class DcmInfoFragment : Fragment() {
     }
 
     private var mAttributes: Attributes? = null
-    private var mDebugMode = false
+    private var _debugMode = false
     private var mInflater: LayoutInflater? = null
     
     var mode: Boolean
-        get() = mDebugMode
-        set(extraInfo) {
-            mDebugMode = extraInfo
+        get() = _debugMode
+        set(value) {
+            _debugMode = value
             updateModeIcon()
             if (recyclerView != null) {
                 val adapter = recyclerView.adapter as? TagRecyclerAdapter ?: return
-                adapter.setDebugMode(mDebugMode)
+                adapter.debugMode = _debugMode
             }
         }
 
@@ -155,7 +155,8 @@ class DcmInfoFragment : Fragment() {
             checkDcmImage(attributes)
 
             // TODO: Add selector for info tag listing
-            recyclerView.adapter = TagRecyclerAdapter(activity!!, R.layout.item_tag, attributes, R.array.dcmint_default, mDebugMode)
+            val activity = activity ?: return
+            recyclerView.adapter = TagRecyclerAdapter(activity, R.layout.item_tag, attributes, R.array.dcmint_default, _debugMode)
 
         } catch (ex: Exception) {
             showImage(false)
@@ -229,7 +230,7 @@ class DcmInfoFragment : Fragment() {
     private fun updateModeIcon() {
         val item = toolbar?.menu?.findItem(R.id.debug_mode) ?: return
 
-        if (mDebugMode) {
+        if (_debugMode) {
             item.setIcon(R.drawable.ic_visibility_white_24dp)
         } else {
             item.setIcon(R.drawable.ic_visibility_off_white_24dp)
