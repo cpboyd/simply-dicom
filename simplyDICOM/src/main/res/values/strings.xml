@@ -74,6 +74,8 @@
     <string name="drawer_close">Close navigation drawer</string>
 
     <!-- Error Messages (Displayed to User) -->
+    <string name="err_title_oom">ERROR: Out of memory</string>
+    <string name="err_mesg_oom">You need more memory to load this DICOM series. Try closing other applications or selecting fewer DICOM files.</string>
     <string name="err_title_disk">ERROR: No storage found.</string>
     <string name="err_mesg_disk">Please connect or insert external storage.</string>
     <string name="err_close">Exit</string>

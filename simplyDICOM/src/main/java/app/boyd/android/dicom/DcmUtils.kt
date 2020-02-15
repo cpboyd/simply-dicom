@@ -23,11 +23,18 @@ object DcmUtils {
      * (0 is not a valid resource ID.)
      */
     fun checkDcmImage(attributes: Attributes): Int {
-        val pixels = attributes.getInts(Tag.PixelData)
+        try {
+            val pixels = attributes.getInts(Tag.PixelData)
+            if (pixels == null || pixels.isEmpty()) {
+                return R.string.err_null_pixeldata
+            }
+        } catch (ex: OutOfMemoryError) {
+            System.gc()
+            return R.string.err_mesg_oom
+        }
         val sopClass = attributes.getString(Tag.MediaStorageSOPClassUID)
         val transferSyntax = attributes.getString(Tag.TransferSyntaxUID)
         return when {
-            pixels == null || pixels.isEmpty() -> R.string.err_null_pixeldata
             // TODO: DICOMDIR support
             sopClass == UID.MediaStorageDirectoryStorage -> R.string.err_dicomdir
             // Null transfer syntax (e.g. "raw" DICOM)

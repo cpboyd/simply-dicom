@@ -180,35 +180,41 @@ class DcmInfoFragment : Fragment() {
     }
 
     fun loadDcmImage(attributes: Attributes) {
-        val pixels = attributes.getInts(Tag.PixelData) ?: return
+        try {
+            val pixels = attributes.getInts(Tag.PixelData) ?: return
 //            text_fileError.text = resources.getString(R.string.err_null_pixeldata)
 
-        // Set the PixelData to null to free memory.
-        attributes.setNull(Tag.PixelData, VR.OB)
-        showImage(true)
-        val rows = attributes.getInt(Tag.Rows, 1)
-        val cols = attributes.getInt(Tag.Columns, 1)
-        val temp = Mat(rows, cols, CvType.CV_32S)
-        temp.put(0, 0, pixels)
+            // Set the PixelData to null to free memory.
+            attributes.setNull(Tag.PixelData, VR.OB)
+            showImage(true)
+            val rows = attributes.getInt(Tag.Rows, 1)
+            val cols = attributes.getInt(Tag.Columns, 1)
+            val temp = Mat(rows, cols, CvType.CV_32S)
+            temp.put(0, 0, pixels)
+
+            // Determine the minmax
+            val minMax = Core.minMaxLoc(temp)
+            val diff = minMax.maxVal - minMax.minVal
+            temp.convertTo(temp, CvType.CV_8UC1, 255.0 / diff, 0.0)
+            // Make the demo image bluish, rather than black and white.
+            Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE)
+            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR)
+
+            // Set the image
+            val imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888)
+            Utils.matToBitmap(temp, imageBitmap, true)
+            backdrop.setImageBitmap(imageBitmap)
+        } catch (ex: OutOfMemoryError) {
+            System.gc()
+            // TODO: Display error?
+            return
+        }
         // [Y, X] or [row, column]
         val spacing = attributes.getDoubles(Tag.PixelSpacing)
         var scaleY2X = 1.0
         if (spacing != null) {
             scaleY2X = spacing[1] / spacing[0]
         }
-
-        // Determine the minmax
-        val minMax = Core.minMaxLoc(temp)
-        val diff = minMax.maxVal - minMax.minVal
-        temp.convertTo(temp, CvType.CV_8UC1, 255.0 / diff, 0.0)
-        // Make the demo image bluish, rather than black and white.
-        Imgproc.applyColorMap(temp, temp, Imgproc.COLORMAP_BONE)
-        Imgproc.cvtColor(temp, temp, Imgproc.COLOR_RGB2BGR)
-
-        // Set the image
-        val imageBitmap = Bitmap.createBitmap(cols, rows, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(temp, imageBitmap, true)
-        backdrop.setImageBitmap(imageBitmap)
         backdrop.scaleX = scaleY2X.toFloat()
         // Limit the height of the image view to display at least two ListView entries (and toolbar).
         val displayMetrics = resources.displayMetrics

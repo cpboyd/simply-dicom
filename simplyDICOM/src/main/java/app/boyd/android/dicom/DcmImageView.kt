@@ -137,8 +137,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
         } catch (ex: OutOfMemoryError) {
             System.gc()
 
-            (activity as? DcmViewer)?.showExitAlertDialog("ERROR: Out of memory",
-                    "This DICOM series required more memory than your device could provide.")
+            (activity as? DcmViewer)?.showMemoryDialog()
         }
     }
 

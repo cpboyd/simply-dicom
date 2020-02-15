@@ -16,6 +16,7 @@ import android.widget.AdapterView
 import android.widget.CompoundButton
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.annotation.StringRes
 import app.boyd.android.dicom.tasks.*
 import app.boyd.android.shared.image.ColormapArrayAdapter
 import com.google.android.material.snackbar.Snackbar
@@ -43,7 +44,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     private var currentInstance: Int
         get() = mInstance[mAxis.ordinal]
         set(value) {
-            mInstance[mAxis.ordinal] = value
+            mInstance[mAxis.ordinal] = value.coerceIn(0, currentMax)
         }
 
     private val currentMax: Int
@@ -154,12 +155,10 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         mMatList = null
 
         // Free the drawable callback
-        if (imageView != null) {
-            val drawable = imageView.drawable
+        val drawable = imageView?.drawable
 
-            if (drawable != null)
-                drawable.callback = null
-        }
+        if (drawable != null)
+            drawable.callback = null
     }
 
     @Synchronized
@@ -193,35 +192,31 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
                 }
                 imageView.mat = newMat
             }
-
-            // Update the UI
-            input_idx.setText((currentInstance + 1).toString())
-
-            // Set the visibility of the previous button
-            currentInstance = currentInstance.coerceIn(0, currentMax)
-            when (currentInstance) {
-                 0 -> {
-                    btn_prev_idx.visibility = View.INVISIBLE
-                    btn_next_idx.visibility = View.VISIBLE
-
-                }
-                currentMax -> {
-                    btn_next_idx.visibility = View.INVISIBLE
-                    btn_prev_idx.visibility = View.VISIBLE
-
-                }
-                else -> {
-                    btn_prev_idx.visibility = View.VISIBLE
-                    btn_next_idx.visibility = View.VISIBLE
-                }
-            }
         } catch (ex: OutOfMemoryError) {
             System.gc()
-
-            showExitAlertDialog("ERROR: Out of memory",
-                    "This DICOM series required more memory than your device could provide.")
+            showMemoryDialog()
         }
 
+        // Update the UI
+        input_idx.setText((currentInstance + 1).toString())
+
+        // Set the visibility of the previous button
+        when (currentInstance) {
+             0 -> {
+                btn_prev_idx.visibility = View.INVISIBLE
+                btn_next_idx.visibility = View.VISIBLE
+
+            }
+            currentMax -> {
+                btn_next_idx.visibility = View.INVISIBLE
+                btn_prev_idx.visibility = View.VISIBLE
+
+            }
+            else -> {
+                btn_prev_idx.visibility = View.VISIBLE
+                btn_next_idx.visibility = View.VISIBLE
+            }
+        }
     }
 
     // Needed to implement the SeekBar.OnSeekBarChangeListener
@@ -340,16 +335,18 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
      * @param title Title of the AlertDialog.
      * @param message Message of the AlertDialog.
      */
-    internal fun showExitAlertDialog(title: String, message: String) {
-
+    private fun showExitAlertDialog(@StringRes title: Int, @StringRes message: Int) {
         val builder = AlertDialog.Builder(this)
         builder.setMessage(message)
                 .setTitle(title)
                 .setCancelable(false)
-                .setPositiveButton("Exit") { dialog, id -> this@DcmViewer.finish() }
+                .setPositiveButton(R.string.err_close) { dialog, id -> this@DcmViewer.finish() }
 
         val alertDialog = builder.create()
         alertDialog.show()
+    }
+    internal fun showMemoryDialog() {
+        return showExitAlertDialog(R.string.err_title_oom, R.string.err_mesg_oom)
     }
 
     private fun updateAxis(axis: Int = 0) {
@@ -418,7 +415,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
 //                input_idx.setError("< 0");
 //            else if (userInput > currentMax)
 //                input_idx.setError("> " + currentMax);
-        currentInstance = userInput.coerceIn(0, currentMax)
+        currentInstance = userInput
         view.text = (currentInstance + 1).toString()
         // Changing the progress bar will set the image
         seek_idx.progress = currentInstance
