@@ -19,7 +19,7 @@ import app.boyd.shared.coercePercent
 import org.opencv.core.Core
 import org.opencv.core.Mat
 
-class DcmImageView: ImageView, View.OnTouchListener {
+class DcmImageView : ImageView, View.OnTouchListener {
     interface OnContrastChangedListener {
         fun onContrastChanged(brightness: Double, contrast: Double, colormap: Int, invertCmap: Boolean)
     }
@@ -30,8 +30,23 @@ class DcmImageView: ImageView, View.OnTouchListener {
     private var mLastContrast = mContrast
     private var mBrightness = 50.0
     private var mLastBrightness = mBrightness
-    private var mInvertCmap = false
-    private var mColormap = -1
+
+    private var _invertCmap = false
+    var invertColormap: Boolean
+        get() = _invertCmap
+        set(value) {
+            _invertCmap = value
+            updateColormap()
+        }
+
+    private var _colormap = -1
+    var colormap: Int
+        get() = _colormap
+        set(value) {
+            _colormap = value
+            updateColormap()
+        }
+
     private var _mat: Mat? = null
     var mat
         get() = _mat
@@ -55,11 +70,12 @@ class DcmImageView: ImageView, View.OnTouchListener {
             updateScale()
         }
 
-    constructor(context: Context): super(context)
+    constructor(context: Context) : super(context)
     @JvmOverloads
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0): super(context, attrs, defStyleAttr)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr, defStyleRes)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     init {
         setOnTouchListener(this)
@@ -68,16 +84,6 @@ class DcmImageView: ImageView, View.OnTouchListener {
 
     fun setOnContrastChangedListener(listener: OnContrastChangedListener) {
         mContrastListener = listener
-    }
-
-    fun invertColormap(invertCmap: Boolean = false) {
-        mInvertCmap = invertCmap
-        updateColormap()
-    }
-
-    fun setColormap(colormap: Int = -1) {
-        mColormap = colormap
-        updateColormap()
     }
 
     /**
@@ -93,7 +99,7 @@ class DcmImageView: ImageView, View.OnTouchListener {
 
     private fun updateColormap() {
         redrawImage()
-        mContrastListener?.onContrastChanged(mBrightness, mContrast, mColormap, mInvertCmap)
+        mContrastListener?.onContrastChanged(mBrightness, mContrast, _colormap, _invertCmap)
     }
 
     private fun redrawImage() {
@@ -106,11 +112,11 @@ class DcmImageView: ImageView, View.OnTouchListener {
         //val imMax = imWidth + (diff - imWidth) * (1.0 - (mBrightness / 100.0)) + minMax.minVal
         val imMin = (diff - imWidth) * (1.0 - mBrightness / 100.0) + minMax.minVal
 
-        val temp = mat.adjustContrast(imWidth, imMin, mInvertCmap)
+        val temp = mat.adjustContrast(imWidth, imMin, _invertCmap)
 
         // Set the image
         try {
-            setImageBitmap(temp.toBitmap(mColormap))
+            setImageBitmap(temp.toBitmap(_colormap))
         } catch (ex: OutOfMemoryError) {
             System.gc()
 
@@ -134,14 +140,14 @@ class DcmImageView: ImageView, View.OnTouchListener {
         Log.i("cpb", "scaleY2X: $scaleY2X mScaleY: $mScaleY")
         mFocusX = displayCenterX
         mFocusY = displayCenterY
-        
+
         updateMatrix()
     }
 
     private fun updateMatrix() {
         val mat = mat ?: return
         val scaleX = (mScaleY * scaleY2X).toFloat()
-        val scaledImageCenterX = mat.cols() * scaleX/ 2.0f
+        val scaledImageCenterX = mat.cols() * scaleX / 2.0f
         val scaledImageCenterY = mat.rows() * mScaleY / 2.0f
 
         val matrix = Matrix()

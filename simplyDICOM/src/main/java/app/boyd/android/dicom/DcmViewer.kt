@@ -31,26 +31,42 @@ import org.opencv.core.Mat
  */
 class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         TextView.OnEditorActionListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
-    private var mInstance = intArrayOf(0, 0, 0)
-    private var mMaxIndex = intArrayOf(0, 0, 0)
-    private var mScaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
-    private var mAxis = Axis.TRANSVERSE
-
     private var mMatList: List<Mat>? = null
     private var zList: List<Int>? = null
     private var mTask: AsyncTask<*, *, *>? = null
 
-    private var currentInstance: Int
-        get() = mInstance[mAxis.ordinal]
+    private var _axis = Axis.TRANSVERSE
+    private var currentAxis: Int
+        get() = _axis.ordinal
         set(value) {
-            mInstance[mAxis.ordinal] = value.coerceIn(0, currentMax)
+            if (currentAxis == value)
+                return
+
+            val axes = Axis.values()
+            val axis = value.coerceIn(0, axes.size - 1)
+            _axis = axes[axis]
+
+            if (spinnerAxis.selectedItemPosition != axis) {
+                spinnerAxis.setSelection(axis)
+            }
+
+            updateAxis()
         }
 
-    private val currentMax: Int
-        get() = mMaxIndex[mAxis.ordinal]
+    private var _instance = intArrayOf(0, 0, 0)
+    private var currentInstance: Int
+        get() = _instance[currentAxis]
+        set(value) {
+            _instance[currentAxis] = value.coerceIn(0, currentMax)
+        }
 
+    private var _maxIndex = intArrayOf(0, 0, 0)
+    private val currentMax: Int
+        get() = _maxIndex[currentAxis]
+
+    private var _scaleSpacing = doubleArrayOf(1.0, 1.0, 1.0)
     private val currentScale: Double
-        get() = mScaleSpacing[mAxis.ordinal]
+        get() = _scaleSpacing[currentAxis]
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -148,10 +164,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         mMatList = null
 
         // Free the drawable callback
-        val drawable = imageView?.drawable
-
-        if (drawable != null)
-            drawable.callback = null
+        imageView?.drawable?.callback = null
     }
 
     @Synchronized
@@ -162,7 +175,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
             if (fromUser) currentInstance = progress
             val matList = mMatList
             if (matList != null) {
-                val newMat = when (mAxis) {
+                val newMat = when (_axis) {
                     Axis.TRANSVERSE -> matList[currentInstance]
                     Axis.CORONAL -> {
                         val listY = ArrayList<Mat>()
@@ -193,23 +206,13 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // Update the UI
         input_idx.setText((currentInstance + 1).toString())
 
+        updateNavButtons()
+    }
+
+    private fun updateNavButtons() {
         // Set the visibility of the previous button
-        when (currentInstance) {
-             0 -> {
-                btn_prev_idx.visibility = View.INVISIBLE
-                btn_next_idx.visibility = View.VISIBLE
-
-            }
-            currentMax -> {
-                btn_next_idx.visibility = View.INVISIBLE
-                btn_prev_idx.visibility = View.VISIBLE
-
-            }
-            else -> {
-                btn_prev_idx.visibility = View.VISIBLE
-                btn_next_idx.visibility = View.VISIBLE
-            }
-        }
+        btn_prev_idx.visibility = if (currentInstance == 0) View.INVISIBLE else View.VISIBLE
+        btn_next_idx.visibility = if (currentInstance == currentMax) View.INVISIBLE else View.VISIBLE
     }
 
     // Needed to implement the SeekBar.OnSeekBarChangeListener
@@ -278,10 +281,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
     }
 
     fun setSpacing(spacing: DoubleArray, spacingZ: Double = 1.0) {
-        // mPixelSpacing{X, Y, Z}
-//        mPixelSpacing = doubleArrayOf(spacing[1], spacing[0], spacingZ)
-        // mScaleY2X = mScaleSpacing[mAxis]
-        mScaleSpacing = doubleArrayOf(spacing[1] / spacing[0], spacing[1] / spacingZ, spacingZ / spacing[0])
+        _scaleSpacing = doubleArrayOf(spacing[1] / spacing[0], spacing[1] / spacingZ, spacingZ / spacing[0])
     }
 
     fun loadResult(result: UrisLoadTaskResult?) {
@@ -294,7 +294,7 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         mMatList = mats
         val rows = mats[0].rows()
         val cols = mats[0].cols()
-        mMaxIndex = intArrayOf(mats.size - 1, rows - 1, cols - 1)
+        _maxIndex = intArrayOf(mats.size - 1, rows - 1, cols - 1)
         if (mats.size <= 1) {
             return
         }
@@ -309,8 +309,8 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         val zs = result.zList
         val z = zs.indexOf(instanceNum).coerceAtLeast(0)
         zList = zs
-        mInstance = intArrayOf(z, rows / 2, cols / 2)
-        updateAxis()
+        _instance = intArrayOf(z, rows / 2, cols / 2)
+        currentAxis = 0
     }
 
     /**
@@ -338,31 +338,22 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         val alertDialog = builder.create()
         alertDialog.show()
     }
+
     internal fun showMemoryDialog() {
         return showExitAlertDialog(R.string.err_title_oom, R.string.err_mesg_oom)
     }
 
-    private fun updateAxis(axis: Int = 0) {
-        if (spinnerAxis.selectedItemPosition != axis) {
-            spinnerAxis.setSelection(axis)
-            return
-        }
-
-        if (mMatList == null)
-            return
-        val axes = Axis.values()
-        mAxis = axes[axis.coerceIn(0, axes.size - 1)]
-        seek_idx.max = currentMax
-        val idx = currentInstance
-        seek_idx.progress = idx
+    private fun updateAxis() {
         imageView.scaleY2X = currentScale
 
-        // Set the visibility of the previous button
-        if (idx == 0) {
-            btn_prev_idx.visibility = View.INVISIBLE
-        } else if (idx == seek_idx.max) {
-            btn_next_idx.visibility = View.INVISIBLE
+        if (mMatList == null) {
+            navigationToolbar.visibility = View.INVISIBLE
+            return
         }
+        seek_idx.max = currentMax
+        seek_idx.progress = currentInstance
+
+        updateNavButtons()
     }
 
     /**
@@ -379,12 +370,10 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // parent.getItemAtPosition(position)
         when (parent?.id) {
             R.id.spinnerColormap -> {
-                val cmapSelect = position - 1
-                Log.i("cpb", "Colormap: $cmapSelect id: $id")
-                imageView.setColormap(cmapSelect)
+                imageView.colormap = position - 1
             }
             R.id.spinnerAxis -> {
-                updateAxis(position)
+                currentAxis = position
             }
         }
     }
@@ -429,8 +418,8 @@ class DcmViewer : Activity(), CompoundButton.OnCheckedChangeListener,
         // Check which toggle button was changed
         when (buttonView?.id) {
             R.id.btn_invert -> {
-                (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap(isChecked)
-                imageView.invertColormap(isChecked)
+                (spinnerColormap.adapter as ColormapArrayAdapter).invertColormap = isChecked
+                imageView.invertColormap = isChecked
             }
         }
     }

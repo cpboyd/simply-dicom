@@ -16,20 +16,20 @@ import android.widget.ArrayAdapter
  * into a ListAdapter.
  */
 class ColormapArrayAdapter : ArrayAdapter<String> {
-    private var mCmapInvert: Boolean = false
+    private var _invert: Boolean = false
+    var invertColormap
+        get() = _invert
+        set(value) {
+            _invert = value
+        }
 
     constructor(context: Context, resource: Int, strings: Array<String>) : super(context, resource, strings)
-
     constructor(context: Context, resource: Int, textViewResourceId: Int, strings: Array<String>) : super(context, resource, textViewResourceId, strings)
-
-    fun invertColormap(invert: Boolean) {
-        mCmapInvert = invert
-    }
 
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = super.getDropDownView(position, convertView, parent)
-        //TODO: Color background
-        view.background = Colormaps.getColormapDrawable(position, mCmapInvert)
+        // TODO: Color background
+        view.background = Colormaps.getColormapDrawable(position, invertColormap)
         return view
     }
 }
