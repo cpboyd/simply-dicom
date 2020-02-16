@@ -52,13 +52,14 @@ class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoad
         matList.add(input.mat)
         zList.add(instanceZ)
 
+        var setSpacing = false
         for ((i, uri) in uriList.withIndex()) {
-            publishProgress(i, totalFiles)
-
             val viewer = viewerRef.get()
             if (viewer == null || viewer.isFinishing) {
                 return null
             }
+
+            publishProgress(i, totalFiles)
 
             val pair = viewer.checkAttributes(uri)
             val currDcm = pair.first ?: continue
@@ -72,10 +73,14 @@ class UrisLoadTask internal constructor(context: DcmViewer) : AsyncTask<UrisLoad
             }
 
             // Spacing definition moved up
-            if (spacing != null && (instanceZ + 2 == instanceNum || instanceNum == instanceZ)) {
+            if (!setSpacing && spacing != null && (spacing.count() > 1) && (startPos.count() > 2) &&
+                    (instanceZ + 2 == instanceNum || instanceNum == instanceZ)) {
                 val nextPos = currDcm.getDoubles(Tag.ImagePositionPatient)
                 // Get currently loaded attributes
-                viewer.setSpacing(spacing, abs(startPos[2] - nextPos[2]))
+                if (nextPos.count() > 2) {
+                    viewer.setSpacing(spacing, abs(startPos[2] - nextPos[2]))
+                    setSpacing = true
+                }
             }
 
             val rows2 = currDcm.getInt(Tag.Rows, 1)
