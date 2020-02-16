@@ -52,7 +52,7 @@ class ImageContrastView : ImageView {
         mMax = imWidth + (diff - imWidth) * (1.0 - brightness / 100.0)
         mMin = (diff - imWidth) * (1.0 - brightness / 100.0)
 
-        val n = diff.toInt()
+        val n = diff.toInt().coerceAtLeast(1)
         val cmap = Mat(1, n, CvType.CV_32S)
         for (i in 0 until n) {
             cmap.put(0, i, i.toDouble())

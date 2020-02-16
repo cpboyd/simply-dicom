@@ -101,7 +101,7 @@ fun Attributes.getMat(): Mat? {
     val rows = this.getInt(Tag.Rows, 1)
     val cols = this.getInt(Tag.Columns, 1)
     val pix = this.getInts(Tag.PixelData)
-    if (pix == null || pix.isEmpty()) {
+    if (pix == null || pix.isEmpty() || cols < 1 || rows < 1) {
         return null
     }
     val mat = Mat(rows, cols, CvType.CV_32S)
