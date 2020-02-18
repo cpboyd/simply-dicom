@@ -87,6 +87,11 @@ fun Activity.checkAttributes(uri: Uri): Pair<Attributes?, String?> {
             "File not found."
         }
         return Pair(null, errorMsg)
+    } catch (e: Exception) {
+        // TODO: Investigate SecurityException
+        // All other errors:
+        Log.e("cpb", "Error checkAttributes:", e)
+        return Pair(null, "Unable to load file.")
     }
 
     val error = attributes.checkImage()
